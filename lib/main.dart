@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
+import 'features/bloc/worker_blocs.dart';
+import 'features/repositories/worker_repository.dart';
 import 'screens/auth/login_screen.dart';
 
 void main() {
   runApp(
-    DevicePreview(
-      enabled: true,
-      builder: (context) => const BuildHireApp(),
-    ),
+    DevicePreview(enabled: false, builder: (context) => const BuildHireApp()),
   );
 }
 
@@ -18,7 +18,16 @@ class BuildHireApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    final repository = WorkerRepository();
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AuthCubit(repository)),
+        BlocProvider(create: (_) => ProfileCubit(repository)),
+        BlocProvider(create: (_) => JobsCubit(repository)),
+        BlocProvider(create: (_) => MessagesCubit(repository)),
+        BlocProvider(create: (_) => NotificationsCubit(repository)),
+      ],
+      child: MaterialApp(
       title: 'BuildHire',
       debugShowCheckedModeBanner: false,
 
@@ -29,6 +38,7 @@ class BuildHireApp extends StatelessWidget {
 
       theme: AppTheme.build(context),
       home: const LoginScreen(),
+      ),
     );
   }
 }

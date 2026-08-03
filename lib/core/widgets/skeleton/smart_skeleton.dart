@@ -112,21 +112,21 @@ class SmartSkeleton extends StatelessWidget {
     this.padding = EdgeInsets.zero,
     this.borderRadius = 12,
     this.showCardChrome = true,
-  })  : layout = SkeletonLayout.grid,
-        hasLeading = false,
-        leadingSize = 0,
-        leadingIsCircle = false,
-        titleWords = 0,
-        subtitleWords = 0,
-        hasMeta = false,
-        hasTags = false,
-        tagCount = 0,
-        tagWidth = 0,
-        tagHeight = 0,
-        showRowLabel = false,
-        itemMargin = EdgeInsets.zero,
-        itemPadding = const EdgeInsets.symmetric(vertical: 10),
-        itemBuilder = null;
+  }) : layout = SkeletonLayout.grid,
+       hasLeading = false,
+       leadingSize = 0,
+       leadingIsCircle = false,
+       titleWords = 0,
+       subtitleWords = 0,
+       hasMeta = false,
+       hasTags = false,
+       tagCount = 0,
+       tagWidth = 0,
+       tagHeight = 0,
+       showRowLabel = false,
+       itemMargin = EdgeInsets.zero,
+       itemPadding = const EdgeInsets.symmetric(vertical: 10),
+       itemBuilder = null;
 
   const SmartSkeleton.list({
     super.key,
@@ -148,15 +148,15 @@ class SmartSkeleton extends StatelessWidget {
     this.itemPadding = const EdgeInsets.all(14),
     this.borderRadius = 14,
     this.showCardChrome = true,
-  })  : layout = SkeletonLayout.list,
-        scrollDirection = Axis.vertical,
-        itemWidth = 0,
-        itemHeight = 0,
-        hasLabel = false,
-        gridTileShape = BoxShape.circle,
-        runSpacing = 0,
-        showRowLabel = false,
-        itemBuilder = null;
+  }) : layout = SkeletonLayout.list,
+       scrollDirection = Axis.vertical,
+       itemWidth = 0,
+       itemHeight = 0,
+       hasLabel = false,
+       gridTileShape = BoxShape.circle,
+       runSpacing = 0,
+       showRowLabel = false,
+       itemBuilder = null;
 
   const SmartSkeleton.row({
     super.key,
@@ -168,25 +168,25 @@ class SmartSkeleton extends StatelessWidget {
     this.itemPadding = EdgeInsets.zero,
     this.borderRadius = 14,
     this.showCardChrome = true,
-  })  : layout = SkeletonLayout.row,
-        scrollDirection = Axis.horizontal,
-        itemWidth = 0,
-        itemHeight = 0,
-        hasLabel = false,
-        gridTileShape = BoxShape.circle,
-        runSpacing = 0,
-        hasLeading = false,
-        leadingSize = 0,
-        leadingIsCircle = false,
-        titleWords = 0,
-        subtitleWords = 0,
-        hasMeta = false,
-        hasTags = false,
-        tagCount = 0,
-        tagWidth = 0,
-        tagHeight = 0,
-        itemMargin = EdgeInsets.zero,
-        itemBuilder = null;
+  }) : layout = SkeletonLayout.row,
+       scrollDirection = Axis.horizontal,
+       itemWidth = 0,
+       itemHeight = 0,
+       hasLabel = false,
+       gridTileShape = BoxShape.circle,
+       runSpacing = 0,
+       hasLeading = false,
+       leadingSize = 0,
+       leadingIsCircle = false,
+       titleWords = 0,
+       subtitleWords = 0,
+       hasMeta = false,
+       hasTags = false,
+       tagCount = 0,
+       tagWidth = 0,
+       tagHeight = 0,
+       itemMargin = EdgeInsets.zero,
+       itemBuilder = null;
 
   const SmartSkeleton.custom({
     super.key,
@@ -196,27 +196,27 @@ class SmartSkeleton extends StatelessWidget {
     this.scrollDirection = Axis.vertical,
     this.spacing = 12,
     this.padding = EdgeInsets.zero,
-  })  : layout = SkeletonLayout.custom,
-        itemWidth = 0,
-        itemHeight = 0,
-        hasLabel = false,
-        gridTileShape = BoxShape.circle,
-        runSpacing = 0,
-        hasLeading = false,
-        leadingSize = 0,
-        leadingIsCircle = false,
-        titleWords = 0,
-        subtitleWords = 0,
-        hasMeta = false,
-        hasTags = false,
-        tagCount = 0,
-        tagWidth = 0,
-        tagHeight = 0,
-        showRowLabel = false,
-        itemMargin = EdgeInsets.zero,
-        itemPadding = EdgeInsets.zero,
-        borderRadius = 12,
-        showCardChrome = false;
+  }) : layout = SkeletonLayout.custom,
+       itemWidth = 0,
+       itemHeight = 0,
+       hasLabel = false,
+       gridTileShape = BoxShape.circle,
+       runSpacing = 0,
+       hasLeading = false,
+       leadingSize = 0,
+       leadingIsCircle = false,
+       titleWords = 0,
+       subtitleWords = 0,
+       hasMeta = false,
+       hasTags = false,
+       tagCount = 0,
+       tagWidth = 0,
+       tagHeight = 0,
+       showRowLabel = false,
+       itemMargin = EdgeInsets.zero,
+       itemPadding = EdgeInsets.zero,
+       borderRadius = 12,
+       showCardChrome = false;
 
   @override
   Widget build(BuildContext context) {
@@ -268,10 +268,7 @@ class SmartSkeleton extends StatelessWidget {
         gridTileShape == BoxShape.circle
             ? const Bone.circle(size: 26)
             : Bone.square(size: 26),
-        if (hasLabel) ...[
-          const SizedBox(height: 6),
-          const Bone.text(words: 1),
-        ],
+        if (hasLabel) ...[const SizedBox(height: 6), const Bone.text(words: 1)],
       ],
     );
 
@@ -295,9 +292,7 @@ class SmartSkeleton extends StatelessWidget {
   // LIST — bigger composite cards stacked vertically.
   // ---------------------------------------------------------------------
   Widget _buildList() {
-    return Column(
-      children: List.generate(itemCount, (i) => _listCard()),
-    );
+    return Column(children: List.generate(itemCount, (i) => _listCard()));
   }
 
   Widget _listCard() {

@@ -13,4 +13,6 @@ class AppColors {
   static const Color textMuted = Colors.black38;
   static const Color border = Colors.black12;
   static const Color error = Color(0xFFD32F2F);
+  static const Color blue = Color(0xFF007BFF); // teal
+  static const Color backgroundBlue = Color(0xFF007BFF); // teal
 }

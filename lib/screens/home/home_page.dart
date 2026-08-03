@@ -1,8 +1,17 @@
+import 'package:construction_workforce_recruitment_site_management_platform/features/jobs/apply_job_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../core/constants/app_colors.dart';
+import '../../core/models/models.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../core/widgets/search/hero_search_bar.dart';
+import '../../features/bloc/worker_blocs.dart';
 import '../search/search_screen.dart';
+import '../profile/worker_profile_screen.dart';
+import '../jobs/my_jobs_screen.dart';
+import '../messages/messages_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,21 +23,20 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _navIndex = 0;
 
-  // Drives every SmartSkeleton on this page. Flip to false once your real
-  // trades/stats/jobs data has actually loaded.
-  bool _isLoading = true;
+  // Which trade chip is active. null = "All". Defaults to whatever matches
+  // the worker's own profile skills once that loads (see _applyDefaultTrade).
+  _Trade? _selectedTrade;
+  bool _defaultTradeApplied = false;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    // TODO: replace with your real data fetch (API/repository call).
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    // Assumes JobsCubit, NotificationsCubit and ProfileCubit are provided
+    // above this widget in the tree, same as ProfileCubit is for
+    // WorkerProfileScreen.
+    context.read<JobsCubit>().load();
+    context.read<NotificationsCubit>().load();
+    context.read<ProfileCubit>().load();
   }
 
   final List<_Trade> _trades = const [
@@ -42,61 +50,36 @@ class _HomePageState extends State<HomePage> {
     _Trade('Laborer', Icons.engineering),
   ];
 
-  final List<_JobPosting> _jobs = const [
-    _JobPosting(
-      title: 'Site Electrician',
-      company: 'Vertex Builders',
-      location: 'Bathinda, PB',
-      pay: '₹850/day',
-      tags: ['Full-time', 'Urgent', 'On-site'],
-      posted: '2h ago',
-    ),
-    _JobPosting(
-      title: 'Steel Fixer / Rebar Mason',
-      company: 'Skyline Infra',
-      location: 'Chandigarh',
-      pay: '₹900/day',
-      tags: ['Contract', 'Housing'],
-      posted: '5h ago',
-    ),
-    _JobPosting(
-      title: 'Heavy Equipment Operator',
-      company: 'GroundWorks Co.',
-      location: 'Ludhiana',
-      pay: '₹1,200/day',
-      tags: ['Full-time', 'Experienced'],
-      posted: '1d ago',
-    ),
-    _JobPosting(
-      title: 'Plumbing Foreman',
-      company: 'AquaTech Contractors',
-      location: 'Patiala',
-      pay: '₹1,100/day',
-      tags: ['Supervisor', 'Long-term'],
-      posted: '1d ago',
-    ),
-    _JobPosting(
-      title: 'General Site Laborer',
-      company: 'Metro Build Group',
-      location: 'Bathinda, PB',
-      pay: '₹650/day',
-      tags: ['Daily wage', 'Immediate joining'],
-      posted: '3d ago',
-    ),
-  ];
+  // Very rough keyword match between a trade name and a job's title/skills.
+  // TODO: once the backend supports a real `/jobs?trade=...` query, replace
+  // this client-side matching with a proper server-side filter.
+  String _tradeKey(_Trade trade) => trade.name.toLowerCase().split(' ').first;
 
-  void _showTradeJobs(BuildContext context, _Trade trade) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return _TradeJobsBottomSheet(trade: trade);
-      },
-    );
+  bool _matchesTrade(Job job, _Trade trade) {
+    final key = _tradeKey(trade);
+    return job.title.toLowerCase().contains(key) ||
+        job.skills.any((s) => s.toLowerCase().contains(key));
   }
 
-  void _showJobDetails(BuildContext context, _JobPosting job) {
+  // Picks the trade chip that best matches the worker's own profile skills,
+  // e.g. a worker with skill "Mason" gets the Mason chip pre-selected.
+  void _applyDefaultTrade(WorkerProfile profile) {
+    if (_defaultTradeApplied) return;
+    _Trade? match;
+    for (final trade in _trades) {
+      final key = _tradeKey(trade);
+      if (profile.skills.any((s) => s.toLowerCase().contains(key))) {
+        match = trade;
+        break;
+      }
+    }
+    setState(() {
+      _selectedTrade = match;
+      _defaultTradeApplied = true;
+    });
+  }
+
+  void _showJobDetails(BuildContext context, Job job) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -109,7 +92,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
+    return BlocListener<ProfileCubit, LoadState<WorkerProfile>>(
+      listener: (context, state) {
+        if (state is Loaded<WorkerProfile>) _applyDefaultTrade(state.data);
+      },
+      child: Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
         title: Row(
@@ -123,47 +110,139 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications,
-              color: Colors.white70,
-              size: 22,
-            ),
+          BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
+            builder: (context, state) {
+              final unread = state is Loaded<List<WorkerNotification>>
+                  ? state.data.where((n) => !n.isRead).length
+                  : 0;
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.notifications,
+                      color: Colors.white70,
+                      size: 22,
+                    ),
+                  ),
+                  if (unread > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          unread > 9 ? '9+' : '$unread',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _buildHero(context),
-            _buildTradesRow(context),
-            _buildStatsBar(context),
-            _buildJobsHeader(context),
-            _isLoading
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: SmartSkeleton.list(
-                      itemCount: 4,
-                      hasLeading: true,
-                      leadingSize: 44,
-                      titleWords: 3,
-                      subtitleWords: 2,
-                      hasMeta: true,
-                      hasTags: true,
-                      tagCount: 3,
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 0),
-                    child: Column(
-                      children: _jobs.map((j) => _JobCard(job: j)).toList(),
-                    ),
-                  ),
-            const SizedBox(height: 24),
-          ],
+      body: _navIndex == 3
+          ? const WorkerProfileScreen()
+          : _navIndex == 1
+          ? const MyJobsScreen()
+          : _navIndex == 2
+          ? const MessagesScreen()
+          : SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => context.read<JobsCubit>().load(),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _buildHero(context),
+              _buildTradesRow(context),
+              _buildStatsBar(context),
+              _buildJobsHeader(context),
+              BlocBuilder<JobsCubit, LoadState<List<Job>>>(
+                builder: (context, state) {
+                  if (state is Idle<List<Job>> || state is Loading<List<Job>>) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: SmartSkeleton.list(
+                        itemCount: 4,
+                        hasLeading: true,
+                        leadingSize: 44,
+                        titleWords: 3,
+                        subtitleWords: 2,
+                        hasMeta: true,
+                        hasTags: true,
+                        tagCount: 3,
+                      ),
+                    );
+                  }
+
+                  if (state is Failed<List<Job>>) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Text('Unable to load jobs', style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: () => context.read<JobsCubit>().load(),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final allJobs = (state as Loaded<List<Job>>).data;
+                  final jobs = _selectedTrade == null
+                      ? allJobs
+                      : allJobs.where((j) => _matchesTrade(j, _selectedTrade!)).toList();
+
+                  if (jobs.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                      child: Center(
+                        child: Text(
+                          _selectedTrade == null
+                              ? 'No job postings yet'
+                              : 'No ${_selectedTrade!.name} jobs right now',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: jobs
+                        .map((j) => _JobCard(
+                              job: j,
+                              onTap: () => _showJobDetails(context, j),
+                              onSaveToggle: () => context.read<JobsCubit>().save(j.id),
+                            ))
+                        .toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: NavigationBar(
@@ -172,25 +251,26 @@ class _HomePageState extends State<HomePage> {
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+            selectedIcon: Icon(Icons.home, color: AppColors.primary),
             label: 'Home',
           ),
           NavigationDestination(
             icon: Icon(Icons.bookmark_border_outlined),
             label: 'My Jobs',
-            selectedIcon: Icon(Icons.bookmark),
+            selectedIcon: Icon(Icons.bookmark,color: AppColors.primary),
           ),
           NavigationDestination(
             icon: Icon(Icons.messenger_outline),
-            selectedIcon: Icon(Icons.message),
+            selectedIcon: Icon(Icons.message, color: AppColors.primary),
             label: 'Messages',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            selectedIcon: Icon(Icons.person, color: AppColors.primary),
             label: 'Profile',
           ),
         ],
+      ),
       ),
     );
   }
@@ -217,56 +297,71 @@ class _HomePageState extends State<HomePage> {
   Widget _buildTradesRow(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    // null represents the "All" chip.
+    final chips = <_Trade?>[null, ..._trades];
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Browse by Trade', style: textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            _selectedTrade == null
+                ? 'Showing all jobs'
+                : 'Showing jobs matched to your ${_selectedTrade!.name} skill',
+            style: textTheme.bodySmall,
+          ),
           const SizedBox(height: 12),
-          _isLoading
-              ? const SmartSkeleton.grid(
-                  itemCount: 8,
-                  itemWidth: 84,
-                  itemHeight: 90,
-                  hasLabel: true,
-                  gridTileShape: BoxShape.circle,
-                )
-              : SizedBox(
-                  height: 90,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _trades.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
-                    itemBuilder: (context, i) {
-                      final t = _trades[i];
-                      return Container(
-                        width: 84,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black12),
+          SizedBox(
+            height: 90,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: chips.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                final t = chips[i];
+                final isSelected = t == _selectedTrade;
+
+                return InkWell(
+                  onTap: () => setState(() => _selectedTrade = t),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 84,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : Colors.black12,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          t?.icon ?? Icons.apps,
+                          color: isSelected ? Colors.white : AppColors.primary,
+                          size: 26,
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(t.icon, color: AppColors.primary, size: 26),
-                            const SizedBox(height: 6),
-                            Text(
-                              t.name,
-                              textAlign: TextAlign.center,
-                              style: textTheme.bodySmall?.copyWith(
-                                fontSize: 11,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 6),
+                        Text(
+                          t?.name ?? 'All',
+                          textAlign: TextAlign.center,
+                          style: textTheme.bodySmall?.copyWith(
+                            fontSize: 11,
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
                         ),
-                      );
-                    },
+                      ],
+                    ),
                   ),
-                ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -301,36 +396,43 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.black12),
       ),
-      child: _isLoading
-          ? const SmartSkeleton.row(
-              itemCount: 3,
-              showRowLabel: true,
-              showCardChrome: false,
-            )
-          : Row(
-              children: [
-                stat('12,400+', 'Open Jobs'),
-                stat('3,800+', 'Hiring Sites'),
-                stat('64,000+', 'Registered Workers'),
-              ],
-            ),
+      // TODO: replace with real platform-wide stats once that endpoint exists.
+      child: Row(
+        children: [
+          stat('12,400+', 'Open Jobs'),
+          stat('3,800+', 'Hiring Sites'),
+          stat('64,000+', 'Registered Workers'),
+        ],
+      ),
     );
   }
 
   Widget _buildJobsHeader(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final title = _selectedTrade == null ? 'Latest Job Postings' : '${_selectedTrade!.name} Jobs';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Latest Job Postings', style: textTheme.titleMedium),
-          Text(
-            'See all',
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
+          Text(title, style: textTheme.titleMedium),
+          InkWell(
+            onTap: () {
+              if (_selectedTrade != null) {
+                setState(() => _selectedTrade = null);
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SearchScreen()),
+                );
+              }
+            },
+            child: Text(
+              _selectedTrade == null ? 'See all' : 'Clear filter',
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -345,41 +447,18 @@ class _Trade {
   const _Trade(this.name, this.icon);
 }
 
-class _JobPosting {
-  final String title;
-  final String company;
-  final String location;
-  final String pay;
-  final List<String> tags;
-  final String posted;
-
-  const _JobPosting({
-    required this.title,
-    required this.company,
-    required this.location,
-    required this.pay,
-    required this.tags,
-    required this.posted,
-  });
-}
-
 class _JobCard extends StatelessWidget {
-  final _JobPosting job;
-  const _JobCard({required this.job});
+  final Job job;
+  final VoidCallback onTap;
+  final VoidCallback onSaveToggle;
+  const _JobCard({required this.job, required this.onTap, required this.onSaveToggle});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return InkWell(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => _JobDetailsSheet(job: job),
-        );
-      },
+      onTap: onTap,
       child: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
         padding: const EdgeInsets.all(14),
@@ -391,6 +470,35 @@ class _JobCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                if (job.applied)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundBlue.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      'Applied',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: AppColors.backgroundBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                InkWell(
+                  onTap: onSaveToggle,
+                  child: Icon(
+                    job.saved ? Icons.bookmark : Icons.bookmark_border_outlined,
+                    size: 23,
+                    color: job.saved ? AppColors.primary : Colors.black45,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Container(
@@ -416,7 +524,6 @@ class _JobCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Text(job.posted, style: textTheme.labelSmall),
               ],
             ),
             const SizedBox(height: 10),
@@ -440,7 +547,7 @@ class _JobCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  job.pay,
+                  '₹${job.dailyPay}/day',
                   style: textTheme.bodySmall?.copyWith(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
@@ -449,33 +556,32 @@ class _JobCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: job.tags
-                  .map(
-                    (t) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        t,
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 10.5,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+            if (job.skills.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: job.skills
+                    .map(
+                      (t) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          t,
+                          style: textTheme.bodySmall?.copyWith(
+                            fontSize: 10.5,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                  .toList(),
-            ),
+                    )
+                    .toList(),
+              ),
+            ],
           ],
         ),
       ),
@@ -483,154 +589,10 @@ class _JobCard extends StatelessWidget {
   }
 }
 
-class _TradeJobsBottomSheet extends StatefulWidget {
-  final _Trade trade;
-
-  const _TradeJobsBottomSheet({required this.trade});
-
-  @override
-  State<_TradeJobsBottomSheet> createState() => _TradeJobsBottomSheetState();
-}
-
-class _TradeJobsBottomSheetState extends State<_TradeJobsBottomSheet> {
-  bool isLoading = true;
-
-  List<_JobPosting> jobs = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadJobs();
-  }
-
-  Future<void> _loadJobs() async {
-    // Replace with your API call.
-    await Future.delayed(const Duration(seconds: 2));
-
-    jobs = [
-      _JobPosting(
-        title: "${widget.trade.name} Required",
-        company: "BuildHire Pvt Ltd",
-        location: "Bathinda",
-        pay: "₹900/day",
-        tags: const ["Urgent", "Full-time"],
-        posted: "Today",
-      ),
-      _JobPosting(
-        title: "Senior ${widget.trade.name}",
-        company: "Skyline Infra",
-        location: "Chandigarh",
-        pay: "₹1,200/day",
-        tags: const ["Experienced"],
-        posted: "1 day ago",
-      ),
-      _JobPosting(
-        title: "${widget.trade.name} Helper",
-        company: "Metro Builders",
-        location: "Mohali",
-        pay: "₹700/day",
-        tags: const ["Immediate"],
-        posted: "2 days ago",
-      ),
-    ];
-
-    if (!mounted) return;
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * .75,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-
-          Container(
-            width: 50,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Icon(widget.trade.icon, color: AppColors.primary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    "${widget.trade.name} Jobs",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: isLoading
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: SmartSkeleton.list(
-                      itemCount: 5,
-                      hasLeading: true,
-                      leadingSize: 44,
-                      titleWords: 3,
-                      subtitleWords: 2,
-                      hasMeta: true,
-                      hasTags: true,
-                      tagCount: 3,
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    itemCount: jobs.length,
-                    itemBuilder: (_, i) {
-                      return _JobCard(job: jobs[i]);
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _JobDetailsSheet extends StatefulWidget {
-  final _JobPosting job;
+class _JobDetailsSheet extends StatelessWidget {
+  final Job job;
 
   const _JobDetailsSheet({required this.job});
-
-  @override
-  State<_JobDetailsSheet> createState() => _JobDetailsSheetState();
-}
-
-class _JobDetailsSheetState extends State<_JobDetailsSheet> {
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-
-      setState(() {
-        isLoading = false;
-      });
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -642,84 +604,64 @@ class _JobDetailsSheetState extends State<_JobDetailsSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: isLoading
-          ? const Padding(
-              padding: EdgeInsets.all(20),
-              child: SmartSkeleton.list(
-                itemCount: 1,
-                hasLeading: true,
-                leadingSize: 50,
-                titleWords: 3,
-                subtitleWords: 2,
-                hasMeta: true,
-                hasTags: true,
-                tagCount: 3,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(job.title, style: textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Text(job.company),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined),
+                const SizedBox(width: 8),
+                Text(job.location),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.payments_outlined),
+                const SizedBox(width: 8),
+                Text('₹${job.dailyPay}/day'),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text("Job Description", style: textTheme.titleMedium),
+            const SizedBox(height: 10),
+            // TODO: dummy API currently has no description/requirements field —
+            // add one to Job + the /jobs dummy response, then swap this in.
+            const Text(
+              "We are looking for skilled workers for our construction site. "
+              "Candidates should have experience in their trade and be able "
+              "to work independently while following all safety regulations.",
+            ),
+            const SizedBox(height: 20),
+            if (job.skills.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                children: job.skills.map((e) => Chip(label: Text(e))).toList(),
               ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(widget.job.title, style: textTheme.headlineSmall),
-
-                  const SizedBox(height: 8),
-
-                  Text(widget.job.company),
-
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined),
-                      const SizedBox(width: 8),
-                      Text(widget.job.location),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      const Icon(Icons.payments_outlined),
-                      const SizedBox(width: 8),
-                      Text(widget.job.pay),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text("Job Description", style: textTheme.titleMedium),
-
-                  const SizedBox(height: 10),
-
-                  const Text(
-                    "We are looking for skilled workers for our construction site. "
-                    "Candidates should have experience in their trade and be able "
-                    "to work independently while following all safety regulations.",
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Wrap(
-                    spacing: 8,
-                    children: widget.job.tags
-                        .map((e) => Chip(label: Text(e)))
-                        .toList(),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {},
-                      child: const Text("Apply Now"),
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: job.applied
+                    ? null
+                    : () {
+                        Navigator.pop(context); // close this bottom sheet first
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => ApplyJobScreen(job: job)),
+                        );
+                      },
+                child: Text(job.applied ? 'Already Applied' : 'Apply Now'),
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
-import '../home/home_page.dart';
+import '../../features/bloc/worker_blocs.dart';
+import '../profile/complete_profile_screen.dart';
 
 /// 6-digit OTP entry screen. Each box auto-advances focus; verifying
-/// on a complete code pushes [HomePage] and clears the auth stack.
+/// on a complete code continues to the worker profile setup.
 class OtpScreen extends StatefulWidget {
   final String phoneNumber;
   const OtpScreen({super.key, required this.phoneNumber});
@@ -19,9 +21,14 @@ class _OtpScreenState extends State<OtpScreen> {
   static const int _otpLength = 6;
   static const int _resendSeconds = 30;
 
-  final List<TextEditingController> _controllers =
-      List.generate(_otpLength, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(_otpLength, (_) => FocusNode());
+  final List<TextEditingController> _controllers = List.generate(
+    _otpLength,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(
+    _otpLength,
+    (_) => FocusNode(),
+  );
 
   Timer? _timer;
   int _secondsLeft = _resendSeconds;
@@ -83,16 +90,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
     setState(() => _isVerifying = true);
 
-    // TODO: replace with a real "verify OTP" API call and handle failure.
-    await Future.delayed(const Duration(milliseconds: 900));
-
-    if (!mounted) return;
-    setState(() => _isVerifying = false);
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomePage()),
-      (route) => false,
-    );
+    context.read<AuthCubit>().verifyOtp(widget.phoneNumber, _enteredOtp);
   }
 
   void _handleResend() {
@@ -120,7 +118,24 @@ class _OtpScreenState extends State<OtpScreen> {
           style: textTheme.titleMedium?.copyWith(color: AppColors.dark),
         ),
       ),
-      body: SafeArea(
+      body: BlocListener<AuthCubit, LoadState<bool>>(
+        listener: (context, state) {
+          if (state is Loaded<bool>) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (_) => CompleteProfileScreen(phoneNumber: widget.phoneNumber),
+              ),
+              (route) => false,
+            );
+          }
+          if (state is Failed<bool>) {
+            setState(() {
+              _isVerifying = false;
+              _errorText = 'Verification failed. Please try again.';
+            });
+          }
+        },
+        child: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: context.w(24),
@@ -197,6 +212,7 @@ class _OtpScreenState extends State<OtpScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -211,7 +227,9 @@ class _OtpScreenState extends State<OtpScreen> {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.dark),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(color: AppColors.dark),
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         decoration: InputDecoration(
           counterText: '',

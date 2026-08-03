@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
+import '../../features/bloc/worker_blocs.dart';
 import 'otp_screen.dart';
+import 'reset_password_screen.dart';
 
 /// Phone-number entry screen — first step of the OTP login flow.
 /// On success it pushes [OtpScreen] with the entered number.
@@ -15,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _phoneController = TextEditingController();
-  bool _isLoading = false;
+  bool _awaitingOtp = false;
 
   @override
   void dispose() {
@@ -27,19 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
-    setState(() => _isLoading = true);
-
-    // TODO: replace with a real "send OTP" API call.
-    await Future.delayed(const Duration(milliseconds: 900));
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OtpScreen(phoneNumber: _phoneController.text.trim()),
-      ),
-    );
+    setState(() => _awaitingOtp = true);
+    context.read<AuthCubit>().requestOtp(_phoneController.text.trim());
   }
 
   @override
@@ -48,8 +40,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: BlocListener<AuthCubit, LoadState<bool>>(
+        listener: (context, state) {
+          if (state is Loaded<bool> && _awaitingOtp) {
+            _awaitingOtp = false;
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => OtpScreen(phoneNumber: _phoneController.text.trim()),
+            ));
+          }
+          if (state is Failed<bool>) {
+            _awaitingOtp = false;
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+          }
+        },
+        child: SafeArea(
+          child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: context.w(24),
             vertical: context.h(32),
@@ -75,7 +80,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: context.h(24)),
                 Text(
                   'Find your next site job.',
-                  style: textTheme.headlineSmall?.copyWith(color: AppColors.dark),
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: AppColors.dark,
+                  ),
                 ),
                 SizedBox(height: context.h(8)),
                 Text(
@@ -94,7 +101,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: '98765 43210',
-                    hintStyle: textTheme.bodyMedium?.copyWith(color: Colors.black38),
+                    hintStyle: textTheme.bodyMedium?.copyWith(
+                      color: Colors.black38,
+                    ),
                     prefixIcon: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Center(
@@ -120,12 +129,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: context.h(24)),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleSendOtp,
+                  child: BlocBuilder<AuthCubit, LoadState<bool>>(
+                    builder: (context, state) => ElevatedButton(
+                    onPressed: state is Loading<bool> ? null : _handleSendOtp,
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: context.h(16)),
                     ),
-                    child: _isLoading
+                    child: state is Loading<bool>
                         ? SizedBox(
                             width: context.sp(20),
                             height: context.sp(20),
@@ -141,9 +151,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                    ),
                   ),
                 ),
                 SizedBox(height: context.h(16)),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
+                    ),
+                    child:  Text('Forgot password? Reset with OTP', style: textTheme.labelMedium?.copyWith(color: AppColors.primary)),
+                  ),
+                ),
                 Center(
                   child: Text.rich(
                     TextSpan(
@@ -173,6 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),
