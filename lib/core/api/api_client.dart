@@ -4,6 +4,8 @@ import 'dummy_api_interceptor.dart';
 
 /// The only place that creates Dio. Repositories must use this client.
 class ApiClient {
+  static String? accessToken;
+
   ApiClient._()
     : dio = Dio(
         BaseOptions(
@@ -17,7 +19,9 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          // Add secure token here after login: options.headers['Authorization'] = 'Bearer $token';
+          if (accessToken != null) {
+            options.headers['Authorization'] = 'Bearer $accessToken';
+          }
           handler.next(options);
         },
       ),

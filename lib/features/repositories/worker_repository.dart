@@ -8,8 +8,10 @@ class WorkerRepository {
   final ApiClient _client;
   Future<void> requestOtp(String phone) async =>
       _client.dio.post('/auth/request-otp', data: {'phone': phone});
-  Future<void> verifyOtp({required String phone, required String otp}) async =>
-      _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+  Future<void> verifyOtp({required String phone, required String otp}) async {
+    final response = await _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+    ApiClient.accessToken = response.data['data']['accessToken'];
+  }
   Future<List<Job>> fetchJobs({String? query}) async {
     final response = await _client.dio.get(
       '/jobs',
