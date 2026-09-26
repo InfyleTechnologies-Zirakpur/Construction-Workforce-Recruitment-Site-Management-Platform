@@ -72,17 +72,20 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       _photoName = image.name;
     });
 
-    // Upload immediately, same as WorkerProfileScreen. If your ProfileCubit
-    // requires an existing saved profile before uploadPhoto() works, move
-    // this call to after _saveProfile() succeeds instead.
     setState(() => _isUploadingPhoto = true);
-    final url = await context.read<ProfileCubit>().uploadPhoto(
-      bytes: bytes,
-      filename: image.name,
-    );
-    if (!mounted) return;
-    setState(() => _isUploadingPhoto = false);
-    _message(url == null ? 'Photo upload failed.' : 'Profile photo uploaded.');
+    try {
+      final url = await context.read<ProfileCubit>().uploadPhoto(
+        bytes: bytes,
+        filename: image.name,
+      );
+      if (!mounted) return;
+      _message(url == null ? 'Photo upload failed: server returned null — check Render logs for 401/413. Try smaller image.' : 'Profile photo uploaded.');
+    } catch (e) {
+      if (!mounted) return;
+      _message('Photo upload failed: $e');
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
   }
 
   Future<void> _pickDocument(String label, String type) async {
@@ -94,26 +97,35 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     final file = result?.files.single;
     if (file?.bytes == null || !mounted) return;
 
-    setState(() => _uploadingDocumentType = type);
-    final document = await context.read<ProfileCubit>().uploadDocument(
-      bytes: file!.bytes!,
-      filename: file.name,
-      type: type,
-    );
-    if (!mounted) return;
+    // Map UI labels to backend entityType — backend expects aadhaar/experience/skill
+    final backendType = switch (label) {
+      'Aadhaar card' => 'aadhaar',
+      'Experience certificate' => 'experience',
+      'Skill certificate' => 'skill',
+      _ => type,
+    };
 
-    setState(() {
-      _uploadingDocumentType = null;
-      if (document != null) {
-        _documents.add(label);
-        _uploadedDocumentNames[label] = file.name;
-      }
-    });
-    _message(
-      document == null
-          ? 'Document upload failed.'
-          : 'Document uploaded for verification.',
-    );
+    setState(() => _uploadingDocumentType = type);
+    try {
+      final document = await context.read<ProfileCubit>().uploadDocument(
+        bytes: file!.bytes!,
+        filename: file.name,
+        type: backendType,
+      );
+      if (!mounted) return;
+      setState(() {
+        _uploadingDocumentType = null;
+        if (document != null) {
+          _documents.add(label);
+          _uploadedDocumentNames[label] = file.name;
+        }
+      });
+      _message(document == null ? 'Document upload failed — check auth (401) or file size <10MB.' : 'Document uploaded for verification.');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploadingDocumentType = null);
+      _message('Document upload failed: $e');
+    }
   }
 
   void _saveProfile() {

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/models/models.dart';
 import '../repositories/worker_repository.dart';
 
@@ -111,14 +112,14 @@ class DashboardCubit extends Cubit<LoadState<Map<String, dynamic>>> {
   }
 }
 
-class AuthCubit extends Cubit<LoadState<bool>> {
+class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
   AuthCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
   Future<void> requestOtp(String phone) async {
     emit(const Loading());
     try {
       await _repo.requestOtp(phone);
-      emit(const Loaded(true));
+      emit(const Loaded(<String, dynamic>{'otpSent': true}));
     } catch (e) {
       emit(Failed(e.toString()));
     }
@@ -127,8 +128,17 @@ class AuthCubit extends Cubit<LoadState<bool>> {
   Future<void> verifyOtp(String phone, String otp) async {
     emit(const Loading());
     try {
-      await _repo.verifyOtp(phone: phone, otp: otp);
-      emit(const Loaded(true));
+      final data = await _repo.verifyOtp(phone: phone, otp: otp);
+      // Persist tokens for ApiClient
+      const storage = FlutterSecureStorage();
+      if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
+      if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
+      if (data['worker'] != null) {
+        // keep worker id for refresh
+        final w = Map<String, dynamic>.from(data['worker']);
+        if (w['id'] != null) await storage.write(key: 'userId', value: w['id'].toString());
+      }
+      emit(Loaded(data));
     } catch (e) {
       emit(Failed(e.toString()));
     }

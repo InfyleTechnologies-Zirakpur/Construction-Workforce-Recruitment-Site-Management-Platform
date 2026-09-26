@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/bloc/worker_blocs.dart';
+import 'company_login_screen.dart';
 import 'otp_screen.dart';
 import 'reset_password_screen.dart';
 
@@ -40,15 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: BlocListener<AuthCubit, LoadState<bool>>(
+      body: BlocListener<AuthCubit, LoadState<Map<String, dynamic>>>(
         listener: (context, state) {
-          if (state is Loaded<bool> && _awaitingOtp) {
+          if (state is Loaded<Map<String, dynamic>> && _awaitingOtp) {
             _awaitingOtp = false;
             Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => OtpScreen(phoneNumber: _phoneController.text.trim()),
             ));
           }
-          if (state is Failed<bool>) {
+          if (state is Failed<Map<String, dynamic>>) {
             _awaitingOtp = false;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
           }
@@ -129,13 +130,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: context.h(24)),
                 SizedBox(
                   width: double.infinity,
-                  child: BlocBuilder<AuthCubit, LoadState<bool>>(
+                  child: BlocBuilder<AuthCubit, LoadState<Map<String, dynamic>>>(
                     builder: (context, state) => ElevatedButton(
-                    onPressed: state is Loading<bool> ? null : _handleSendOtp,
+                    onPressed: state is Loading<Map<String, dynamic>> ? null : _handleSendOtp,
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: context.h(16)),
                     ),
-                    child: state is Loading<bool>
+                    child: state is Loading<Map<String, dynamic>>
                         ? SizedBox(
                             width: context.sp(20),
                             height: context.sp(20),
@@ -161,6 +162,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
                     ),
                     child:  Text('Forgot password? Reset with OTP', style: textTheme.labelMedium?.copyWith(color: AppColors.primary)),
+                  ),
+                ),
+                SizedBox(height: context.h(8)),
+                Center(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CompanyLoginScreen()),
+                    ),
+                    child: Text('Company login with email', style: textTheme.labelMedium?.copyWith(color: AppColors.dark)),
                   ),
                 ),
                 Center(

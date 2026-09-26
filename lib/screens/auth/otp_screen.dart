@@ -118,9 +118,9 @@ class _OtpScreenState extends State<OtpScreen> {
           style: textTheme.titleMedium?.copyWith(color: AppColors.dark),
         ),
       ),
-      body: BlocListener<AuthCubit, LoadState<bool>>(
+      body: BlocListener<AuthCubit, LoadState<Map<String, dynamic>>>(
         listener: (context, state) {
-          if (state is Loaded<bool>) {
+          if (state is Loaded<Map<String, dynamic>>) {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
                 builder: (_) => CompleteProfileScreen(phoneNumber: widget.phoneNumber),
@@ -128,7 +128,7 @@ class _OtpScreenState extends State<OtpScreen> {
               (route) => false,
             );
           }
-          if (state is Failed<bool>) {
+          if (state is Failed<Map<String, dynamic>>) {
             setState(() {
               _isVerifying = false;
               _errorText = 'Verification failed. Please try again.';

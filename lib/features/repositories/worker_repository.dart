@@ -8,8 +8,10 @@ class WorkerRepository {
   final ApiClient _client;
   Future<void> requestOtp(String phone) async =>
       _client.dio.post('/auth/request-otp', data: {'phone': phone});
-  Future<void> verifyOtp({required String phone, required String otp}) async =>
-      _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+  Future<Map<String, dynamic>> verifyOtp({required String phone, required String otp}) async {
+    final r = await _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+    return Map<String, dynamic>.from(r.data['data']);
+  }
   Future<List<Job>> fetchJobs({String? query}) async {
     final response = await _client.dio.get(
       '/jobs',
@@ -36,7 +38,12 @@ class WorkerRepository {
     return response.data['data']['profilePhotoUrl'] as String;
   }
   Future<Map<String, dynamic>> uploadDocument({required List<int> bytes, required String filename, required String type}) async {
-    final response = await _client.dio.post('/documents', data: FormData.fromMap({'file': MultipartFile.fromBytes(bytes, filename: filename), 'type': type}), options: Options(contentType: 'multipart/form-data'));
+    final form = FormData.fromMap({'file': MultipartFile.fromBytes(bytes, filename: filename), 'type': type});
+    // Debug: ensure token is sent
+    // ignore: avoid_print
+    print('uploadDocument -> /documents type=$type bytes=${bytes.length}');
+    final response = await _client.dio.post('/documents', data: form, options: Options(contentType: 'multipart/form-data'));
+    print('uploadDocument <- ${response.statusCode} ${response.data}');
     return Map<String, dynamic>.from(response.data['data']);
   }
   Future<Attendance> checkIn() async => Attendance.fromJson(
