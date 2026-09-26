@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:device_preview/device_preview.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'features/bloc/worker_blocs.dart';
@@ -8,7 +8,8 @@ import 'screens/auth/login_screen.dart';
 
 void main() {
   runApp(
-    DevicePreview(enabled: false, builder: (context) => const BuildHireApp()),
+    // DevicePreview(enabled: false, builder: (context) => const BuildHireApp()),
+     const BuildHireApp(),
   );
 }
 
@@ -32,9 +33,9 @@ class BuildHireApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // Required for device_preview to work correctly
-      useInheritedMediaQuery: true,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
+      // useInheritedMediaQuery: true,
+      // locale: DevicePreview.locale(context),
+      // builder: DevicePreview.appBuilder,
 
       theme: AppTheme.build(context),
       home: const LoginScreen(),

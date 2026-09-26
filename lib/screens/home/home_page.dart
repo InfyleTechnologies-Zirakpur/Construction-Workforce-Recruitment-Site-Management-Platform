@@ -629,15 +629,26 @@ class _JobDetailsSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            Text("Job Description", style: textTheme.titleMedium),
+            Text('Job Description', style: textTheme.titleMedium),
             const SizedBox(height: 10),
-            // TODO: dummy API currently has no description/requirements field —
-            // add one to Job + the /jobs dummy response, then swap this in.
-            const Text(
-              "We are looking for skilled workers for our construction site. "
-              "Candidates should have experience in their trade and be able "
-              "to work independently while following all safety regulations.",
-            ),
+            Text(job.description),
+            if (job.requirements.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Text('Requirements', style: textTheme.titleMedium),
+              const SizedBox(height: 10),
+              ...job.requirements.map(
+                (requirement) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('\u2022  '),
+                      Expanded(child: Text(requirement)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             if (job.skills.isNotEmpty)
               Wrap(

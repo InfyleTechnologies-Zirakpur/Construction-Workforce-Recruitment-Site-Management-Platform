@@ -6,6 +6,8 @@ class Job {
     required this.location,
     required this.dailyPay,
     required this.skills,
+    this.description = '',
+    this.requirements = const [],
     this.saved = false,
     this.applied = false,
     this.projectType = 'Full-time',
@@ -14,6 +16,8 @@ class Job {
   final String id, title, company, location;
   final int dailyPay;
   final List<String> skills;
+  final String description;
+  final List<String> requirements;
   final bool saved, applied;
   // e.g. 'Full-time', 'Contract', 'Daily Wage'
   final String projectType;
@@ -26,6 +30,8 @@ class Job {
     location: j['location'],
     dailyPay: j['dailyPay'],
     skills: List<String>.from(j['skills'] ?? []),
+    description: j['description'] ?? '',
+    requirements: List<String>.from(j['requirements'] ?? []),
     saved: j['saved'] ?? false,
     applied: j['applied'] ?? false,
     projectType: j['projectType'] ?? 'Full-time',
