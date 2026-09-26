@@ -6,3 +6,4 @@ class ApiConfig {
   static const bool useDummyApi = false;
   static const Duration connectTimeout = Duration(seconds: 30);
 }
+

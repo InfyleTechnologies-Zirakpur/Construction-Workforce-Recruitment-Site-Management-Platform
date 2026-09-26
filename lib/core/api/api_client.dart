@@ -4,6 +4,8 @@ import 'api_config.dart';
 import 'dummy_api_interceptor.dart';
 
 class ApiClient {
+  static String? accessToken;
+
   ApiClient._()
     : dio = Dio(
         BaseOptions(
