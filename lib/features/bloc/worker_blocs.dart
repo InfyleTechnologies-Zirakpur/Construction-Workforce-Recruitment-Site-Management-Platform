@@ -37,14 +37,24 @@ class JobsCubit extends Cubit<LoadState<List<Job>>> {
     }
   }
 
-  Future<void> apply(String id) async {
-    await _repo.apply(id);
+  Future<void> apply(String id, {Map<String, dynamic>? details}) async {
+    await _repo.apply(id, details: details);
     await load();
   }
 
   Future<void> save(String id) async {
     await _repo.save(id);
     await load();
+  }
+
+  Future<void> withdraw(String applicationId, {String? jobId}) async {
+    await _repo.withdrawApplication(applicationId, jobId: jobId);
+    await load();
+  }
+
+  Future<void> report({required String jobId, required String reason}) async {
+    await _repo.reportJob(jobId: jobId, reason: reason);
+    // don't necessarily need to reload for a report, but we could.
   }
 }
 
@@ -130,18 +140,24 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
     try {
       final data = await _repo.verifyOtp(phone: phone, otp: otp);
       // Persist tokens for ApiClient
-      const storage = FlutterSecureStorage();
+      const storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
       if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
-      if (data['worker'] != null) {
-        // keep worker id for refresh
-        final w = Map<String, dynamic>.from(data['worker']);
-        if (w['id'] != null) await storage.write(key: 'userId', value: w['id'].toString());
-      }
+      await storage.write(key: 'role', value: 'job_seeker');
       emit(Loaded(data));
     } catch (e) {
       emit(Failed(e.toString()));
     }
+  }
+
+  Future<void> logout() async {
+    const storage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+    await storage.deleteAll();
+    emit(const Idle());
   }
 }
 

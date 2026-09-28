@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -26,12 +27,29 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
   }
 
   List<Job> _filter(List<Job> jobs) {
+    List<Job> result;
     switch (_selectedFilter) {
       case MyJobsFilter.saved:
-        return jobs.where((job) => job.saved).toList();
+        result = jobs.where((job) => job.saved).toList();
+        // ignore: avoid_print
+        print('💾 [MY JOBS - SAVED TAB] Total jobs in memory: ${jobs.length} | Saved count: ${result.length}');
+        for (var j in result) {
+          // ignore: avoid_print
+          print('   -> Saved Job: "${j.title}" at "${j.company}" (ID: ${j.id})');
+        }
+        return result;
       case MyJobsFilter.applied:
-        return jobs.where((job) => job.applied).toList();
+        result = jobs.where((job) => job.applied).toList();
+        // ignore: avoid_print
+        print('📝 [MY JOBS - APPLIED TAB] Total jobs in memory: ${jobs.length} | Applied count: ${result.length}');
+        for (var j in result) {
+          // ignore: avoid_print
+          print('   -> Applied Job: "${j.title}" at "${j.company}" (ID: ${j.id}, AppID: ${j.applicationId})');
+        }
+        return result;
       case MyJobsFilter.archived:
+        // ignore: avoid_print
+        print('📦 [MY JOBS - ARCHIVED TAB] Archived count: 0 (No archived jobs API connected)');
         return const [];
     }
   }
@@ -239,7 +257,13 @@ class _JobStatusCard extends StatelessWidget {
             const SizedBox(height: 12),
             const Divider(height: 1),
             const SizedBox(height: 10),
-            Row(children: [const Icon(Icons.schedule, size: 16, color: Colors.black45), const SizedBox(width: 5), Text('Status: Pending employer review', style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600))]),
+            Row(
+              children: [
+                const Icon(Icons.schedule, size: 16, color: Colors.black45),
+                const SizedBox(width: 5),
+                Text('Status: Pending employer review', style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
           ],
         ],
       ),

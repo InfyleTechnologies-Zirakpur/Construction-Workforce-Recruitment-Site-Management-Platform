@@ -117,7 +117,7 @@ Recommended status codes:
 | `POST` | `/auth/reset-password` | Public | Used now |
 | `GET` | `/jobs` | Protected | Used now |
 | `POST` | `/jobs/{jobId}/save` | Protected | Used now; toggles saved state |
-| `POST` | `/jobs/{jobId}/applications` | Protected | Used now |
+| `POST` | `/applications/jobs/{jobId}/apply` | Protected | Used now |
 | `GET` | `/profile` | Protected | Used now |
 | `PUT` | `/profile` | Protected | Used now |
 | `POST` | `/profile/photo` | Protected | Used now; multipart |
@@ -288,7 +288,7 @@ No request body. The current Flutter UI uses this as a toggle. Return the update
 ### Apply for a job
 
 ```http
-POST /jobs/{jobId}/applications
+POST /applications/jobs/{jobId}/apply
 Authorization: Bearer <accessToken>
 Content-Type: application/json
 ```
@@ -641,7 +641,7 @@ Return one complete `Job` object.
 ### Saved jobs
 
 ```http
-GET /saved-jobs
+GET /jobs/saved/list
 Authorization: Bearer <accessToken>
 ```
 

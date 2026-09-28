@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/bloc/worker_blocs.dart';
+import '../home/home_page.dart';
 import '../profile/complete_profile_screen.dart';
 
 /// 6-digit OTP entry screen. Each box auto-advances focus; verifying
@@ -121,12 +122,24 @@ class _OtpScreenState extends State<OtpScreen> {
       body: BlocListener<AuthCubit, LoadState<Map<String, dynamic>>>(
         listener: (context, state) {
           if (state is Loaded<Map<String, dynamic>>) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (_) => CompleteProfileScreen(phoneNumber: widget.phoneNumber),
-              ),
-              (route) => false,
-            );
+            final data = state.data;
+            final worker = data['worker'] is Map ? Map<String, dynamic>.from(data['worker']) : null;
+            final name = worker?['name']?.toString().trim() ?? '';
+            final bool isProfileComplete = name.isNotEmpty && name.toLowerCase() != 'null';
+
+            if (isProfileComplete) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomePage()),
+                (route) => false,
+              );
+            } else {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (_) => CompleteProfileScreen(phoneNumber: widget.phoneNumber),
+                ),
+                (route) => false,
+              );
+            }
           }
           if (state is Failed<Map<String, dynamic>>) {
             setState(() {

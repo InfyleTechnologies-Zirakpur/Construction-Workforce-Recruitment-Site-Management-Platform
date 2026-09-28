@@ -8,6 +8,7 @@ import '../../core/models/models.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/bloc/worker_blocs.dart';
+import '../auth/login_screen.dart';
 
 class WorkerProfileScreen extends StatefulWidget {
   const WorkerProfileScreen({super.key});
@@ -240,6 +241,16 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                     icon: const Icon(Icons.edit_outlined),
                     label: const Text('Edit profile details'),
                   ),
+                  SizedBox(height: context.h(12)),
+                  OutlinedButton.icon(
+                    onPressed: () => _confirmLogout(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                    ),
+                    icon: const Icon(Icons.logout, color: AppColors.error),
+                    label: const Text('Log out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
             ),
@@ -247,6 +258,44 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
         );
       },
     );
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Log out', style: TextStyle(color: AppColors.dark, fontWeight: FontWeight.bold)),
+        content: const Text('Are you sure you want to log out? ', style: TextStyle(color: AppColors.dark)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Log out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      // Clear image cache
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+
+      // Clear secure storage and state
+      await context.read<AuthCubit>().logout();
+
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    }
   }
 
   Widget _profileHeader(

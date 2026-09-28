@@ -10,6 +10,7 @@ class Job {
     this.requirements = const [],
     this.saved = false,
     this.applied = false,
+    this.applicationId,
     this.projectType = 'Full-time',
     this.experienceLevel = 'Any',
   });
@@ -19,24 +20,37 @@ class Job {
   final String description;
   final List<String> requirements;
   final bool saved, applied;
+  final String? applicationId;
   // e.g. 'Full-time', 'Contract', 'Daily Wage'
   final String projectType;
   // e.g. 'Fresher', 'Experienced', 'Any'
   final String experienceLevel;
-  factory Job.fromJson(Map<String, dynamic> j) => Job(
-    id: j['id'],
-    title: j['title'],
-    company: j['company'],
-    location: j['location'],
-    dailyPay: j['dailyPay'],
-    skills: List<String>.from(j['skills'] ?? []),
-    description: j['description'] ?? '',
-    requirements: List<String>.from(j['requirements'] ?? []),
-    saved: j['saved'] ?? false,
-    applied: j['applied'] ?? false,
-    projectType: j['projectType'] ?? 'Full-time',
-    experienceLevel: j['experienceLevel'] ?? 'Any',
-  );
+  factory Job.fromJson(Map<String, dynamic> j) {
+    int parsePay(dynamic v) {
+      if (v == null) return 0;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? double.tryParse(v)?.toInt() ?? 0;
+      return 0;
+    }
+
+    final pay = parsePay(j['dailyPay']) != 0 ? parsePay(j['dailyPay']) : parsePay(j['compensation']);
+
+    return Job(
+      id: j['id']?.toString() ?? '',
+      title: j['title']?.toString() ?? 'Job Title',
+      company: j['company'] is Map ? (j['company']['name']?.toString() ?? 'Company') : (j['company']?.toString() ?? 'Company'),
+      location: j['location']?.toString() ?? 'Location',
+      dailyPay: pay,
+      skills: List<String>.from((j['skills'] as List?)?.map((e) => e.toString()) ?? []),
+      description: j['description']?.toString() ?? '',
+      requirements: List<String>.from((j['requirements'] as List?)?.map((e) => e.toString()) ?? []),
+      saved: j['saved'] == true,
+      applied: j['applied'] == true,
+      applicationId: j['applicationId']?.toString(),
+      projectType: j['projectType']?.toString() ?? 'Full-time',
+      experienceLevel: j['experienceLevel']?.toString() ?? 'Any',
+    );
+  }
 }
 
 class Attendance {

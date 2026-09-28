@@ -37,6 +37,7 @@ class _HomePageState extends State<HomePage> {
     context.read<JobsCubit>().load();
     context.read<NotificationsCubit>().load();
     context.read<ProfileCubit>().load();
+    context.read<DashboardCubit>().load();
   }
 
   final List<_Trade> _trades = const [
@@ -215,6 +216,9 @@ class _HomePageState extends State<HomePage> {
                       ? allJobs
                       : allJobs.where((j) => _matchesTrade(j, _selectedTrade!)).toList();
 
+                  // ignore: avoid_print
+                  print('🏠 [HOME SCREEN] Total Loaded: ${allJobs.length} | Trade Filter: "${_selectedTrade?.name ?? 'All'}" | Displayed: ${jobs.length}');
+
                   if (jobs.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -388,22 +392,37 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black12),
-      ),
-      // TODO: replace with real platform-wide stats once that endpoint exists.
-      child: Row(
-        children: [
-          stat('12,400+', 'Open Jobs'),
-          stat('3,800+', 'Hiring Sites'),
-          stat('64,000+', 'Registered Workers'),
-        ],
-      ),
+    return BlocBuilder<JobsCubit, LoadState<List<Job>>>(
+      builder: (context, jobsState) {
+        final jobs = jobsState is Loaded<List<Job>> ? jobsState.data : <Job>[];
+        final openJobs = jobs.length;
+        final hiringCompanies = jobs.map((j) => j.company).toSet().length;
+
+        return BlocBuilder<DashboardCubit, LoadState<Map<String, dynamic>>>(
+          builder: (context, dashState) {
+            final dashData = dashState is Loaded<Map<String, dynamic>> ? dashState.data : <String, dynamic>{};
+            final appliedCount = dashData['appliedJobs'] ?? jobs.where((j) => j.applied).length;
+            final sitesCount = dashData['activeProjects'] ?? hiringCompanies;
+
+            return Container(
+              margin: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Row(
+                children: [
+                  stat('$openJobs', 'Open Jobs'),
+                  stat('$sitesCount', 'Active Sites'),
+                  stat('$appliedCount', 'Applied Jobs'),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -670,9 +689,60 @@ class _JobDetailsSheet extends StatelessWidget {
                 child: Text(job.applied ? 'Already Applied' : 'Apply Now'),
               ),
             ),
+            const SizedBox(height: 12),
+            Center(
+              child: TextButton.icon(
+                onPressed: () => _reportJob(context),
+                icon: const Icon(Icons.flag_outlined, size: 16),
+                label: const Text('Report this job'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black54,
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _reportJob(BuildContext context) async {
+    final reasonController = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report Job'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Why are you reporting this job?'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Fraudulent listing, incorrect pay...',
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, reasonController.text.trim()),
+            child: const Text('Submit Report'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && context.mounted) {
+      await context.read<JobsCubit>().report(jobId: job.id, reason: result);
+      if (context.mounted) {
+        Navigator.pop(context); // close sheet
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Job reported successfully.')));
+      }
+    }
   }
 }

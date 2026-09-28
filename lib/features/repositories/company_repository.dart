@@ -1,5 +1,4 @@
 import '../../core/api/api_client.dart';
-import 'package:dio/dio.dart';
 
 class CompanyRepository {
   CompanyRepository({ApiClient? client}) : _client = client ?? ApiClient.instance;
@@ -15,7 +14,7 @@ class CompanyRepository {
       'fullName': fullName,
       'email': email,
       'password': password,
-      if (phone != null) 'phone': phone,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
       'role': 'company',
     });
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
@@ -26,21 +25,158 @@ class CompanyRepository {
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
+  // --- COMPANY PROFILE APIS ---
+
+  /// 1. POST /api/v1/companies - Register a new company profile
   Future<Map<String, dynamic>> createCompanyProfile(Map<String, dynamic> body) async {
     final r = await _client.dio.post('/companies', data: body);
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
-  Future<Map<String, dynamic>> createJob(Map<String, dynamic> body) async {
-    final r = await _client.dio.post('/jobs', data: body);
-    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
-  }
-
-  Future<List<Map<String, dynamic>>> myApplications() async {
-    final r = await _client.dio.get('/applications');
+  /// 2. GET /api/v1/companies/my-profiles - Retrieve company profiles owned by current logged-in company user
+  Future<List<Map<String, dynamic>>> getMyProfiles() async {
+    final r = await _client.dio.get('/companies/my-profiles');
     final d = r.data['data'];
     if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
     if (d is List) return List<Map<String, dynamic>>.from(d);
     return [];
   }
+
+  /// 3. GET /api/v1/companies - List all company profiles (Admin / Directory)
+  Future<Map<String, dynamic>> listCompanies({int page = 1, int limit = 10, String? status}) async {
+    final r = await _client.dio.get('/companies', queryParameters: {
+      'page': page,
+      'limit': limit,
+      if (status != null && status.isNotEmpty) 'status': status,
+    });
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 4. GET /api/v1/companies/:id - View single company details by UUID
+  Future<Map<String, dynamic>> getCompanyById(String id) async {
+    final r = await _client.dio.get('/companies/$id');
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 5. PATCH /api/v1/companies/:id - Update company profile details
+  Future<Map<String, dynamic>> updateCompanyProfile(String id, Map<String, dynamic> body) async {
+    final r = await _client.dio.patch('/companies/$id', data: body);
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 6. PATCH /api/v1/companies/:id/verify - Admin verification / rejection of company profile
+  Future<Map<String, dynamic>> verifyCompany(String id, {required String verificationStatus, String? verificationRemarks}) async {
+    final r = await _client.dio.patch('/companies/$id/verify', data: {
+      'verificationStatus': verificationStatus,
+      if (verificationRemarks != null) 'verificationRemarks': verificationRemarks,
+    });
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  // --- JOB MANAGEMENT APIS FOR COMPANY ---
+
+  /// 1. POST /jobs - CREATE JOB POSTING
+  Future<Map<String, dynamic>> createJob(Map<String, dynamic> body) async {
+    final r = await _client.dio.post('/jobs', data: body);
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 2. GET /jobs - LIST COMPANY JOBS
+  Future<List<Map<String, dynamic>>> getCompanyJobs({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? location,
+    num? minDailyPay,
+    String? skill,
+    String? projectType,
+    String? experienceLevel,
+  }) async {
+    final r = await _client.dio.get('/jobs', queryParameters: {
+      'page': page,
+      'limit': limit,
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (location != null && location.isNotEmpty) 'location': location,
+      if (minDailyPay != null) 'minDailyPay': minDailyPay,
+      if (skill != null && skill.isNotEmpty) 'skill': skill,
+      if (projectType != null && projectType.isNotEmpty) 'projectType': projectType,
+      if (experienceLevel != null && experienceLevel.isNotEmpty) 'experienceLevel': experienceLevel,
+    });
+    final d = r.data['data'];
+    if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+    if (d is List) return List<Map<String, dynamic>>.from(d);
+    if (r.data['items'] is List) return List<Map<String, dynamic>>.from(r.data['items']);
+    return [];
+  }
+
+  /// 3. GET /jobs/:id - GET JOB DETAILS BY ID
+  Future<Map<String, dynamic>> getJobById(String id) async {
+    final r = await _client.dio.get('/jobs/$id');
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 4. PATCH /jobs/:id - UPDATE JOB POSTING
+  Future<Map<String, dynamic>> updateJob(String id, Map<String, dynamic> body) async {
+    final r = await _client.dio.patch('/jobs/$id', data: body);
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 5. POST /jobs/:id/close - CLOSE JOB POSTING
+  Future<Map<String, dynamic>> closeJob(String id) async {
+    final r = await _client.dio.post('/jobs/$id/close');
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  // --- APPLICATION MANAGEMENT APIS FOR COMPANY ---
+
+  /// 10. GET /applications - LIST JOB APPLICATIONS SUBMITTED TO COMPANY JOBS
+  Future<List<Map<String, dynamic>>> getCompanyApplications({String? status, int page = 1, int limit = 10}) async {
+    final r = await _client.dio.get('/applications', queryParameters: {
+      'page': page,
+      'limit': limit,
+      if (status != null && status.isNotEmpty) 'status': status,
+    });
+    final d = r.data['data'];
+    if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+    if (d is List) return List<Map<String, dynamic>>.from(d);
+    return [];
+  }
+
+  /// 11. GET /applications/:id - GET APPLICATION DETAILS BY ID
+  Future<Map<String, dynamic>> getApplicationById(String id) async {
+    final r = await _client.dio.get('/applications/$id');
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 12. PATCH /applications/:id/status - UPDATE APPLICATION STATUS
+  Future<Map<String, dynamic>> updateApplicationStatus(String id, {required String status, String? reviewRemarks}) async {
+    final r = await _client.dio.patch('/applications/$id/status', data: {
+      'status': status,
+      if (reviewRemarks != null && reviewRemarks.isNotEmpty) 'reviewRemarks': reviewRemarks,
+    });
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// 13. POST /applications/bulk-shortlist - BULK SHORTLIST APPLICATIONS
+  Future<Map<String, dynamic>> bulkShortlistApplications(List<String> applicationIds) async {
+    final r = await _client.dio.post('/applications/bulk-shortlist', data: {
+      'applicationIds': applicationIds,
+    });
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  // --- ANALYTICS AND REPORTS API FOR COMPANY ---
+
+  /// 16. GET /reports/operations/jobs-applications - JOB & APPLICATION ANALYTICS
+  Future<Map<String, dynamic>> getReports() async {
+    try {
+      final r = await _client.dio.get('/reports/operations/jobs-applications');
+      return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    } catch (_) {
+      return {};
+    }
+  }
+
+  // Backward compatibility alias
+  Future<List<Map<String, dynamic>>> myApplications() => getCompanyApplications();
 }

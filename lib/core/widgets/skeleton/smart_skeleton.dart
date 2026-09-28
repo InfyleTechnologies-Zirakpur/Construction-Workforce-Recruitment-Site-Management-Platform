@@ -292,7 +292,10 @@ class SmartSkeleton extends StatelessWidget {
   // LIST — bigger composite cards stacked vertically.
   // ---------------------------------------------------------------------
   Widget _buildList() {
-    return Column(children: List.generate(itemCount, (i) => _listCard()));
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(children: List.generate(itemCount, (i) => _listCard())),
+    );
   }
 
   Widget _listCard() {

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -65,27 +66,84 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      // See NOTE in the class doc — details below aren't sent to the
-      // backend yet, only the apply-flag flip is.
-      // ignore: unused_local_variable
       final details = {
         'experienceLevel': _hasExperience ? 'Experienced' : 'Fresher',
         if (_hasExperience) 'previousCompany': _companyController.text.trim(),
         if (_hasExperience) 'previousRole': _roleController.text.trim(),
-        if (_hasExperience) 'yearsOfExperience': _yearsController.text.trim(),
+        if (_hasExperience) 'yearsOfExperience': int.tryParse(_yearsController.text.trim()) ?? 0,
         if (!_hasExperience) 'trainingInfo': _trainingController.text.trim(),
-        'summary': _summaryController.text.trim(),
+        'coverNote': _summaryController.text.trim(),
       };
 
-      await context.read<JobsCubit>().apply(widget.job.id);
+      await context.read<JobsCubit>().apply(widget.job.id, details: details);
 
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Application submitted to ${widget.job.company}')),
       );
+    } catch (e) {
+      if (!mounted) return;
+      String msg = 'Failed to submit application.';
+      if (e is DioException) {
+        msg = e.response?.data?['message']?.toString() ?? e.message ?? msg;
+      } else {
+        msg = e.toString();
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _reportJob(BuildContext context, String jobId) async {
+    final reasonController = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report Job'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Why are you reporting this job?'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Fraudulent listing, incorrect pay...',
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, reasonController.text.trim()),
+            child: const Text('Submit Report'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && context.mounted) {
+      try {
+        await context.read<JobsCubit>().report(jobId: jobId, reason: result);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Job reported successfully.')));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          String msg = 'Failed to report job.';
+          if (e is DioException) msg = e.response?.data?['message']?.toString() ?? e.message ?? msg;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
+        }
+      }
     }
   }
 
@@ -95,7 +153,30 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
     final job = widget.job;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Apply for job')),
+      appBar: AppBar(
+        title: const Text('Apply for job'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (val) {
+              if (val == 'report') {
+                _reportJob(context, job.id);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'report',
+                child: Row(
+                  children: [
+                    Icon(Icons.flag_outlined, size: 20),
+                    SizedBox(width: 8),
+                    Text('Report job'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,

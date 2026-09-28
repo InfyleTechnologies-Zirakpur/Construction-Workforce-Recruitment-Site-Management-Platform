@@ -15,8 +15,8 @@ Errors use `success: false`, `message`, and an optional `errors` object.
 | Reset password | `POST /auth/reset-password` | `{"phone":"...","otp":"...","newPassword":"..."}` | `{"changed":true}` |
 | Jobs (filters) | `GET /jobs?search=&location=&minDailyPay=&skill=&projectType=` | none | `{"items":[Job],"total":24}` |
 | Job details | `GET /jobs/{jobId}` | none | `Job` |
-| Apply job | `POST /jobs/{jobId}/applications` | `{"coverNote":"..."}` | `{"id":"app_1","jobId":"job_1","status":"pending"}` |
-| Saved jobs | `GET /saved-jobs` | none | `{"items":[Job]}` |
+| Apply job | `POST /applications/jobs/{jobId}/apply` | `{"coverNote":"..."}` | `{"id":"app_1","jobId":"job_1","status":"pending"}` |
+| Saved jobs | `GET /jobs/saved/list` | none | `{"items":[Job]}` |
 | Save / remove job | `POST /jobs/{jobId}/save` | none | updated `Job` |
 | Applications | `GET /applications?status=pending` | none | `{"items":[{"id":"app_1","status":"pending","job":Job}]}` |
 | Profile | `GET /profile` | none | `WorkerProfile` |
