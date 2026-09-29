@@ -171,6 +171,26 @@ class MessagesCubit extends Cubit<LoadState<List<Conversation>>> {
 class NotificationsCubit extends Cubit<LoadState<List<WorkerNotification>>> {
   NotificationsCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
-  Future<void> load() async { emit(const Loading()); try { emit(Loaded(await _repo.notifications())); } catch (e) { emit(Failed(e.toString())); } }
-  Future<void> markRead(String id) async { await _repo.markNotificationRead(id); await load(); }
+  Future<void> load() async {
+    emit(const Loading());
+    try {
+      emit(Loaded(await _repo.notifications()));
+    } catch (e) {
+      emit(Failed(e.toString()));
+    }
+  }
+
+  Future<void> markRead(String id) async {
+    try {
+      await _repo.markNotificationRead(id);
+    } catch (_) {}
+    await load();
+  }
+
+  Future<void> markAllRead() async {
+    try {
+      await _repo.markAllNotificationsRead();
+    } catch (_) {}
+    await load();
+  }
 }

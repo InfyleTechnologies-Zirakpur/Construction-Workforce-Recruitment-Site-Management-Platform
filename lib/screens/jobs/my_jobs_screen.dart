@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -11,18 +10,20 @@ import '../../features/bloc/worker_blocs.dart';
 enum MyJobsFilter { saved, applied, archived }
 
 class MyJobsScreen extends StatefulWidget {
-  const MyJobsScreen({super.key});
+  final MyJobsFilter initialFilter;
+  const MyJobsScreen({super.key, this.initialFilter = MyJobsFilter.saved});
 
   @override
   State<MyJobsScreen> createState() => _MyJobsScreenState();
 }
 
 class _MyJobsScreenState extends State<MyJobsScreen> {
-  MyJobsFilter _selectedFilter = MyJobsFilter.saved;
+  late MyJobsFilter _selectedFilter;
 
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     context.read<JobsCubit>().load();
   }
 

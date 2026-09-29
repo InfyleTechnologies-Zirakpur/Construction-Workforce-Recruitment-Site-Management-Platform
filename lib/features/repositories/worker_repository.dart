@@ -134,10 +134,17 @@ class WorkerRepository {
     return resultList;
   }
 
-  Future<void> apply(String id, {Map<String, dynamic>? details}) async => _client.dio.post(
-    '/applications/jobs/$id/apply',
-    data: details ?? {'coverNote': 'I am interested in this job.'},
-  );
+  Future<void> apply(String id, {Map<String, dynamic>? details}) async {
+    final note = details?['coverNote']?.toString().trim();
+    final body = <String, dynamic>{
+      'coverNote': (note != null && note.isNotEmpty) ? note : 'I am interested in this job.',
+    };
+
+    await _client.dio.post(
+      '/applications/jobs/$id/apply',
+      data: body,
+    );
+  }
   Future<void> save(String id) async => _client.dio.post('/jobs/$id/save');
   Future<List<Job>> fetchSavedJobs() async {
     try {
@@ -217,9 +224,86 @@ class WorkerRepository {
     return (response.data['data']['items'] as List).map((item) => Conversation.fromJson(Map<String, dynamic>.from(item))).toList();
   }
   Future<void> sendMessage(String conversationId, String text) async => _client.dio.post('/conversations/$conversationId/messages', data: {'text': text});
-  Future<List<WorkerNotification>> notifications() async {
-    final response = await _client.dio.get('/notifications');
-    return (response.data['data']['items'] as List).map((item) => WorkerNotification.fromJson(Map<String, dynamic>.from(item))).toList();
+  Future<List<WorkerNotification>> notifications({int page = 1, int limit = 20}) async {
+    try {
+      final response = await _client.dio.get('/notifications', queryParameters: {
+        'page': page,
+        'limit': limit,
+      });
+      final payload = response.data;
+      dynamic itemsRaw;
+      if (payload['data'] is Map) {
+        if (payload['data']['data'] is Map && payload['data']['data']['items'] is List) {
+          itemsRaw = payload['data']['data']['items'];
+        } else if (payload['data']['items'] is List) {
+          itemsRaw = payload['data']['items'];
+        }
+      } else if (payload['items'] is List) {
+        itemsRaw = payload['items'];
+      } else if (payload['data'] is List) {
+        itemsRaw = payload['data'];
+      }
+      if (itemsRaw is List) {
+        return itemsRaw.map((item) => WorkerNotification.fromJson(Map<String, dynamic>.from(item))).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
   }
-  Future<void> markNotificationRead(String id) async => _client.dio.patch('/notifications/$id', data: {'isRead': true});
+
+  Future<int> unreadNotificationsCount() async {
+    try {
+      final response = await _client.dio.get('/notifications', queryParameters: {'page': 1, 'limit': 1});
+      final payload = response.data;
+      if (payload['data'] is Map && payload['data']['unreadCount'] != null) {
+        return (payload['data']['unreadCount'] as num).toInt();
+      }
+      if (payload['data'] is Map && payload['data']['data'] is Map && payload['data']['data']['unreadCount'] != null) {
+        return (payload['data']['data']['unreadCount'] as num).toInt();
+      }
+      return 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<void> markNotificationRead(String id) async =>
+      _client.dio.patch('/notifications/$id/read');
+
+  Future<void> markAllNotificationsRead() async =>
+      _client.dio.patch('/notifications/read-all');
+
+  Future<void> registerDeviceToken(String token, {String platform = 'android'}) async {
+    try {
+      final response = await _client.dio.post('/notifications/register-device', data: {
+        'token': token,
+        'platform': platform,
+      });
+      // ignore: avoid_print
+      print('🔔 [WorkerRepository] registerDeviceToken response: ${response.statusCode}');
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] registerDeviceToken failed: $e');
+    }
+  }
+
+  Future<void> unregisterDeviceToken(String token) async {
+    try {
+      await _client.dio.delete('/notifications/unregister-device', data: {
+        'token': token,
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] unregisterDeviceToken failed: $e');
+    }
+  }
+
+  Future<void> logout({String? fcmToken}) async {
+    try {
+      await _client.dio.post('/auth/logout', data: {
+        if (fcmToken != null && fcmToken.isNotEmpty) 'fcmToken': fcmToken,
+      });
+    } catch (_) {}
+  }
 }

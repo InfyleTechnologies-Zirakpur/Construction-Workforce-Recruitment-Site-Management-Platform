@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/repositories/company_repository.dart';
 import '../auth/login_screen.dart';
+import '../notifications/notifications_screen.dart';
 import 'company_profile_screen.dart';
 import 'company_profile_form_screen.dart';
 
@@ -83,6 +85,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     );
 
     if (confirm == true && mounted) {
+      await NotificationService.instance.handleLogout();
       const storage = FlutterSecureStorage(
         aOptions: AndroidOptions(encryptedSharedPreferences: true),
       );
@@ -377,8 +380,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     final workforce = TextEditingController(text: '5');
     final skills = TextEditingController();
     final description = TextEditingController();
-    String projectType = 'Full-time';
-    String experienceLevel = 'Experienced';
     bool isPosting = false;
 
     showModalBottomSheet(
@@ -458,8 +459,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                                   'workforceRequired': int.tryParse(workforce.text.trim()) ?? 1,
                                   'skills': skills.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
                                   'description': description.text.trim(),
-                                  'projectType': projectType,
-                                  'experienceLevel': experienceLevel,
                                 });
                                 if (mounted) {
                                   Navigator.pop(sheetCtx);
@@ -506,10 +505,25 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
           children: [
             const Icon(Icons.business, color: AppColors.primary),
             const SizedBox(width: 8),
-            Text('BuildHire Employer', style: textTheme.titleLarge?.copyWith(color: Colors.white)),
+            Expanded(
+              child: Text(
+                'BuildHire Employer',
+                style: textTheme.titleLarge?.copyWith(color: Colors.white),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+            tooltip: 'Notifications',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.account_circle, color: Colors.white, size: 28),
             tooltip: 'Company Profile',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/utils/responsive.dart';
 import '../company/company_home_screen.dart';
 import '../../features/repositories/company_repository.dart';
@@ -32,6 +33,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
       if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       await storage.write(key: 'role', value: 'company');
+      NotificationService.instance.syncDeviceToken();
 
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const CompanyHomeScreen()), (_) => false);

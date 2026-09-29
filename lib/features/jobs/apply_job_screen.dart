@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
+import '../../core/services/notification_service.dart';
 import '../../features/bloc/worker_blocs.dart';
 
 /// Full application flow for a single job: employer requirements up top,
@@ -66,18 +67,48 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final details = {
-        'experienceLevel': _hasExperience ? 'Experienced' : 'Fresher',
-        if (_hasExperience) 'previousCompany': _companyController.text.trim(),
-        if (_hasExperience) 'previousRole': _roleController.text.trim(),
-        if (_hasExperience) 'yearsOfExperience': int.tryParse(_yearsController.text.trim()) ?? 0,
-        if (!_hasExperience) 'trainingInfo': _trainingController.text.trim(),
-        'coverNote': _summaryController.text.trim(),
+      final profileState = context.read<ProfileCubit>().state;
+      String? phone;
+      if (profileState is Loaded<WorkerProfile>) {
+        phone = profileState.data.phone;
+      }
+      final years = int.tryParse(_yearsController.text.trim());
+      final company = _companyController.text.trim();
+      final role = _roleController.text.trim();
+      final training = _trainingController.text.trim();
+      final baseNote = _summaryController.text.trim();
+
+      final buffer = StringBuffer(baseNote);
+      if (_hasExperience && (years != null || company.isNotEmpty || role.isNotEmpty)) {
+        buffer.write('\n\n[Experience Details]');
+        if (years != null && years > 0) buffer.write('\n• Years of Experience: $years');
+        if (role.isNotEmpty) buffer.write('\n• Previous Role: $role');
+        if (company.isNotEmpty) buffer.write('\n• Previous Company: $company');
+      } else if (!_hasExperience && training.isNotEmpty) {
+        buffer.write('\n\n[Training/Background]\n• $training');
+      }
+      if (phone != null && phone.isNotEmpty) {
+        buffer.write('\n\n• Contact Phone: $phone');
+      }
+
+      final details = <String, dynamic>{
+        'coverNote': buffer.toString().trim(),
       };
 
       await context.read<JobsCubit>().apply(widget.job.id, details: details);
 
+      // Trigger immediate heads-up popup notification banner on device
+      NotificationService.instance.showLocalNotification(
+        title: 'Application Submitted! 🎉',
+        body: 'Your application for "${widget.job.title}" was submitted to ${widget.job.company}.',
+        payload: '{"type": "application", "jobId": "${widget.job.id}"}',
+      );
+
       if (!mounted) return;
+      try {
+        context.read<NotificationsCubit>().load();
+      } catch (_) {}
+
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Application submitted to ${widget.job.company}')),

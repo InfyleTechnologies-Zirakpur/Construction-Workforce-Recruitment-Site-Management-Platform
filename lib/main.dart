@@ -1,6 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/bloc/worker_blocs.dart';
 import 'features/repositories/worker_repository.dart';
@@ -10,7 +13,18 @@ import 'screens/home/home_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Register the background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Initialize FCM: permissions, token, listeners
+  await NotificationService.instance.initialize();
+
   runApp(
     const BuildHireApp(),
   );
@@ -48,6 +62,9 @@ class _BuildHireAppState extends State<BuildHireApp> {
           _isCompany = role == 'company';
           _isLoading = false;
         });
+        if (_isLoggedIn) {
+          NotificationService.instance.syncDeviceToken();
+        }
       }
     } catch (_) {
       if (mounted) {

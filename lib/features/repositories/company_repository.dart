@@ -77,7 +77,10 @@ class CompanyRepository {
 
   /// 1. POST /jobs - CREATE JOB POSTING
   Future<Map<String, dynamic>> createJob(Map<String, dynamic> body) async {
-    final r = await _client.dio.post('/jobs', data: body);
+    final payload = Map<String, dynamic>.from(body)
+      ..remove('projectType')
+      ..remove('experienceLevel');
+    final r = await _client.dio.post('/jobs', data: payload);
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
@@ -117,7 +120,10 @@ class CompanyRepository {
 
   /// 4. PATCH /jobs/:id - UPDATE JOB POSTING
   Future<Map<String, dynamic>> updateJob(String id, Map<String, dynamic> body) async {
-    final r = await _client.dio.patch('/jobs/$id', data: body);
+    final payload = Map<String, dynamic>.from(body)
+      ..remove('projectType')
+      ..remove('experienceLevel');
+    final r = await _client.dio.patch('/jobs/$id', data: payload);
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
@@ -179,4 +185,42 @@ class CompanyRepository {
 
   // Backward compatibility alias
   Future<List<Map<String, dynamic>>> myApplications() => getCompanyApplications();
+
+  // --- NOTIFICATION MANAGEMENT (ADMIN & BROADCAST) ---
+
+  /// API 7: GET /notifications/admin - ADMIN LIST ALL PLATFORM NOTIFICATIONS
+  Future<Map<String, dynamic>> getAdminNotifications({
+    int page = 1,
+    int limit = 20,
+    String? event,
+    String? userId,
+    String? search,
+  }) async {
+    final r = await _client.dio.get('/notifications/admin', queryParameters: {
+      'page': page,
+      'limit': limit,
+      if (event != null && event.isNotEmpty) 'event': event,
+      if (userId != null && userId.isNotEmpty) 'userId': userId,
+      if (search != null && search.isNotEmpty) 'search': search,
+    });
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// API 8: POST /notifications/send - SEND ADMIN ANNOUNCEMENT / TARGETED NOTIFICATION
+  Future<Map<String, dynamic>> sendNotification({
+    required String title,
+    required String body,
+    required String event,
+    List<String>? userIds,
+    String? referenceId,
+  }) async {
+    final r = await _client.dio.post('/notifications/send', data: {
+      'title': title,
+      'body': body,
+      'event': event,
+      if (userIds != null && userIds.isNotEmpty) 'userIds': userIds,
+      if (referenceId != null && referenceId.isNotEmpty) 'referenceId': referenceId,
+    });
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
 }

@@ -116,8 +116,30 @@ class ChatMessage {
 }
 
 class WorkerNotification {
-  const WorkerNotification({required this.id, required this.title, required this.body, required this.type, required this.time, required this.isRead});
+  const WorkerNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.type,
+    required this.time,
+    required this.isRead,
+    this.referenceId,
+    this.isPushed = false,
+  });
+
   final String id, title, body, type, time;
   final bool isRead;
-  factory WorkerNotification.fromJson(Map<String, dynamic> json) => WorkerNotification(id: json['id'] as String, title: json['title'] as String, body: json['body'] as String, type: json['type'] as String, time: json['time'] as String, isRead: json['isRead'] as bool? ?? false);
+  final String? referenceId;
+  final bool isPushed;
+
+  factory WorkerNotification.fromJson(Map<String, dynamic> json) => WorkerNotification(
+        id: json['id']?.toString() ?? '',
+        title: json['title']?.toString() ?? '',
+        body: (json['body'] ?? json['message'])?.toString() ?? '',
+        type: (json['event'] ?? json['type'])?.toString() ?? 'general',
+        time: (json['createdAt'] ?? json['time'])?.toString() ?? '',
+        isRead: json['isRead'] as bool? ?? false,
+        referenceId: json['referenceId']?.toString(),
+        isPushed: json['isPushed'] as bool? ?? false,
+      );
 }

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/bloc/worker_blocs.dart';
@@ -285,6 +286,9 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       // Clear image cache
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
+
+      // Deactivate device token on backend
+      await NotificationService.instance.handleLogout();
 
       // Clear secure storage and state
       await context.read<AuthCubit>().logout();
