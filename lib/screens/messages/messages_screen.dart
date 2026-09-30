@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/bloc/worker_blocs.dart';
+import '../../features/repositories/worker_repository.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -47,6 +49,28 @@ class _MessagesScreenState extends State<MessagesScreen> {
         }
 
         final conversations = (state as Loaded<List<Conversation>>).data;
+        if (conversations.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.chat_bubble_outline_rounded, size: 56, color: AppColors.textSecondary),
+                  const SizedBox(height: 16),
+                  Text('No conversations yet', style: textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'When an employer reviews your application and sends a remark, a conversation will appear here.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         return RefreshIndicator(
           onRefresh: () => context.read<MessagesCubit>().load(),
           child: Center(
@@ -102,7 +126,12 @@ class ConversationTile extends StatelessWidget {
             MaterialPageRoute(
               builder: (_) => ChatScreen(conversation: conversation),
             ),
-          );
+          ).then((_) {
+            // Refresh conversations when returning from chat
+            if (context.mounted) {
+              context.read<MessagesCubit>().load();
+            }
+          });
         },
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -112,7 +141,7 @@ class ConversationTile extends StatelessWidget {
                 radius: context.w(24),
                 backgroundColor: AppColors.dark,
                 child: Text(
-                  conversation.company.substring(0, 1),
+                  conversation.company.isNotEmpty ? conversation.company[0].toUpperCase() : 'C',
                   style: textTheme.titleMedium?.copyWith(color: AppColors.primary),
                 ),
               ),
@@ -172,8 +201,9 @@ class ConversationTile extends StatelessWidget {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.conversation});
+  const ChatScreen({super.key, required this.conversation, this.isCompany = false});
   final Conversation conversation;
+  final bool isCompany;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -181,32 +211,112 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
-  late List<ChatMessage> _messages;
+  final _scrollController = ScrollController();
+  final _repo = WorkerRepository();
+  List<ChatMessage> _messages = [];
+  bool _isLoading = true;
   bool _isSending = false;
+  bool _isCandidate = false;
 
   @override
   void initState() {
     super.initState();
-    _messages = List.of(widget.conversation.messages);
+    _checkRole();
+    _loadMessages();
+    _markRead();
+  }
+
+  Future<void> _checkRole() async {
+    if (widget.isCompany) {
+      if (mounted) setState(() => _isCandidate = false);
+      return;
+    }
+    const storage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+    final role = await storage.read(key: 'role');
+    if (mounted) {
+      setState(() {
+        _isCandidate = (role != 'company');
+      });
+    }
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadMessages() async {
+    try {
+      final messages = await _repo.fetchMessages(widget.conversation.id);
+      if (mounted) {
+        setState(() {
+          _messages = messages;
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        // ignore: avoid_print
+        print('⚠️ [ChatScreen] Failed to load messages: $e');
+      }
+    }
+  }
+
+  Future<void> _markRead() async {
+    try {
+      await _repo.markConversationRead(widget.conversation.id);
+    } catch (_) {}
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty || _isSending) return;
 
+    // First message restriction: candidate cannot initiate first message
+    if (_isCandidate && _messages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Only the company can initiate the conversation after reviewing your application.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isSending = true;
-      _messages.add(ChatMessage(id: 'local', text: text, isMine: true, time: 'Now'));
+      _messages.add(ChatMessage(id: 'local_${DateTime.now().millisecondsSinceEpoch}', text: text, isMine: true, time: 'Now'));
       _messageController.clear();
     });
+    _scrollToBottom();
 
-    await context.read<MessagesCubit>().send(widget.conversation.id, text);
+    try {
+      await _repo.sendMessage(widget.conversation.id, text);
+      // Reload messages to get the server-assigned ID and timestamp
+      await _loadMessages();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
     if (mounted) setState(() => _isSending = false);
   }
 
@@ -226,6 +336,16 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh messages',
+            onPressed: () {
+              setState(() => _isLoading = true);
+              _loadMessages();
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -252,14 +372,41 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.symmetric(
-                  horizontal: context.w(16),
-                  vertical: context.h(10),
-                ),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) => MessageBubble(message: _messages[index]),
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _messages.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _isCandidate ? Icons.lock_clock_outlined : Icons.chat_bubble_outline,
+                                  size: 48,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _isCandidate
+                                      ? 'Waiting for contractor to send the first message'
+                                      : 'No messages yet. Send the first message to the candidate!',
+                                  style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: context.w(16),
+                            vertical: context.h(10),
+                          ),
+                          itemCount: _messages.length,
+                          itemBuilder: (context, index) => MessageBubble(message: _messages[index]),
+                        ),
             ),
             _composer(),
           ],
@@ -269,6 +416,34 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _composer() {
+    // If candidate and conversation has no messages yet -> Candidate cannot send first message!
+    if (_isCandidate && _messages.isEmpty) {
+      final textTheme = Theme.of(context).textTheme;
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.lock_outline, color: AppColors.textSecondary, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Only the company can initiate the conversation after reviewing your application.',
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: EdgeInsets.fromLTRB(context.w(16), 10, context.w(16), 12),
       decoration: const BoxDecoration(
@@ -333,11 +508,24 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 3),
-            Text(
-              message.time,
-              style: textTheme.labelSmall?.copyWith(
-                color: message.isMine ? Colors.white70 : Colors.black45,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  message.time,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: message.isMine ? Colors.white70 : Colors.black45,
+                  ),
+                ),
+                if (message.isMine) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    message.isRead ? Icons.done_all : Icons.done,
+                    size: 14,
+                    color: message.isRead ? Colors.white : Colors.white70,
+                  ),
+                ],
+              ],
             ),
           ],
         ),

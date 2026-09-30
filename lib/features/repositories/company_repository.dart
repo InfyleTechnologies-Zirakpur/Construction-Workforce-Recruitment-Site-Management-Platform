@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../core/api/api_client.dart';
 
 class CompanyRepository {
@@ -155,12 +156,30 @@ class CompanyRepository {
   }
 
   /// 12. PATCH /applications/:id/status - UPDATE APPLICATION STATUS
-  Future<Map<String, dynamic>> updateApplicationStatus(String id, {required String status, String? reviewRemarks}) async {
-    final r = await _client.dio.patch('/applications/$id/status', data: {
-      'status': status,
-      if (reviewRemarks != null && reviewRemarks.isNotEmpty) 'reviewRemarks': reviewRemarks,
-    });
-    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  /// The backend accepts { "status": "...", "remark": "..." }.
+  /// If remark is provided, a conversation is auto-created and the remark
+  /// is posted as the first chat message between company and job seeker.
+  Future<Map<String, dynamic>> updateApplicationStatus(
+    String id, {
+    required String status,
+    String? remark,
+  }) async {
+    final body = <String, dynamic>{'status': status};
+    if (remark != null && remark.trim().isNotEmpty) {
+      body['remark'] = remark.trim();
+    }
+
+    try {
+      final r = await _client.dio.patch('/applications/$id/status', data: body);
+      return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    } on DioException catch (e) {
+      // If the backend rejects the 'remark' field (422), retry with just status
+      if (e.response?.statusCode == 422 && body.length > 1) {
+        final fallback = await _client.dio.patch('/applications/$id/status', data: {'status': status});
+        return Map<String, dynamic>.from(fallback.data['data'] ?? fallback.data);
+      }
+      rethrow;
+    }
   }
 
   /// 13. POST /applications/bulk-shortlist - BULK SHORTLIST APPLICATIONS
@@ -177,7 +196,18 @@ class CompanyRepository {
   Future<Map<String, dynamic>> getReports() async {
     try {
       final r = await _client.dio.get('/reports/operations/jobs-applications');
-      return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+      final raw = r.data;
+      if (raw is Map) {
+        final d1 = raw['data'];
+        if (d1 is Map && d1['data'] is Map) {
+          return Map<String, dynamic>.from(d1['data']);
+        }
+        if (d1 is Map) {
+          return Map<String, dynamic>.from(d1);
+        }
+        return Map<String, dynamic>.from(raw);
+      }
+      return {};
     } catch (_) {
       return {};
     }
@@ -222,5 +252,52 @@ class CompanyRepository {
       if (referenceId != null && referenceId.isNotEmpty) 'referenceId': referenceId,
     });
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  // --- CONVERSATION / CHAT APIS FOR COMPANY ---
+
+  /// GET /conversations - LIST ALL CONVERSATIONS
+  Future<List<Map<String, dynamic>>> getConversations() async {
+    final r = await _client.dio.get('/conversations');
+    final raw = r.data;
+    if (raw is Map) {
+      final d = raw['data'];
+      if (d is List) return List<Map<String, dynamic>>.from(d);
+      if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+      if (d is Map && d['items'] is List) return List<Map<String, dynamic>>.from(d['items']);
+    }
+    if (raw is List) return List<Map<String, dynamic>>.from(raw);
+    return [];
+  }
+
+  /// GET /conversations/:id - GET SINGLE CONVERSATION
+  Future<Map<String, dynamic>> getConversationById(String id) async {
+    final r = await _client.dio.get('/conversations/$id');
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// GET /conversations/:id/messages - FETCH MESSAGES
+  Future<List<Map<String, dynamic>>> getMessages(String conversationId) async {
+    final r = await _client.dio.get('/conversations/$conversationId/messages');
+    final raw = r.data;
+    if (raw is Map) {
+      final d = raw['data'];
+      if (d is List) return List<Map<String, dynamic>>.from(d);
+      if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+      if (d is Map && d['items'] is List) return List<Map<String, dynamic>>.from(d['items']);
+    }
+    if (raw is List) return List<Map<String, dynamic>>.from(raw);
+    return [];
+  }
+
+  /// POST /conversations/:id/messages - SEND MESSAGE
+  Future<Map<String, dynamic>> sendMessage(String conversationId, String text) async {
+    final r = await _client.dio.post('/conversations/$conversationId/messages', data: {'text': text});
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
+  /// PATCH /conversations/:id/read - MARK CONVERSATION READ
+  Future<void> markConversationRead(String conversationId) async {
+    await _client.dio.patch('/conversations/$conversationId/read');
   }
 }

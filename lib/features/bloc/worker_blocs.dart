@@ -146,6 +146,11 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
       if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       await storage.write(key: 'role', value: 'job_seeker');
+      // Persist userId for conversation message ownership detection
+      final user = data['worker'] ?? data['user'];
+      if (user is Map && user['id'] != null) {
+        await storage.write(key: 'userId', value: user['id'].toString());
+      }
       emit(Loaded(data));
     } catch (e) {
       emit(Failed(e.toString()));

@@ -33,6 +33,11 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
       if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       await storage.write(key: 'role', value: 'company');
+      // Persist userId for conversation message ownership detection
+      final user = data['user'] ?? data;
+      if (user is Map && user['id'] != null) {
+        await storage.write(key: 'userId', value: user['id'].toString());
+      }
       NotificationService.instance.syncDeviceToken();
 
       if (!mounted) return;

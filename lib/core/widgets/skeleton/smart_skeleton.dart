@@ -249,7 +249,7 @@ class SmartSkeleton extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: itemCount,
-          separatorBuilder: (_, __) => SizedBox(width: spacing),
+          separatorBuilder: (_, _) => SizedBox(width: spacing),
           itemBuilder: (context, i) => _gridTile(),
         ),
       );
@@ -322,7 +322,7 @@ class SmartSkeleton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Bone.text(words: 1),
+            const Bone.text(width: 50),
           ],
         ),
         if (hasMeta) ...[
@@ -331,11 +331,11 @@ class SmartSkeleton extends StatelessWidget {
             children: const [
               Bone.icon(size: 15),
               SizedBox(width: 4),
-              Bone.text(words: 2),
+              Bone.text(width: 70),
               SizedBox(width: 14),
               Bone.icon(size: 15),
               SizedBox(width: 4),
-              Bone.text(words: 1),
+              Bone.text(width: 50),
             ],
           ),
         ],

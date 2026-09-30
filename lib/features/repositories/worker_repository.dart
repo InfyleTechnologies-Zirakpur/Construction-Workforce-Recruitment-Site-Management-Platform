@@ -1,6 +1,9 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/models.dart';
-import 'package:dio/dio.dart';
 
 class WorkerRepository {
   WorkerRepository({ApiClient? client})
@@ -71,6 +74,7 @@ class WorkerRepository {
                 saved: true,
                 applied: existing?.applied ?? sJob.applied,
                 applicationId: existing?.applicationId ?? sJob.applicationId,
+                applicationStatus: existing?.applicationStatus ?? sJob.applicationStatus,
                 projectType: sJob.projectType,
                 experienceLevel: sJob.experienceLevel,
               );
@@ -80,18 +84,30 @@ class WorkerRepository {
       }
     } catch (_) {}
 
-    // 3. Fetch applications to ensure applied jobs are included
+    // 3. Fetch applications to ensure applied jobs are included & statuses are updated
     try {
       final appResponse = await _client.dio.get('/applications');
       final payload = appResponse.data;
-      final items = payload['data'] != null
-          ? (payload['data']['items'] ?? payload['data'])
-          : payload['items'] ?? [];
-      if (items is List) {
-        for (final item in items) {
+      dynamic rawApps;
+      if (payload is Map) {
+        final d = payload['data'];
+        if (d is List) {
+          rawApps = d;
+        } else if (d is Map) {
+          rawApps = d['data'] ?? d['items'];
+        } else {
+          rawApps = payload['items'];
+        }
+      } else if (payload is List) {
+        rawApps = payload;
+      }
+
+      if (rawApps is List) {
+        for (final item in rawApps) {
           if (item is Map) {
             final appData = Map<String, dynamic>.from(item);
             final appId = appData['id']?.toString();
+            final appStatus = appData['status']?.toString();
             final jobData = appData['job'] is Map ? Map<String, dynamic>.from(appData['job']) : null;
             final jobId = appData['jobId']?.toString() ?? jobData?['id']?.toString() ?? '';
 
@@ -110,6 +126,7 @@ class WorkerRepository {
                 saved: existing?.saved ?? false,
                 applied: true,
                 applicationId: appId ?? existing?.applicationId,
+                applicationStatus: appStatus ?? existing?.applicationStatus ?? 'pending',
                 projectType: existing?.projectType ?? aJob?.projectType ?? 'Full-time',
                 experienceLevel: existing?.experienceLevel ?? aJob?.experienceLevel ?? 'Any',
               );
@@ -117,7 +134,10 @@ class WorkerRepository {
           }
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [FETCH APPLICATIONS ERROR]: $e');
+    }
 
     final resultList = jobMap.values.toList();
     // ignore: avoid_print
@@ -127,7 +147,7 @@ class WorkerRepository {
     for (int i = 0; i < resultList.length; i++) {
       final j = resultList[i];
       // ignore: avoid_print
-      print('  [$i] ID: ${j.id} | Title: "${j.title}" | Company: "${j.company}" | Pay: ₹${j.dailyPay} | Saved: ${j.saved} | Applied: ${j.applied}');
+      print('  [$i] ID: ${j.id} | Title: "${j.title}" | Company: "${j.company}" | Pay: ₹${j.dailyPay} | Saved: ${j.saved} | Applied: ${j.applied} | Status: ${j.applicationStatus}');
     }
     // ignore: avoid_print
     print('--------------------------------------------------');
@@ -160,8 +180,23 @@ class WorkerRepository {
     try {
       final response = await _client.dio.get('/applications');
       final payload = response.data;
-      final items = payload['data'] != null ? (payload['data']['items'] ?? payload['data']) : (payload['items'] ?? []);
-      return List<Map<String, dynamic>>.from(items);
+      dynamic rawApps;
+      if (payload is Map) {
+        final d = payload['data'];
+        if (d is List) {
+          rawApps = d;
+        } else if (d is Map) {
+          rawApps = d['data'] ?? d['items'];
+        } else {
+          rawApps = payload['items'];
+        }
+      } else if (payload is List) {
+        rawApps = payload;
+      }
+      if (rawApps is List) {
+        return List<Map<String, dynamic>>.from(rawApps.whereType<Map>());
+      }
+      return [];
     } catch (_) {
       return [];
     }
@@ -219,11 +254,92 @@ class WorkerRepository {
   Future<Map<String, dynamic>> dashboard() async => Map<String, dynamic>.from(
     (await _client.dio.get('/dashboard')).data['data'],
   );
+  /// Returns the current user's ID from stored secure storage or JWT token
+  Future<String?> _getCurrentUserId() async {
+    const storage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+    var uid = await storage.read(key: 'userId');
+    if (uid == null || uid.isEmpty) {
+      final token = await storage.read(key: 'accessToken');
+      if (token != null && token.isNotEmpty) {
+        uid = _parseUserIdFromJwt(token);
+      }
+    }
+    return uid;
+  }
+
+  static String? _parseUserIdFromJwt(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length < 2) return null;
+      final normalized = base64Url.normalize(parts[1]);
+      final resp = utf8.decode(base64Url.decode(normalized));
+      final payload = jsonDecode(resp);
+      if (payload is Map) {
+        return payload['sub']?.toString() ??
+            payload['id']?.toString() ??
+            payload['userId']?.toString() ??
+            payload['user_id']?.toString();
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<List<Conversation>> conversations() async {
     final response = await _client.dio.get('/conversations');
-    return (response.data['data']['items'] as List).map((item) => Conversation.fromJson(Map<String, dynamic>.from(item))).toList();
+    final currentUserId = await _getCurrentUserId();
+    final raw = response.data;
+    List items = [];
+    if (raw is Map) {
+      final d = raw['data'];
+      if (d is List) {
+        items = d;
+      } else if (d is Map) {
+        if (d['data'] is List) items = d['data'];
+        else if (d['items'] is List) items = d['items'];
+      }
+    } else if (raw is List) {
+      items = raw;
+    }
+    return items.map((item) => Conversation.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId)).toList();
   }
-  Future<void> sendMessage(String conversationId, String text) async => _client.dio.post('/conversations/$conversationId/messages', data: {'text': text});
+
+  Future<Conversation?> getConversationById(String conversationId) async {
+    try {
+      final response = await _client.dio.get('/conversations/$conversationId');
+      final currentUserId = await _getCurrentUserId();
+      final raw = response.data;
+      final data = raw is Map ? (raw['data'] ?? raw) : raw;
+      if (data is Map) {
+        return Conversation.fromJson(Map<String, dynamic>.from(data), currentUserId: currentUserId);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<List<ChatMessage>> fetchMessages(String conversationId) async {
+    final response = await _client.dio.get('/conversations/$conversationId/messages');
+    final currentUserId = await _getCurrentUserId();
+    final raw = response.data;
+    List items = [];
+    if (raw is Map) {
+      final d = raw['data'];
+      if (d is List) items = d;
+      else if (d is Map && d['data'] is List) items = d['data'];
+      else if (d is Map && d['items'] is List) items = d['items'];
+    } else if (raw is List) {
+      items = raw;
+    }
+    return items.map((item) => ChatMessage.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId)).toList();
+  }
+
+  Future<void> sendMessage(String conversationId, String text) async =>
+      _client.dio.post('/conversations/$conversationId/messages', data: {'text': text});
+
+  Future<void> markConversationRead(String conversationId) async =>
+      _client.dio.patch('/conversations/$conversationId/read');
+
   Future<List<WorkerNotification>> notifications({int page = 1, int limit = 20}) async {
     try {
       final response = await _client.dio.get('/notifications', queryParameters: {

@@ -491,21 +491,39 @@ class _JobCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                if (job.applied)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundBlue.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'Applied',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.backgroundBlue,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                if (job.applied) ...[
+                  Builder(
+                    builder: (context) {
+                      final status = (job.applicationStatus ?? '').toLowerCase();
+                      Color badgeColor = AppColors.backgroundBlue;
+                      String badgeText = 'Applied';
+                      if (status == 'accepted') {
+                        badgeColor = const Color(0xFF16A34A);
+                        badgeText = 'Accepted';
+                      } else if (status == 'rejected') {
+                        badgeColor = const Color(0xFFDC2626);
+                        badgeText = 'Rejected';
+                      } else if (status == 'shortlisted') {
+                        badgeColor = const Color(0xFF7C3AED);
+                        badgeText = 'Shortlisted';
+                      }
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: badgeColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          badgeText,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: badgeColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    },
                   ),
+                ],
                 const Spacer(),
                 InkWell(
                   onTap: onSaveToggle,
