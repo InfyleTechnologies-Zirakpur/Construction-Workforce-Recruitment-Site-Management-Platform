@@ -266,14 +266,34 @@ class NotificationService {
     }
   }
 
-  /// Clean logout passing the FCM token to backend
-  Future<void> handleLogout() async {
+  /// Clean logout passing the FCM token to backend.
+  /// Order-safe: unregisters the device + hits POST /auth/logout while the
+  /// auth token is still in storage. Does NOT wipe secure storage — the
+  /// caller (AuthCubit.logout) does that, so the FCM token is still
+  /// available there for the server call.
+  Future<String?> handleLogout() async {
+    String? token;
     try {
-      final token = await getStoredToken();
-      await _repo.logout(fcmToken: token);
-      await _storage.delete(key: _tokenKey);
+      token = await getStoredToken();
+      if (token != null && token.isNotEmpty) {
+        // 1. Remove device mapping so no more pushes arrive.
+        try {
+          await _repo.unregisterDeviceToken(token);
+        } catch (_) {}
+        // 2. Full server logout (updates job_seeker/company presence state).
+        try {
+          await _repo.logout(fcmToken: token);
+        } catch (_) {}
+      } else {
+        try {
+          await _repo.logout();
+        } catch (_) {}
+      }
       // ignore: avoid_print
       print('🔔 [FCM] Logged out device with token');
     } catch (_) {}
+    // NOTE: do NOT delete fcmDeviceToken here — AuthCubit.logout() needs
+    // it and then wipes all storage with deleteAll().
+    return token;
   }
 }

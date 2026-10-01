@@ -9,8 +9,12 @@ class WorkerRepository {
   WorkerRepository({ApiClient? client})
     : _client = client ?? ApiClient.instance;
   final ApiClient _client;
-  Future<void> requestOtp(String phone) async =>
-      _client.dio.post('/auth/request-otp', data: {'phone': phone});
+  Future<Map<String, dynamic>> requestOtp(String phone) async {
+    final r = await _client.dio.post('/auth/request-otp', data: {'phone': phone});
+    final d = r.data is Map ? r.data['data'] : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return const {'otpSent': true};
+  }
   Future<Map<String, dynamic>> verifyOtp({required String phone, required String otp}) async {
     final r = await _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
     return Map<String, dynamic>.from(r.data['data']);
@@ -222,16 +226,73 @@ class WorkerRepository {
       WorkerProfile.fromJson(
         (await _client.dio.put('/profile', data: body)).data['data'],
       );
-  Future<String> uploadProfilePhoto({required List<int> bytes, required String filename}) async {
-    final response = await _client.dio.post('/profile/photo', data: FormData.fromMap({'photo': MultipartFile.fromBytes(bytes, filename: filename)}), options: Options(contentType: 'multipart/form-data'));
-    return response.data['data']['profilePhotoUrl'] as String;
+  /// Infer a real Content-Type for the multipart part.
+  /// Without this, Dio sends `application/octet-stream` for every part and
+  /// the backend rejects seeker documents (aadhaar / experience / skill)
+  /// with 400 `Invalid mime application/octet-stream`.
+  static String _mimeForFilename(String filename) {
+    final ext = filename.toLowerCase().split('.').last;
+    switch (ext) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'heic':
+        return 'image/heic';
+      default:
+        return 'application/octet-stream';
+    }
   }
-  Future<Map<String, dynamic>> uploadDocument({required List<int> bytes, required String filename, required String type}) async {
-    final form = FormData.fromMap({'file': MultipartFile.fromBytes(bytes, filename: filename), 'type': type});
-    // Debug: ensure token is sent
+
+  Future<String> uploadProfilePhoto({
+    required List<int> bytes,
+    required String filename,
+  }) async {
+    final response = await _client.dio.post(
+      '/profile/photo',
+      data: FormData.fromMap({
+        'photo': MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
+          contentType: DioMediaType.parse(_mimeForFilename(filename)),
+        ),
+      }),
+      options: Options(contentType: 'multipart/form-data'),
+    );
+    final data = response.data['data'];
+    if (data is Map && data['profilePhotoUrl'] is String) {
+      return data['profilePhotoUrl'] as String;
+    }
+    throw Exception(
+      'Photo upload failed: server returned no profilePhotoUrl (${response.data})',
+    );
+  }
+
+  Future<Map<String, dynamic>> uploadDocument({
+    required List<int> bytes,
+    required String filename,
+    required String type,
+  }) async {
     // ignore: avoid_print
     print('uploadDocument -> /documents type=$type bytes=${bytes.length}');
-    final response = await _client.dio.post('/documents', data: form, options: Options(contentType: 'multipart/form-data'));
+    final response = await _client.dio.post(
+      '/documents',
+      data: FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
+          contentType: DioMediaType.parse(_mimeForFilename(filename)),
+        ),
+        'type': type,
+      }),
+      options: Options(contentType: 'multipart/form-data'),
+    );
+    // ignore: avoid_print
     print('uploadDocument <- ${response.statusCode} ${response.data}');
     return Map<String, dynamic>.from(response.data['data']);
   }
@@ -417,9 +478,20 @@ class WorkerRepository {
 
   Future<void> logout({String? fcmToken}) async {
     try {
+      const storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      String? refreshToken;
+      try {
+        refreshToken = await storage.read(key: 'refreshToken');
+      } catch (_) {}
       await _client.dio.post('/auth/logout', data: {
         if (fcmToken != null && fcmToken.isNotEmpty) 'fcmToken': fcmToken,
+        if (refreshToken != null && refreshToken.isNotEmpty)
+          'refreshToken': refreshToken,
       });
-    } catch (_) {}
+    } catch (_) {
+      // Best-effort: local session is cleared by AuthCubit regardless.
+    }
   }
 }

@@ -105,6 +105,97 @@ class _OtpScreenState extends State<OtpScreen> {
     _startTimer();
   }
 
+  /// Robust existing-user detection.
+  /// Backend (bipul/auth.service) is the source of truth and now returns
+  /// top-level `isNewUser` / `isProfileComplete` + the same flags inside
+  /// `worker`. The fallback below mirrors the backend rule so old builds /
+  /// cached responses still route correctly.
+  /// A brand-new number (e.g. 1234567891) is auto-created with
+  /// name='Job Seeker' + empty city/skills → must go to
+  /// CompleteProfileScreen; an existing number (e.g. 9878261754) with a
+  /// saved real name + city/skills → HomePage.
+  static const _placeholderNames = {
+    '',
+    'null',
+    'undefined',
+    'job seeker',
+    'jobseeker',
+    'new user',
+    'user',
+  };
+
+  bool _isProfileComplete(Map<String, dynamic> data) {
+    // 1. Explicit server flags win.
+    for (final key in [
+      'isProfileComplete',
+      'profileComplete',
+      'profileCompleted',
+      'hasProfile',
+      'isProfileCreated',
+    ]) {
+      if (data[key] is bool) return data[key] as bool;
+    }
+    if (data['isNewUser'] is bool) return !(data['isNewUser'] as bool);
+    if (data['isNew'] is bool) return !(data['isNew'] as bool);
+
+    // 2. Inspect worker / user / profile payloads.
+    Map<String, dynamic>? candidate;
+    for (final key in ['worker', 'user', 'profile', 'seeker']) {
+      if (data[key] is Map) {
+        candidate = Map<String, dynamic>.from(data[key] as Map);
+        // Nested flags inside the object.
+        for (final nk in [
+          'isProfileComplete',
+          'profileComplete',
+          'hasProfile',
+        ]) {
+          if (candidate[nk] is bool) return candidate[nk] as bool;
+        }
+        if (candidate['isNewUser'] is bool) {
+          return !(candidate['isNewUser'] as bool);
+        }
+        break;
+      }
+    }
+    candidate ??= data;
+
+    bool validName(String? v) {
+      if (v == null) return false;
+      final t = v.trim().toLowerCase();
+      if (t.isEmpty || t == 'null' || t == 'undefined') return false;
+      // Backend auto-register placeholder — NOT a real profile.
+      if (_placeholderNames.contains(t)) return false;
+      return true;
+    }
+
+    bool valid(String? v) {
+      if (v == null) return false;
+      final t = v.trim().toLowerCase();
+      return t.isNotEmpty && t != 'null' && t != 'undefined';
+    }
+
+    // Name alone is NOT enough (new users have 'Job Seeker').
+    // Mirror backend: synthetic OTP accounts (phone@buildhire.app) need a
+    // real profile field; real registrations with a real name are complete.
+    final hasRealName = validName(candidate['name']?.toString()) ||
+        validName(candidate['fullName']?.toString());
+    if (!hasRealName) return false;
+    final email = (candidate['email']?.toString() ?? '').toLowerCase().trim();
+    final phone = (candidate['phone']?.toString() ?? '').trim();
+    final isSynthetic =
+        email.endsWith('@buildhire.app') && phone.isNotEmpty && email.startsWith(phone);
+    if (!isSynthetic && email.isNotEmpty) return true;
+    final cityOk = valid(candidate['city']?.toString());
+    final skills = candidate['skills'];
+    final skillsOk = skills is List && skills.isNotEmpty;
+    final salaryOk = valid(candidate['salaryExpectation']?.toString());
+    if (cityOk || skillsOk || salaryOk) return true;
+
+    // Name set but nothing else (edge case) → treat as incomplete so the
+    // user can finish Create Profile rather than hitting an empty Home.
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -124,10 +215,32 @@ class _OtpScreenState extends State<OtpScreen> {
         listener: (context, state) {
           if (state is Loaded<Map<String, dynamic>>) {
             final data = state.data;
+            // Ignore the intermediate {'otpSent': true} emission from
+            // requestOtp — that belongs to LoginScreen, not verification.
+            if (data['otpSent'] == true && data['accessToken'] == null) return;
             NotificationService.instance.syncDeviceToken();
-            final worker = data['worker'] is Map ? Map<String, dynamic>.from(data['worker']) : null;
-            final name = worker?['name']?.toString().trim() ?? '';
-            final bool isProfileComplete = name.isNotEmpty && name.toLowerCase() != 'null';
+            final bool isProfileComplete = _isProfileComplete(data);
+
+            // Clear stale feature state from any previous number BEFORE
+            // navigating — otherwise the new login briefly sees the old
+            // user's profile/jobs. Then reset auth state so going back /
+            // re-login doesn't replay this stale Loaded event.
+            try {
+              context.read<ProfileCubit>().reset();
+            } catch (_) {}
+            try {
+              context.read<JobsCubit>().reset();
+            } catch (_) {}
+            try {
+              context.read<DashboardCubit>().reset();
+            } catch (_) {}
+            try {
+              context.read<MessagesCubit>().reset();
+            } catch (_) {}
+            try {
+              context.read<NotificationsCubit>().reset();
+            } catch (_) {}
+            context.read<AuthCubit>().reset();
 
             if (isProfileComplete) {
               Navigator.of(context).pushAndRemoveUntil(

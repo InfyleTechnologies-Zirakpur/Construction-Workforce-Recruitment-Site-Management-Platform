@@ -95,11 +95,26 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     );
 
     if (confirm == true && mounted) {
-      await NotificationService.instance.handleLogout();
-      const storage = FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
-      );
-      await storage.deleteAll();
+      // Full server logout for company role:
+      // 1. unregister FCM device + POST /auth/logout (updates company
+      //    presence state on backend) while token still stored.
+      // 2. wipe secure storage + reset AuthCubit state.
+      try {
+        await NotificationService.instance.handleLogout();
+      } catch (_) {}
+      try {
+        const storage = FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        );
+        String? fcmToken;
+        try {
+          fcmToken = await storage.read(key: 'fcmDeviceToken');
+        } catch (_) {}
+        try {
+          await _repo.logout(fcmToken: fcmToken);
+        } catch (_) {}
+        await storage.deleteAll();
+      } catch (_) {}
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginScreen()),

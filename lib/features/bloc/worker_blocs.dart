@@ -28,6 +28,7 @@ class Failed<T> extends LoadState<T> {
 class JobsCubit extends Cubit<LoadState<List<Job>>> {
   JobsCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
+  void reset() => emit(const Idle());
   Future<void> load([String? query]) async {
     emit(const Loading());
     try {
@@ -61,6 +62,7 @@ class JobsCubit extends Cubit<LoadState<List<Job>>> {
 class ProfileCubit extends Cubit<LoadState<WorkerProfile>> {
   ProfileCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
+  void reset() => emit(const Idle());
   Future<void> load() async {
     emit(const Loading());
     try {
@@ -112,6 +114,7 @@ class AttendanceCubit extends Cubit<LoadState<List<Attendance>>> {
 class DashboardCubit extends Cubit<LoadState<Map<String, dynamic>>> {
   DashboardCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
+  void reset() => emit(const Idle());
   Future<void> load() async {
     emit(const Loading());
     try {
@@ -128,8 +131,9 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
   Future<void> requestOtp(String phone) async {
     emit(const Loading());
     try {
-      await _repo.requestOtp(phone);
-      emit(const Loaded(<String, dynamic>{'otpSent': true}));
+      final res = await _repo.requestOtp(phone);
+      // Forward backend flags (isNewUser) so OTP screen / login can use them.
+      emit(Loaded(<String, dynamic>{'otpSent': true, ...res}));
     } catch (e) {
       emit(Failed(e.toString()));
     }
@@ -138,6 +142,13 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
   Future<void> verifyOtp(String phone, String otp) async {
     emit(const Loading());
     try {
+      // Wipe any stale session from a previous number BEFORE storing the
+      // new one — prevents old profile/jobs leaking into a fresh login.
+      try {
+        await const FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        ).deleteAll();
+      } catch (_) {}
       final data = await _repo.verifyOtp(phone: phone, otp: otp);
       // Persist tokens for ApiClient
       const storage = FlutterSecureStorage(
@@ -146,6 +157,22 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
       if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       await storage.write(key: 'role', value: 'job_seeker');
+      await storage.write(key: 'phone', value: phone);
+      // Persist profile-completeness so splash / re-open routes correctly.
+      final worker = data['worker'] ?? data['user'];
+      bool? completeFlag;
+      if (data['isProfileComplete'] is bool) {
+        completeFlag = data['isProfileComplete'] as bool;
+      } else if (data['isNewUser'] is bool) {
+        completeFlag = !(data['isNewUser'] as bool);
+      } else if (worker is Map && worker['isProfileComplete'] is bool) {
+        completeFlag = worker['isProfileComplete'] as bool;
+      } else if (worker is Map && worker['isNewUser'] is bool) {
+        completeFlag = !(worker['isNewUser'] as bool);
+      }
+      if (completeFlag != null) {
+        await storage.write(key: 'profileComplete', value: completeFlag.toString());
+      }
       // Persist userId for conversation message ownership detection
       final user = data['worker'] ?? data['user'];
       if (user is Map && user['id'] != null) {
@@ -157,18 +184,39 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout({String? fcmToken}) async {
     const storage = FlutterSecureStorage(
       aOptions: AndroidOptions(encryptedSharedPreferences: true),
     );
-    await storage.deleteAll();
+    try {
+      // Resolve FCM token + refresh token BEFORE wiping storage
+      // so the backend can deactivate the device + invalidate session
+      // (updates job_seeker / company presence state server-side).
+      String? tokenToSend = fcmToken;
+      if (tokenToSend == null || tokenToSend.isEmpty) {
+        try {
+          tokenToSend = await storage.read(key: 'fcmDeviceToken');
+        } catch (_) {}
+      }
+      await _repo.logout(fcmToken: tokenToSend);
+    } catch (_) {
+      // Server logout is best-effort — still clear local session.
+    }
+    try {
+      await storage.deleteAll();
+    } catch (_) {}
+    // Reset auth state so Login/Otp listeners don't react to stale Loaded.
     emit(const Idle());
   }
+
+  /// Reset to idle without touching storage (e.g. after navigation).
+  void reset() => emit(const Idle());
 }
 
 class MessagesCubit extends Cubit<LoadState<List<Conversation>>> {
   MessagesCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
+  void reset() => emit(const Idle());
   Future<void> load() async { emit(const Loading()); try { emit(Loaded(await _repo.conversations())); } catch (e) { emit(Failed(e.toString())); } }
   Future<void> send(String conversationId, String text) async { await _repo.sendMessage(conversationId, text); await load(); }
 }
@@ -176,6 +224,7 @@ class MessagesCubit extends Cubit<LoadState<List<Conversation>>> {
 class NotificationsCubit extends Cubit<LoadState<List<WorkerNotification>>> {
   NotificationsCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
+  void reset() => emit(const Idle());
   Future<void> load() async {
     emit(const Loading());
     try {

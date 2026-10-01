@@ -230,9 +230,9 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                         style: textTheme.bodySmall,
                       ),
                       const SizedBox(height: 8),
-                      _documentRow('Aadhaar card', 'aadhaar'),
-                      _documentRow('Experience certificate', 'experience_certificate'),
-                      _documentRow('Skill certificate', 'skill_certificate'),
+                      _documentRow('Aadhaar card', 'aadhaar', profile.documents),
+                      _documentRow('Experience certificate', 'experience_certificate', profile.documents),
+                      _documentRow('Skill certificate', 'skill_certificate', profile.documents),
                       if (_isUploadingDocument) const LinearProgressIndicator(),
                     ],
                   ),
@@ -283,22 +283,51 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     );
 
     if (confirm == true && context.mounted) {
+      // Capture cubits + navigator BEFORE async gaps (lint-safe).
+      final authCubit = context.read<AuthCubit>();
+      final profileCubit = context.read<ProfileCubit>();
+      final jobsCubit = context.read<JobsCubit>();
+      final dashboardCubit = context.read<DashboardCubit>();
+      final messagesCubit = context.read<MessagesCubit>();
+      final notificationsCubit = context.read<NotificationsCubit>();
+      final navigator = Navigator.of(context, rootNavigator: true);
+
       // Clear image cache
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
 
-      // Deactivate device token on backend
-      await NotificationService.instance.handleLogout();
+      // Full server logout: unregisters FCM device + POST /auth/logout
+      // (updates job_seeker presence state on backend) while the token
+      // is still in secure storage, then wipes storage + resets state.
+      try {
+        await NotificationService.instance.handleLogout();
+      } catch (_) {}
+      try {
+        await authCubit.logout();
+      } catch (_) {}
 
-      // Clear secure storage and state
-      await context.read<AuthCubit>().logout();
+      // Reset in-memory feature state so the next login starts clean
+      // (prevents stale profile/jobs leaking into a different number).
+      try {
+        profileCubit.reset();
+      } catch (_) {}
+      try {
+        jobsCubit.reset();
+      } catch (_) {}
+      try {
+        dashboardCubit.reset();
+      } catch (_) {}
+      try {
+        messagesCubit.reset();
+      } catch (_) {}
+      try {
+        notificationsCubit.reset();
+      } catch (_) {}
 
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      }
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
     }
   }
 
@@ -397,15 +426,45 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     );
   }
 
-  Widget _documentRow(String title, String type) {
+  Widget _documentRow(String title, String type, List<Map<String, dynamic>> docs) {
+    // Backend subtype is aadhaar/experience/skill; the profile-screen row
+    // keys are aadhaar/experience_certificate/skill_certificate.
+    String subtypeOf(String t) {
+      final v = t.trim().toLowerCase();
+      if (v == 'aadhaar') return 'aadhaar';
+      if (v.startsWith('experience')) return 'experience';
+      if (v.startsWith('skill')) return 'skill';
+      return v;
+    }
+
+    final want = subtypeOf(type);
+    Map<String, dynamic>? match;
+    for (final d in docs) {
+      if (subtypeOf((d['type'] ?? '').toString()) == want) {
+        match = d;
+        break;
+      }
+    }
+    final uploadedName =
+        match?['name']?.toString() ?? match?['originalFilename']?.toString();
+
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.description_outlined, color: AppColors.primary),
+      leading: Icon(
+        match != null ? Icons.verified_outlined : Icons.description_outlined,
+        color: match != null ? Colors.green : AppColors.primary,
+      ),
       title: Text(title),
-      subtitle: const Text('Upload for verification'),
+      subtitle: Text(
+        match != null
+            ? (uploadedName != null && uploadedName.isNotEmpty
+                ? 'Uploaded: $uploadedName'
+                : 'Uploaded ✓')
+            : 'Upload for verification',
+      ),
       trailing: OutlinedButton(
         onPressed: _isUploadingDocument ? null : () => _uploadDocument(type),
-        child: const Text('Upload'),
+        child: Text(match != null ? 'Replace' : 'Upload'),
       ),
     );
   }

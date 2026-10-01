@@ -45,6 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state is Loaded<Map<String, dynamic>> && _awaitingOtp) {
             _awaitingOtp = false;
+            // Clear the otpSent state so OtpScreen's own listener only
+            // reacts to the verifyOtp result (fixes new-number → Home bug).
+            context.read<AuthCubit>().reset();
             Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => OtpScreen(phoneNumber: _phoneController.text.trim()),
             ));

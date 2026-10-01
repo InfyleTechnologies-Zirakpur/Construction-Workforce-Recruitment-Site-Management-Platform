@@ -26,6 +26,19 @@ class CompanyRepository {
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
+  // --- AUTH / SESSION ---
+
+  /// POST /auth/logout — invalidates server session + device token.
+  /// Works for both `company` and `job_seeker` roles (same endpoint).
+  /// Best-effort: never throws, local session is cleared by caller anyway.
+  Future<void> logout({String? fcmToken}) async {
+    try {
+      await _client.dio.post('/auth/logout', data: {
+        if (fcmToken != null && fcmToken.isNotEmpty) 'fcmToken': fcmToken,
+      });
+    } catch (_) {}
+  }
+
   // --- COMPANY PROFILE APIS ---
 
   /// 1. POST /api/v1/companies - Register a new company profile
