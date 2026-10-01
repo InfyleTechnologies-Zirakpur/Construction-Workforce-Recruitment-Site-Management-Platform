@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/models/models.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/repositories/company_repository.dart';
 import '../auth/login_screen.dart';
+import '../messages/messages_screen.dart';
+import '../notifications/notifications_screen.dart';
 import 'company_profile_screen.dart';
 import 'company_profile_form_screen.dart';
 
@@ -15,11 +19,12 @@ class CompanyHomeScreen extends StatefulWidget {
 }
 
 class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
-  int _tabIndex = 0; // 0: Applications, 1: Site Jobs, 2: Analytics Report
+  int _tabIndex = 0;
   bool _isLoading = true;
 
   List<Map<String, dynamic>> _applications = [];
   List<Map<String, dynamic>> _companyJobs = [];
+  List<Map<String, dynamic>> _companyConversations = [];
   Map<String, dynamic>? _myProfile;
   Map<String, dynamic>? _reportsData;
 
@@ -39,10 +44,16 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
-        _repo.getCompanyApplications(status: _appStatusFilter == 'all' ? null : _appStatusFilter),
-        _repo.getMyProfiles(),
-        _repo.getCompanyJobs(),
-        _repo.getReports().catchError((_) => <String, dynamic>{}),
+        _repo.getCompanyApplications(status: _appStatusFilter == 'all' ? null : _appStatusFilter)
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _repo.getMyProfiles()
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _repo.getCompanyJobs()
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _repo.getReports()
+            .catchError((_) => <String, dynamic>{}),
+        _repo.getConversations()
+            .catchError((_) => <Map<String, dynamic>>[]),
       ]);
 
       if (mounted) {
@@ -52,6 +63,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
           _myProfile = profiles.isNotEmpty ? profiles.first : null;
           _companyJobs = results[2] as List<Map<String, dynamic>>;
           _reportsData = results[3] as Map<String, dynamic>;
+          _companyConversations = results[4] as List<Map<String, dynamic>>;
           _selectedAppIds.clear();
           _isLoading = false;
         });
@@ -83,6 +95,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     );
 
     if (confirm == true && mounted) {
+      await NotificationService.instance.handleLogout();
       const storage = FlutterSecureStorage(
         aOptions: AndroidOptions(encryptedSharedPreferences: true),
       );
@@ -156,7 +169,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
 
   Future<void> _updateAppStatus(String appId, String status, {String? remarks}) async {
     try {
-      await _repo.updateApplicationStatus(appId, status: status, reviewRemarks: remarks);
+      await _repo.updateApplicationStatus(appId, status: status, remark: remarks);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Application $status!'), backgroundColor: Colors.green),
@@ -274,51 +287,155 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: remarksController,
+                    maxLines: 3,
+                    minLines: 1,
                     decoration: const InputDecoration(
-                      labelText: 'Review Remarks / Interview Notes',
-                      hintText: 'e.g. Profile matches RCC site requirements.',
+                      labelText: 'Remark (sent as chat message)',
+                      hintText: 'e.g. We\'d like to invite you for an interview on Monday at 10 AM.',
+                      helperText: 'This will be sent as the first message in your conversation with the candidate.',
+                      helperMaxLines: 2,
                     ),
                   ),
 
                   const SizedBox(height: 20),
-                  Text('Current Status: ${status.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
-                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Text(
+                        'Change Status:',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.dark),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _getStatusBgColor(status),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          status.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _getStatusFgColor(status),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
 
                   Row(
                     children: [
+                      // Reject Button
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(sheetCtx);
-                            _updateAppStatus(appId, 'rejected', remarks: remarksController.text.trim());
-                          },
-                          style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: const BorderSide(color: AppColors.error)),
-                          icon: const Icon(Icons.close, size: 16),
-                          label: const Text('Reject'),
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.pop(sheetCtx);
+                              _updateAppStatus(appId, 'rejected', remarks: remarksController.text.trim());
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFDC2626),
+                              backgroundColor: status == 'rejected' ? const Color(0xFFFEE2E2) : Colors.white,
+                              side: BorderSide(
+                                color: status == 'rejected' ? const Color(0xFFDC2626) : const Color(0xFFEF4444),
+                                width: status == 'rejected' ? 1.8 : 1.2,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.close_rounded, size: 16, color: Color(0xFFDC2626)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Reject',
+                                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFDC2626)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
+
+                      // Shortlist Button
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(sheetCtx);
-                            _updateAppStatus(appId, 'shortlisted', remarks: remarksController.text.trim());
-                          },
-                          style: OutlinedButton.styleFrom(foregroundColor: Colors.orange, side: const BorderSide(color: Colors.orange)),
-                          icon: const Icon(Icons.star_outline, size: 16),
-                          label: const Text('Shortlist'),
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.pop(sheetCtx);
+                              _updateAppStatus(appId, 'shortlisted', remarks: remarksController.text.trim());
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFD97706),
+                              backgroundColor: status == 'shortlisted' ? const Color(0xFFFEF3C7) : Colors.white,
+                              side: BorderSide(
+                                color: status == 'shortlisted' ? const Color(0xFFD97706) : const Color(0xFFF59E0B),
+                                width: status == 'shortlisted' ? 1.8 : 1.2,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.star_outline_rounded, size: 16, color: Color(0xFFD97706)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Shortlist',
+                                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFD97706)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
+
+                      // Accept Button
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(sheetCtx);
-                            _updateAppStatus(appId, 'accepted', remarks: remarksController.text.trim());
-                          },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          icon: const Icon(Icons.check, size: 16),
-                          label: const Text('Accept'),
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(sheetCtx);
+                              _updateAppStatus(appId, 'accepted', remarks: remarksController.text.trim());
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF16A34A),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_rounded, size: 16, color: Colors.white),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Accept',
+                                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -377,8 +494,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     final workforce = TextEditingController(text: '5');
     final skills = TextEditingController();
     final description = TextEditingController();
-    String projectType = 'Full-time';
-    String experienceLevel = 'Experienced';
     bool isPosting = false;
 
     showModalBottomSheet(
@@ -458,8 +573,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                                   'workforceRequired': int.tryParse(workforce.text.trim()) ?? 1,
                                   'skills': skills.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
                                   'description': description.text.trim(),
-                                  'projectType': projectType,
-                                  'experienceLevel': experienceLevel,
                                 });
                                 if (mounted) {
                                   Navigator.pop(sheetCtx);
@@ -506,10 +619,25 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
           children: [
             const Icon(Icons.business, color: AppColors.primary),
             const SizedBox(width: 8),
-            Text('BuildHire Employer', style: textTheme.titleLarge?.copyWith(color: Colors.white)),
+            Expanded(
+              child: Text(
+                'BuildHire',
+                style: textTheme.titleLarge?.copyWith(color: Colors.white),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+            tooltip: 'Notifications',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.account_circle, color: Colors.white, size: 28),
             tooltip: 'Company Profile',
@@ -527,30 +655,21 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabIndex,
-        onTap: (idx) {
-          if (idx == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
-            ).then((_) => _loadCompanyData());
-          } else {
-            setState(() => _tabIndex = idx);
-          }
-        },
+        onTap: (idx) => setState(() => _tabIndex = idx),
         selectedItemColor: AppColors.primary,
         unselectedItemColor: Colors.black54,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.assignment_ind_outlined), activeIcon: Icon(Icons.assignment_ind), label: 'Applications'),
           BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Site Jobs'),
           BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics), label: 'Analytics'),
-          BottomNavigationBarItem(icon: Icon(Icons.domain_outlined), activeIcon: Icon(Icons.domain), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat_outlined), activeIcon: Icon(Icons.chat), label: 'Chats'),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: _showPostJobModal,
         backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Post Job', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        tooltip: 'Post Job',
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -567,8 +686,10 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                       _applicationsTab(textTheme),
                     ] else if (_tabIndex == 1) ...[
                       _siteJobsTab(textTheme),
-                    ] else ...[
+                    ] else if (_tabIndex == 2) ...[
                       _analyticsTab(textTheme),
+                    ] else ...[
+                      _chatsTab(textTheme),
                     ],
                   ],
                 ),
@@ -577,8 +698,132 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     );
   }
 
+  Widget _chatsTab(TextTheme textTheme) {
+    if (_companyConversations.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.chat_bubble_outline_rounded, size: 56, color: AppColors.textSecondary),
+            const SizedBox(height: 16),
+            Text('No applicant chats yet', style: textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              'When you update an application status with a remark, a conversation will be created here with the candidate.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final companyUserId = _myProfile?['id']?.toString();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Applicant Chats (${_companyConversations.length})',
+              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.dark),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh, color: AppColors.primary),
+              onPressed: _loadCompanyData,
+              tooltip: 'Refresh chats',
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ..._companyConversations.map((map) {
+          final conv = Conversation.fromJson(map, currentUserId: companyUserId);
+          final seekerName = conv.company.isNotEmpty ? conv.company : 'Applicant';
+          return Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(conversation: conv, isCompany: true),
+                  ),
+                ).then((_) => _loadCompanyData());
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: AppColors.dark,
+                      child: Text(
+                        seekerName.isNotEmpty ? seekerName[0].toUpperCase() : 'A',
+                        style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  seekerName,
+                                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              if (conv.lastMessageAt.isNotEmpty)
+                                Text(conv.lastMessageAt, style: textTheme.labelSmall),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            conv.jobTitle,
+                            style: textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            conv.lastMessage.isNotEmpty ? conv.lastMessage : 'No messages yet',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: conv.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (conv.unreadCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: CircleAvatar(
+                          radius: 10,
+                          backgroundColor: AppColors.primary,
+                          child: Text(
+                            '${conv.unreadCount}',
+                            style: textTheme.labelSmall?.copyWith(color: Colors.white, fontSize: 11),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   Widget _companyHeader(TextTheme textTheme) {
-    final companyName = _myProfile?['name']?.toString() ?? 'Employer Portal';
+    final rawName = _myProfile?['name']?.toString() ?? _myProfile?['companyName']?.toString() ?? _myProfile?['fullName']?.toString() ?? 'Employer Portal';
+    final companyName = rawName.replaceAll(RegExp(r'\s+Admin$', caseSensitive: false), '');
     final logoUrl = _myProfile?['logoUrl']?.toString();
     final status = (_myProfile?['verificationStatus'] ?? 'pending').toString().toUpperCase();
     final statusColor = status == 'VERIFIED' ? Colors.green : (status == 'REJECTED' ? AppColors.error : Colors.orange);
@@ -696,8 +941,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     final userPhone = user['phone'] ?? app['contactPhone'] ?? 'N/A';
     final jobTitle = job['title'] ?? 'Construction Role';
     final status = (app['status'] ?? 'pending').toString();
-    final appId = app['id']?.toString() ?? '';
-    final isSelected = _selectedAppIds.contains(appId);
 
     return InkWell(
       onTap: () => _showApplicationDetailsModal(app),
@@ -708,26 +951,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                if (status == 'pending')
-                  Checkbox(
-                    value: isSelected,
-                    onChanged: (val) {
-                      setState(() {
-                        if (val == true) {
-                          _selectedAppIds.add(appId);
-                        } else {
-                          _selectedAppIds.remove(appId);
-                        }
-                      });
-                    },
-                  ),
                 const CircleAvatar(
                   backgroundColor: Colors.black12,
                   child: Icon(Icons.person, color: AppColors.dark),
@@ -882,7 +1112,10 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   // --- TAB 3: ANALYTICS REPORT ---
 
   Widget _analyticsTab(TextTheme textTheme) {
-    final d = _reportsData ?? {};
+    var d = _reportsData ?? {};
+    if (d['data'] is Map) {
+      d = Map<String, dynamic>.from(d['data']);
+    }
     final totalJobs = d['totalJobs'] ?? _companyJobs.length;
     final totalApps = d['totalApplications'] ?? _applications.length;
     final avgApps = d['averageApplicationsPerJob'] ?? 0;

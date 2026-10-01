@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/bloc/worker_blocs.dart';
 import '../home/home_page.dart';
@@ -123,6 +124,7 @@ class _OtpScreenState extends State<OtpScreen> {
         listener: (context, state) {
           if (state is Loaded<Map<String, dynamic>>) {
             final data = state.data;
+            NotificationService.instance.syncDeviceToken();
             final worker = data['worker'] is Map ? Map<String, dynamic>.from(data['worker']) : null;
             final name = worker?['name']?.toString().trim() ?? '';
             final bool isProfileComplete = name.isNotEmpty && name.toLowerCase() != 'null';

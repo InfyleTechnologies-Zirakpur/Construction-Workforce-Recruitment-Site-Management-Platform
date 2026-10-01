@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/repositories/company_repository.dart';
 import '../company/company_profile_form_screen.dart';
@@ -61,6 +62,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
         await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       }
       await storage.write(key: 'role', value: 'company');
+      NotificationService.instance.syncDeviceToken();
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

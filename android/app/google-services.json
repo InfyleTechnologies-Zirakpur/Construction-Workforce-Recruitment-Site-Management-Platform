@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665418875582",
+    "project_id": "construcniton",
+    "storage_bucket": "construcniton.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665418875582:android:934c1a659e6c8076f654ef",
+        "android_client_info": {
+          "package_name": "com.example.construction_workforce_recruitment_site_management_platform"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbZ2WAY-Dh5t_glFnKKR0G5nb457N4x9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

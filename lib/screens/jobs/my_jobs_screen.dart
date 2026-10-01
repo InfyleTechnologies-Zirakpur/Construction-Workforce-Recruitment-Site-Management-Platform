@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -11,18 +10,20 @@ import '../../features/bloc/worker_blocs.dart';
 enum MyJobsFilter { saved, applied, archived }
 
 class MyJobsScreen extends StatefulWidget {
-  const MyJobsScreen({super.key});
+  final MyJobsFilter initialFilter;
+  const MyJobsScreen({super.key, this.initialFilter = MyJobsFilter.saved});
 
   @override
   State<MyJobsScreen> createState() => _MyJobsScreenState();
 }
 
 class _MyJobsScreenState extends State<MyJobsScreen> {
-  MyJobsFilter _selectedFilter = MyJobsFilter.saved;
+  late MyJobsFilter _selectedFilter;
 
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     context.read<JobsCubit>().load();
   }
 
@@ -58,7 +59,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return BlocBuilder<JobsCubit, LoadState<List<Job>>>(
+    final content = BlocBuilder<JobsCubit, LoadState<List<Job>>>(
       builder: (context, state) {
         if (state is Idle<List<Job>> || state is Loading<List<Job>>) {
           return const Padding(
@@ -116,6 +117,27 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
           ),
         );
       },
+    );
+
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
+    if (canPop) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            _selectedFilter == MyJobsFilter.applied
+                ? 'My Applications'
+                : _selectedFilter == MyJobsFilter.saved
+                    ? 'Saved Opportunities'
+                    : 'My Jobs',
+          ),
+        ),
+        body: SafeArea(child: content),
+      );
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: content,
     );
   }
 
@@ -221,6 +243,54 @@ class _JobStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final isApplied = filter == MyJobsFilter.applied;
+
+    final status = (job.applicationStatus ?? 'pending').toLowerCase();
+    final Color statusColor;
+    final String statusLabel;
+    final IconData statusIcon;
+    final String statusDescription;
+
+    if (!isApplied) {
+      statusLabel = 'Saved';
+      statusColor = AppColors.primary;
+      statusIcon = Icons.bookmark_added_outlined;
+      statusDescription = 'Saved opportunity';
+    } else {
+      switch (status) {
+        case 'accepted':
+          statusLabel = 'Accepted';
+          statusColor = const Color(0xFF16A34A);
+          statusIcon = Icons.check_circle_outline;
+          statusDescription = 'Status: Application accepted by employer';
+          break;
+        case 'rejected':
+          statusLabel = 'Rejected';
+          statusColor = const Color(0xFFDC2626);
+          statusIcon = Icons.highlight_off;
+          statusDescription = 'Status: Application rejected';
+          break;
+        case 'shortlisted':
+          statusLabel = 'Shortlisted';
+          statusColor = const Color(0xFF7C3AED);
+          statusIcon = Icons.star_border;
+          statusDescription = 'Status: Shortlisted for review';
+          break;
+        case 'withdrawn':
+          statusLabel = 'Withdrawn';
+          statusColor = Colors.grey;
+          statusIcon = Icons.remove_circle_outline;
+          statusDescription = 'Status: Application withdrawn';
+          break;
+        case 'pending':
+        default:
+          statusLabel = 'Under Review';
+          statusColor = const Color(0xFF2563EB);
+          statusIcon = Icons.schedule;
+          statusDescription = 'Status: Pending employer review';
+          break;
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(context.w(15)),
@@ -243,7 +313,7 @@ class _JobStatusCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(job.title, style: textTheme.titleSmall), const SizedBox(height: 2), Text(job.company, style: textTheme.bodySmall)])),
-              _statusChip(context, isApplied ? 'Application sent' : 'Saved', isApplied ? Colors.blue : AppColors.primary),
+              _statusChip(context, statusLabel, statusColor),
             ],
           ),
           const SizedBox(height: 14),
@@ -259,9 +329,15 @@ class _JobStatusCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.schedule, size: 16, color: Colors.black45),
-                const SizedBox(width: 5),
-                Text('Status: Pending employer review', style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                Icon(statusIcon, size: 16, color: statusColor),
+                const SizedBox(width: 6),
+                Text(
+                  statusDescription,
+                  style: textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
+                  ),
+                ),
               ],
             ),
           ],

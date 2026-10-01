@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/bloc/worker_blocs.dart';
+import '../company/company_home_screen.dart';
+import '../jobs/my_jobs_screen.dart';
 
-/// Full notifications list. Wire this up from the Home AppBar bell icon:
-///
-///   Navigator.of(context).push(
-///     MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-///   );
-///
-/// Assumes `NotificationsCubit` is already provided above this screen in the
-/// widget tree (same pattern as `ProfileCubit` in WorkerProfileScreen) —
-/// if it isn't yet, add it alongside your other cubits wherever those are
-/// provided (likely main.dart / an app-level MultiBlocProvider).
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -32,14 +25,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   IconData _iconFor(String type) {
     switch (type) {
-      case 'job':
-        return Icons.work_outline;
+      case 'application_update':
       case 'application':
         return Icons.assignment_turned_in_outlined;
+      case 'newMessage':
+      case 'message':
+      case 'chat':
+        return Icons.chat_bubble_outline;
+      case 'new_job':
+      case 'job':
+        return Icons.work_outline;
+      case 'attendance_event':
       case 'attendance':
         return Icons.access_time;
-      case 'project':
-        return Icons.construction_outlined;
+      case 'project_assignment':
+      case 'assignment':
+        return Icons.assignment_ind_outlined;
+      case 'site_assignment':
+        return Icons.location_city_outlined;
+      case 'daily_report_submitted':
+        return Icons.description_outlined;
+      case 'project_update':
+        return Icons.update_outlined;
+      case 'admin_announcement':
       case 'announcement':
         return Icons.campaign_outlined;
       default:
@@ -47,12 +55,63 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Color _iconColorFor(String type) {
+    switch (type) {
+      case 'application_update':
+        return Colors.green;
+      case 'newMessage':
+        return Colors.blue;
+      case 'new_job':
+        return AppColors.primary;
+      case 'admin_announcement':
+        return Colors.purple;
+      case 'attendance_event':
+        return Colors.orange;
+      default:
+        return AppColors.dark;
+    }
+  }
+
+  String _formatTime(String raw) {
+    if (raw.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      final now = DateTime.now();
+      final diff = now.difference(dt);
+      if (diff.inSeconds < 60) return 'Just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      if (diff.inDays == 1) return 'Yesterday';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return raw;
+    }
+  }
+
   Future<void> _onTapNotification(WorkerNotification notification) async {
     if (!notification.isRead) {
       await context.read<NotificationsCubit>().markRead(notification.id);
     }
-    // TODO: route to the relevant screen based on notification.type
-    // (e.g. job -> job details, application -> My Jobs tab, attendance -> attendance screen).
+
+    if (!mounted) return;
+    if (notification.type == 'application_update' || notification.type == 'application') {
+      const storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      final role = await storage.read(key: 'role');
+      if (!mounted) return;
+      if (role == 'company') {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const CompanyHomeScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const MyJobsScreen(initialFilter: MyJobsFilter.applied)),
+        );
+      }
+    }
   }
 
   @override
@@ -60,7 +119,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.done_all),
+            tooltip: 'Mark all as read',
+            onPressed: () async {
+              await context.read<NotificationsCubit>().markAllRead();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All notifications marked as read')),
+                );
+              }
+            },
+          ),
+        ],
+      ),
       body: BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
         builder: (context, state) {
           if (state is Idle<List<WorkerNotification>> ||
@@ -120,18 +195,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, i) {
                 final n = notifications[i];
+                final color = _iconColorFor(n.type);
+
                 return InkWell(
                   onTap: () => _onTapNotification(n),
                   child: Container(
-                    color: n.isRead ? Colors.transparent : AppColors.primary.withOpacity(0.05),
+                    color: n.isRead ? Colors.transparent : color.withOpacity(0.06),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: AppColors.dark.withOpacity(0.08),
-                          child: Icon(_iconFor(n.type), color: AppColors.dark, size: 20),
+                          backgroundColor: color.withOpacity(0.12),
+                          child: Icon(_iconFor(n.type), color: color, size: 20),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -164,8 +241,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               Text(n.body, style: textTheme.bodySmall),
                               const SizedBox(height: 4),
                               Text(
-                                n.time,
-                                style: textTheme.labelSmall,
+                                _formatTime(n.time),
+                                style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
                               ),
                             ],
                           ),
