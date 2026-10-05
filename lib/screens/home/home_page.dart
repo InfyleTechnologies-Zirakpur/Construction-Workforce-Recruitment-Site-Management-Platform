@@ -12,6 +12,8 @@ import '../profile/worker_profile_screen.dart';
 import '../jobs/my_jobs_screen.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../feed/feed_screen.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,8 +25,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _navIndex = 0;
 
-  // Which trade chip is active. null = "All". Defaults to whatever matches
-  // the worker's own profile skills once that loads (see _applyDefaultTrade).
   _Trade? _selectedTrade;
   bool _defaultTradeApplied = false;
 
@@ -159,12 +159,14 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(width: 8),
         ],
       ),
-      body: _navIndex == 3
+      body: _navIndex == 4
           ? const WorkerProfileScreen()
-          : _navIndex == 1
-          ? const MyJobsScreen()
-          : _navIndex == 2
+          : _navIndex == 3
           ? const MessagesScreen()
+          : _navIndex == 2
+          ? const MyJobsScreen()
+          : _navIndex == 0
+          ? const FeedScreen()
           : SafeArea(
         child: RefreshIndicator(
           onRefresh: () => context.read<JobsCubit>().load(),
@@ -254,14 +256,19 @@ class _HomePageState extends State<HomePage> {
         onDestinationSelected: (i) => setState(() => _navIndex = i),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: AppColors.primary),
-            label: 'Home',
+            icon: Icon(Icons.dynamic_feed_outlined),
+            selectedIcon: Icon(Icons.feed, color: AppColors.primary),
+            label: 'Feed',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.work_outline),
+            selectedIcon: Icon(Icons.work, color: AppColors.primary),
+            label: 'Jobs',
           ),
           NavigationDestination(
             icon: Icon(Icons.bookmark_border_outlined),
             label: 'My Jobs',
-            selectedIcon: Icon(Icons.bookmark,color: AppColors.primary),
+            selectedIcon: Icon(Icons.bookmark, color: AppColors.primary),
           ),
           NavigationDestination(
             icon: Icon(Icons.messenger_outline),
@@ -275,6 +282,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+
       ),
     );
   }

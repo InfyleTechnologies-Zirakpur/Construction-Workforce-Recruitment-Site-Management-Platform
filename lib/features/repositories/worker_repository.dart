@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/models.dart';
@@ -42,18 +43,15 @@ class WorkerRepository {
                 jobMap[job.id] = job;
               }
             } catch (itemErr) {
-              // ignore: avoid_print
-              print('⚠️ [JOB PARSE ERROR] Skipping malformed job item: $itemErr');
             }
           }
         }
       }
     } catch (e) {
-      // ignore: avoid_print
+    
       print('=== FETCH JOBS ERROR: $e ===');
     }
 
-    // 2. Fetch saved jobs list to ensure saved jobs are included
     try {
       final savedResponse = await _client.dio.get('/jobs/saved/list');
       final payload = savedResponse.data;
@@ -88,7 +86,6 @@ class WorkerRepository {
       }
     } catch (_) {}
 
-    // 3. Fetch applications to ensure applied jobs are included & statuses are updated
     try {
       final appResponse = await _client.dio.get('/applications');
       final payload = appResponse.data;
@@ -180,6 +177,28 @@ class WorkerRepository {
       return [];
     }
   }
+
+  /// Get Active and New Job Counts (GET /jobs/counts)
+  Future<Map<String, int>> getJobCounts() async {
+    try {
+      final response = await _client.dio.get('/jobs/counts');
+      final payload = response.data;
+      final data = payload is Map ? (payload['data'] ?? payload) : payload;
+      if (data is Map) {
+        final activeJobs = (data['activeJobs'] as num?)?.toInt() ?? 0;
+        final newJobsToday = (data['newJobsToday'] as num?)?.toInt() ?? 0;
+        return {
+          'activeJobs': activeJobs,
+          'newJobsToday': newJobsToday,
+        };
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] getJobCounts API error: $e');
+    }
+    return {'activeJobs': 0, 'newJobsToday': 0};
+  }
+
   Future<List<Map<String, dynamic>>> fetchApplications() async {
     try {
       final response = await _client.dio.get('/applications');
@@ -491,7 +510,184 @@ class WorkerRepository {
           'refreshToken': refreshToken,
       });
     } catch (_) {
-      // Best-effort: local session is cleared by AuthCubit regardless.
+     
     }
+  }
+
+
+
+
+  Future<Map<String, dynamic>> fetchPosts({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? tag,
+    String? authorId,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      if (tag != null && tag.trim().isNotEmpty) 'tag': tag.trim(),
+      if (authorId != null && authorId.trim().isNotEmpty) 'authorId': authorId.trim(),
+    };
+
+    final response = await _client.dio.get('/posts', queryParameters: queryParams);
+    final payload = response.data;
+    List rawItems = [];
+    int total = 0;
+    int totalPages = 1;
+
+    if (payload is Map) {
+      final data = payload['data'];
+      if (data is Map) {
+        if (data['items'] is List) rawItems = data['items'];
+        total = (data['total'] as num?)?.toInt() ?? rawItems.length;
+        totalPages = (data['totalPages'] as num?)?.toInt() ?? 1;
+      } else if (data is List) {
+        rawItems = data;
+      } else if (payload['items'] is List) {
+        rawItems = payload['items'];
+      }
+    }
+
+    final currentUserId = await _getCurrentUserId();
+    final posts = rawItems
+        .whereType<Map>()
+        .map((item) => FeedPost.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId))
+        .toList();
+
+    return {
+      'items': posts,
+      'total': total,
+      'page': page,
+      'limit': limit,
+      'totalPages': totalPages,
+    };
+  }
+
+  /// 2. Get Post Detail (GET /posts/:id)
+  Future<FeedPost> getPostDetail(String id) async {
+    final response = await _client.dio.get('/posts/$id');
+    final payload = response.data;
+    final data = payload is Map ? (payload['data'] ?? payload) : payload;
+    final currentUserId = await _getCurrentUserId();
+    return FeedPost.fromJson(Map<String, dynamic>.from(data), currentUserId: currentUserId);
+  }
+
+  /// 3. Create Post (POST /posts)
+  Future<FeedPost> createPost({
+    required String title,
+    required String description,
+    String? location,
+    List<String>? tags,
+    List<String>? photos,
+    String? coverPhoto,
+    double? latitude,
+    double? longitude,
+    String visibility = 'PUBLIC',
+  }) async {
+    final body = <String, dynamic>{
+      'title': title,
+      'description': description,
+      if (location != null && location.isNotEmpty) 'location': location,
+      if (tags != null && tags.isNotEmpty) 'tags': tags,
+      if (photos != null && photos.isNotEmpty) 'photos': photos,
+      if (coverPhoto != null && coverPhoto.isNotEmpty) 'coverPhoto': coverPhoto,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      'visibility': visibility,
+    };
+
+    final response = await _client.dio.post('/posts', data: body);
+    final payload = response.data;
+    final data = payload is Map ? (payload['data'] ?? payload) : payload;
+    return FeedPost.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  /// 4. Update Post (PATCH /posts/:id)
+  Future<FeedPost> updatePost(String id, {String? description, String? location, String? title}) async {
+    final body = <String, dynamic>{
+      if (title != null && title.isNotEmpty) 'title': title,
+      if (description != null && description.isNotEmpty) 'description': description,
+      if (location != null && location.isNotEmpty) 'location': location,
+    };
+
+    final response = await _client.dio.patch('/posts/$id', data: body);
+    final payload = response.data;
+    final data = payload is Map ? (payload['data'] ?? payload) : payload;
+    return FeedPost.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  /// 5. Delete Post (Soft Delete) (DELETE /posts/:id)
+  Future<void> deletePost(String id) async {
+    await _client.dio.delete('/posts/$id');
+  }
+
+  /// 6. Toggle Like Post (POST /posts/:id/like)
+  Future<Map<String, dynamic>> toggleLikePost(String id) async {
+    final response = await _client.dio.post('/posts/$id/like');
+    final payload = response.data;
+    final data = payload is Map ? (payload['data'] ?? payload) : payload;
+    return {
+      'isLiked': data['isLiked'] == true,
+      'likesCount': (data['likesCount'] as num?)?.toInt() ?? 0,
+    };
+  }
+
+  /// 7. Share Post (POST /posts/:id/share)
+  Future<int> sharePost(String id) async {
+    final response = await _client.dio.post('/posts/$id/share');
+    final payload = response.data;
+    final data = payload is Map ? (payload['data'] ?? payload) : payload;
+    return (data['sharesCount'] as num?)?.toInt() ?? 0;
+  }
+
+  /// 8. Add Comment to Post (POST /posts/:id/comments)
+  Future<PostComment> addComment(String postId, String content) async {
+    final response = await _client.dio.post('/posts/$postId/comments', data: {'content': content});
+    final payload = response.data;
+    final data = payload is Map ? (payload['data'] ?? payload) : payload;
+    final currentUserId = await _getCurrentUserId();
+    return PostComment.fromJson(Map<String, dynamic>.from(data), currentUserId: currentUserId);
+  }
+
+  /// 9. List Comments for Post (GET /posts/:id/comments)
+  Future<Map<String, dynamic>> fetchComments(String postId, {int page = 1, int limit = 10}) async {
+    final response = await _client.dio.get('/posts/$postId/comments', queryParameters: {
+      'page': page,
+      'limit': limit,
+    });
+    final payload = response.data;
+    List rawItems = [];
+    int total = 0;
+    int totalPages = 1;
+
+    if (payload is Map) {
+      final data = payload['data'];
+      if (data is Map) {
+        if (data['items'] is List) rawItems = data['items'];
+        total = (data['total'] as num?)?.toInt() ?? rawItems.length;
+        totalPages = (data['totalPages'] as num?)?.toInt() ?? 1;
+      } else if (data is List) {
+        rawItems = data;
+      } else if (payload['items'] is List) {
+        rawItems = payload['items'];
+      }
+    }
+
+    final currentUserId = await _getCurrentUserId();
+    final comments = rawItems
+        .whereType<Map>()
+        .map((item) => PostComment.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId))
+        .toList();
+
+    return {
+      'items': comments,
+      'total': total,
+      'page': page,
+      'limit': limit,
+      'totalPages': totalPages,
+    };
   }
 }

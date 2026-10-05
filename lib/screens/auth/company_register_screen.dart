@@ -62,6 +62,23 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
         await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       }
       await storage.write(key: 'role', value: 'company');
+      // Persist userId & companyName from registration response
+      final user = data['user'] ?? data['company'] ?? data;
+      if (user is Map) {
+        if (user['id'] != null) await storage.write(key: 'userId', value: user['id'].toString());
+        final compName = user['companyName']?.toString() ??
+            user['name']?.toString() ??
+            user['fullName']?.toString() ??
+            _fullName.text.trim();
+        if (compName.isNotEmpty) {
+          await storage.write(key: 'companyName', value: compName);
+        }
+      } else {
+        // Fallback: save the entered name as companyName
+        if (_fullName.text.trim().isNotEmpty) {
+          await storage.write(key: 'companyName', value: _fullName.text.trim());
+        }
+      }
       NotificationService.instance.syncDeviceToken();
 
       if (!mounted) return;

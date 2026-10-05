@@ -8,6 +8,7 @@ import '../../features/repositories/company_repository.dart';
 import '../auth/login_screen.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../feed/feed_screen.dart';
 import 'company_profile_screen.dart';
 import 'company_profile_form_screen.dart';
 
@@ -673,43 +674,50 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         onTap: (idx) => setState(() => _tabIndex = idx),
         selectedItemColor: AppColors.primary,
         unselectedItemColor: Colors.black54,
+        type: BottomNavigationBarType.fixed,
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dynamic_feed_outlined), activeIcon: Icon(Icons.dynamic_feed), label: 'Feed'),
           BottomNavigationBarItem(icon: Icon(Icons.assignment_ind_outlined), activeIcon: Icon(Icons.assignment_ind), label: 'Applications'),
           BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Site Jobs'),
           BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics), label: 'Analytics'),
           BottomNavigationBarItem(icon: Icon(Icons.chat_outlined), activeIcon: Icon(Icons.chat), label: 'Chats'),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showPostJobModal,
-        backgroundColor: AppColors.primary,
-        tooltip: 'Post Job',
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadCompanyData,
-          child: _isLoading
-              ? const Padding(padding: EdgeInsets.all(20), child: SmartSkeleton.list(itemCount: 4))
-              : ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    _companyHeader(textTheme),
-                    const SizedBox(height: 16),
+      floatingActionButton: _tabIndex == 0
+          ? null
+          : FloatingActionButton(
+              onPressed: _showPostJobModal,
+              backgroundColor: AppColors.primary,
+              tooltip: 'Post Job',
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
+      body: _tabIndex == 0
+          ? const FeedScreen()
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _loadCompanyData,
+                child: _isLoading
+                    ? const Padding(padding: EdgeInsets.all(20), child: SmartSkeleton.list(itemCount: 4))
+                    : ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: [
+                          _companyHeader(textTheme),
+                          const SizedBox(height: 16),
 
-                    if (_tabIndex == 0) ...[
-                      _applicationsTab(textTheme),
-                    ] else if (_tabIndex == 1) ...[
-                      _siteJobsTab(textTheme),
-                    ] else if (_tabIndex == 2) ...[
-                      _analyticsTab(textTheme),
-                    ] else ...[
-                      _chatsTab(textTheme),
-                    ],
-                  ],
-                ),
-        ),
-      ),
+                          if (_tabIndex == 1) ...[
+                            _applicationsTab(textTheme),
+                          ] else if (_tabIndex == 2) ...[
+                            _siteJobsTab(textTheme),
+                          ] else if (_tabIndex == 3) ...[
+                            _analyticsTab(textTheme),
+                          ] else ...[
+                            _chatsTab(textTheme),
+                          ],
+                        ],
+                      ),
+              ),
+            ),
+
     );
   }
 
@@ -1231,6 +1239,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         ],
       ),
     );
+    
   }
 
   Widget _emptyCard(TextTheme textTheme, String title, String subtitle) {
