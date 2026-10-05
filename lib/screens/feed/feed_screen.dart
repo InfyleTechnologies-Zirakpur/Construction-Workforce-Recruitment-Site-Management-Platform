@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -93,11 +94,28 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   void _showShareModal(FeedPost post) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ShareBottomSheet(post: post),
-    );
+    context.read<FeedCubit>().incrementShare(post.id);
+
+    final String authorPart = post.authorName.trim().isNotEmpty
+        ? 'Posted by: ${post.authorName.trim()}\n'
+        : '';
+    final String shareText =
+        '${post.content}\n\n${authorPart}-- Shared via BuildHire App';
+
+    try {
+      Share.share(
+        shareText,
+        subject: 'BuildHire Feed Post',
+      );
+    } catch (_) {
+      if (mounted) {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (_) => _ShareBottomSheet(post: post),
+        );
+      }
+    }
   }
 
   void _confirmDeletePost(FeedPost post) {
@@ -1460,10 +1478,14 @@ class _ShareBottomSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _shareOption(
-                icon: Icons.copy,
-                label: 'Copy Text',
-                color: AppColors.dark,
-                onTap: () => _copyToClipboard(context),
+                icon: Icons.share_rounded,
+                label: 'All Apps',
+                color: AppColors.primary,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.read<FeedCubit>().incrementShare(post.id);
+                  Share.share(_generateShareText());
+                },
               ),
               _shareOption(
                 icon: Icons.chat,
@@ -1472,8 +1494,14 @@ class _ShareBottomSheet extends StatelessWidget {
                 onTap: () => _shareWhatsApp(context),
               ),
               _shareOption(
+                icon: Icons.copy,
+                label: 'Copy Text',
+                color: AppColors.dark,
+                onTap: () => _copyToClipboard(context),
+              ),
+              _shareOption(
                 icon: Icons.sms_outlined,
-                label: 'SMS / Msg',
+                label: 'SMS',
                 color: AppColors.primary,
                 onTap: () => _shareSMS(context),
               ),
