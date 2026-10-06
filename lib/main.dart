@@ -16,13 +16,12 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
+
   await Firebase.initializeApp();
 
-  // Register the background message handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // Initialize FCM: permissions, token, listeners
+ 
   await NotificationService.instance.initialize();
 
   runApp(
@@ -85,9 +84,11 @@ class _BuildHireAppState extends State<BuildHireApp> {
         BlocProvider(create: (_) => AuthCubit(repository)),
         BlocProvider(create: (_) => ProfileCubit(repository)),
         BlocProvider(create: (_) => JobsCubit(repository)),
+        BlocProvider(create: (_) => FeedCubit()),
         BlocProvider(create: (_) => DashboardCubit(repository)),
         BlocProvider(create: (_) => MessagesCubit(repository)),
         BlocProvider(create: (_) => NotificationsCubit(repository)),
+
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,

@@ -33,10 +33,19 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
       if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       await storage.write(key: 'role', value: 'company');
-      // Persist userId for conversation message ownership detection
-      final user = data['user'] ?? data;
-      if (user is Map && user['id'] != null) {
-        await storage.write(key: 'userId', value: user['id'].toString());
+      // Persist userId & companyName
+      final user = data['user'] ?? data['company'] ?? data;
+      if (user is Map) {
+        if (user['id'] != null) await storage.write(key: 'userId', value: user['id'].toString());
+        final compName = user['companyName']?.toString() ??
+            user['businessName']?.toString() ??
+            user['name']?.toString() ??
+            user['fullName']?.toString();
+        // ignore: avoid_print
+        print('🏢 [CompanyLogin] Resolved companyName: "$compName" from keys: ${user.keys.toList()}');
+        if (compName != null && compName.isNotEmpty) {
+          await storage.write(key: 'companyName', value: compName);
+        }
       }
       NotificationService.instance.syncDeviceToken();
 
