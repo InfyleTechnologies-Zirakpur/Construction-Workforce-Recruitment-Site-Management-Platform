@@ -5,11 +5,11 @@ import '../../core/services/notification_service.dart';
 import '../../core/utils/responsive.dart';
 import '../company/company_home_screen.dart';
 import '../../features/repositories/company_repository.dart';
-
 import 'company_register_screen.dart';
 
 class CompanyLoginScreen extends StatefulWidget {
   const CompanyLoginScreen({super.key});
+
   @override
   State<CompanyLoginScreen> createState() => _CompanyLoginScreenState();
 }
@@ -19,20 +19,32 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
   final _email = TextEditingController();
   final _pass = TextEditingController();
   bool _loading = false;
+  bool _obscurePass = true;
+  bool _rememberMe = true;
   String? _error;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _pass.dispose();
+    super.dispose();
+  }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() {_loading = true; _error = null;});
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
     try {
       final repo = CompanyRepository();
       final data = await repo.loginCompany(email: _email.text.trim(), password: _pass.text);
-      const storage = FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
-      );
+      const storage = FlutterSecureStorage();
       if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       await storage.write(key: 'role', value: 'company');
+
       // Persist userId & companyName
       final user = data['user'] ?? data['company'] ?? data;
       if (user is Map) {
@@ -41,8 +53,6 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
             user['businessName']?.toString() ??
             user['name']?.toString() ??
             user['fullName']?.toString();
-        // ignore: avoid_print
-        print('🏢 [CompanyLogin] Resolved companyName: "$compName" from keys: ${user.keys.toList()}');
         if (compName != null && compName.isNotEmpty) {
           await storage.write(key: 'companyName', value: compName);
         }
@@ -50,7 +60,10 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
       NotificationService.instance.syncDeviceToken();
 
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const CompanyHomeScreen()), (_) => false);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const CompanyHomeScreen()),
+        (_) => false,
+      );
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -61,48 +74,346 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Company Login')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(context.w(24)),
-          child: Form(
-            key: _formKey,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Hire workers faster', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.dark, fontWeight: FontWeight.bold)),
-              SizedBox(height: context.h(8)),
-              Text('Sign in with your company email', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
-              SizedBox(height: context.h(24)),
-              TextFormField(controller: _email, decoration: const InputDecoration(labelText: 'Email'), validator: (v) => (v??'').contains('@') ? null : 'Enter email'),
-              SizedBox(height: context.h(12)),
-              TextFormField(controller: _pass, obscureText: true, decoration: const InputDecoration(labelText: 'Password'), validator: (v) => (v??'').length >= 8 ? null : 'Min 8 chars'),
-              if (_error != null) ...[SizedBox(height: context.h(12)), Text(_error!, style: const TextStyle(color: AppColors.error))],
-              SizedBox(height: context.h(24)),
-              SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _loading ? null : _login, child: _loading ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Sign In'))),
-              SizedBox(height: context.h(12)),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CompanyRegisterScreen()),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Background building graphic extending behind logo & titles
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: context.h(290),
+            child: ShaderMask(
+              shaderCallback: (rect) {
+                return const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.black, Colors.black, Colors.transparent],
+                  stops: [0.0, 0.75, 1.0],
+                ).createShader(rect);
+              },
+              blendMode: BlendMode.dstIn,
+              child: Opacity(
+                opacity: 0.85,
+                child: Image.asset(
+                  'assets/company_bg.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topRight,
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top App Bar
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.w(16),
+                    vertical: context.h(8),
                   ),
-                  child: const Text.rich(
-                    TextSpan(
-                      text: "Don't have a company account? ",
-                      style: TextStyle(color: AppColors.textSecondary),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => Navigator.pop(context),
+                        child: const Padding(
+                          padding: EdgeInsets.all(6.0),
+                          child: Icon(Icons.arrow_back, color: Color(0xFF1E2A38), size: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Company Login',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E2A38),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: context.w(24)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextSpan(
-                          text: 'Sign Up',
-                          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                        SizedBox(height: context.h(16)),
+
+                        // Company Brand Logo
+                        Image.asset(
+                          'assets/logo_company.png',
+                          width: context.w(62),
+                          height: context.w(62),
+                          fit: BoxFit.contain,
+                        ),
+                        SizedBox(height: context.h(22)),
+
+                        // Title
+                        Text(
+                          'Hire workers faster',
+                          style: TextStyle(
+                            fontSize: context.sp(28),
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF111827),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        SizedBox(height: context.h(8)),
+
+                        // Subtitle
+                        Text(
+                          'Sign in with your company email to manage jobs, applications and more.',
+                          style: TextStyle(
+                            fontSize: context.sp(14),
+                            color: const Color(0xFF6B7280),
+                            height: 1.4,
+                          ),
+                        ),
+                        SizedBox(height: context.h(28)),
+
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Email Input
+                              TextFormField(
+                                controller: _email,
+                                keyboardType: TextInputType.emailAddress,
+                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                decoration: InputDecoration(
+                                  hintText: 'Email',
+                                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                                  prefixIcon: const Icon(
+                                    Icons.mail_outline_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                  ),
+                                ),
+                                validator: (v) => (v != null && v.contains('@')) ? null : 'Enter valid email',
+                              ),
+                              SizedBox(height: context.h(14)),
+
+                              // Password Input
+                              TextFormField(
+                                controller: _pass,
+                                obscureText: _obscurePass,
+                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                decoration: InputDecoration(
+                                  hintText: 'Password',
+                                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                                  prefixIcon: const Icon(
+                                    Icons.lock_outline_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                      color: const Color(0xFF6B7280),
+                                      size: 20,
+                                    ),
+                                    onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                  ),
+                                ),
+                                validator: (v) => (v != null && v.length >= 6) ? null : 'Min 6 characters',
+                              ),
+
+                              if (_error != null) ...[
+                                SizedBox(height: context.h(10)),
+                                Text(
+                                  _error!,
+                                  style: const TextStyle(color: AppColors.error, fontSize: 13),
+                                ),
+                              ],
+                              SizedBox(height: context.h(14)),
+
+                              // Remember Me & Forgot Password Row
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: Checkbox(
+                                          value: _rememberMe,
+                                          onChanged: (v) => setState(() => _rememberMe = v ?? true),
+                                          activeColor: const Color(0xFF1E2A38),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          side: const BorderSide(color: Color(0xFF9CA3AF), width: 1.2),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        'Remember me',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF374151),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Please contact administrator to reset company password'),
+                                        ),
+                                      );
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text(
+                                      'Forgot password?',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFFFA6400),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: context.h(24)),
+
+                              // Sign In Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: context.h(52),
+                                child: ElevatedButton(
+                                  onPressed: _loading ? null : _login,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFA6400),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: _loading
+                                      ? const SizedBox(
+                                          height: 22,
+                                          width: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Sign In',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              SizedBox(height: context.h(18)),
+
+                              // Sign Up Link
+                              Center(
+                                child: TextButton(
+                                  onPressed: () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const CompanyRegisterScreen(),
+                                    ),
+                                  ),
+                                  child: const Text.rich(
+                                    TextSpan(
+                                      text: "Don't have a company account? ",
+                                      style: TextStyle(
+                                        color: Color(0xFF6B7280),
+                                        fontSize: 14,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Sign Up',
+                                          style: TextStyle(
+                                            color: Color(0xFFFA6400),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: context.h(12)),
+
+                              // Back to seeker login Link
+                              Center(
+                                child: TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text(
+                                    'Back to seeker login',
+                                    style: TextStyle(
+                                      color: Color(0xFFFA6400),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: context.h(24)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: context.h(4)),
-              Center(child: TextButton(onPressed: () => Navigator.pop(context), child: const Text('Back to seeker login'))),
-            ]),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
