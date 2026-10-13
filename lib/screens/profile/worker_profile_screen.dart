@@ -6,10 +6,14 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../core/services/notification_service.dart';
-import '../../core/utils/responsive.dart';
-import '../../core/widgets/skeleton/smart_skeleton.dart';
+import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../features/bloc/worker_blocs.dart';
 import '../auth/login_screen.dart';
+import 'widgets/edit_profile_sheet.dart';
+import 'widgets/profile_details_card.dart';
+import 'widgets/profile_documents_card.dart';
+import 'widgets/profile_header_card.dart';
+import 'widgets/profile_stats_bar.dart';
 
 class WorkerProfileScreen extends StatefulWidget {
   const WorkerProfileScreen({super.key});
@@ -28,6 +32,29 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     context.read<ProfileCubit>().load();
   }
 
+  static String _subtypeOf(String t) {
+    final v = t.trim().toLowerCase();
+    if (v == 'aadhaar') return 'aadhaar';
+    if (v.startsWith('experience')) return 'experience';
+    if (v.startsWith('skill')) return 'skill';
+    return v;
+  }
+
+  int _countVerifiedDocs(List<Map<String, dynamic>> docs) {
+    final types = docs
+        .map((d) => _subtypeOf((d['type'] ?? '').toString()))
+        .toSet();
+    return ['aadhaar', 'experience', 'skill']
+        .where((t) => types.contains(t))
+        .length;
+  }
+
+  bool _isKycVerified(List<Map<String, dynamic>> docs) {
+    return docs.any(
+      (d) => _subtypeOf((d['type'] ?? '').toString()) == 'aadhaar',
+    );
+  }
+
   Future<void> _uploadPhoto() async {
     final image = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -43,7 +70,9 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     if (!mounted) return;
 
     setState(() => _isUploadingPhoto = false);
-    _showMessage(url == null ? 'Photo upload failed.' : 'Profile photo updated.');
+    _showMessage(
+      url == null ? 'Photo upload failed.' : 'Profile photo updated.',
+    );
     if (url != null) context.read<ProfileCubit>().load();
   }
 
@@ -74,216 +103,35 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   }
 
   void _editProfile(WorkerProfile profile) {
-    final name = TextEditingController(text: profile.name);
-    final city = TextEditingController(text: profile.city);
-    final salary = TextEditingController(
-      text: profile.salaryExpectation.replaceAll(RegExp(r'[^0-9]'), ''),
-    );
-    final skills = TextEditingController(text: profile.skills.join(', '));
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Edit professional profile',
-                    style: Theme.of(sheetContext).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: name,
-                    decoration: const InputDecoration(labelText: 'Full name'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: city,
-                    decoration: const InputDecoration(
-                      labelText: 'Preferred location',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: salary,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Expected daily salary',
-                      prefixText: '₹ ',
-                      suffixText: '/day',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: skills,
-                    decoration: const InputDecoration(
-                      labelText: 'Skills',
-                      hintText: 'Electrician, Wiring',
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<ProfileCubit>().update({
-                          'name': name.text.trim(),
-                          'city': city.text.trim(),
-                          'salaryExpectation': '₹${salary.text.trim()}/day',
-                          'skills': skills.text
-                              .split(',')
-                              .map((item) => item.trim())
-                              .where((item) => item.isNotEmpty)
-                              .toList(),
-                        });
-                        Navigator.pop(sheetContext);
-                      },
-                      child: const Text('Save changes'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    EditProfileSheet.show(
+      context,
+      profile: profile,
+      onSave: (data) => context.read<ProfileCubit>().update(data),
     );
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
-      builder: (context, state) {
-        if (state is Idle<WorkerProfile> || state is Loading<WorkerProfile>) {
-          return const Padding(
-            padding: EdgeInsets.all(20),
-            child: SmartSkeleton.list(
-              itemCount: 4,
-              hasLeading: true,
-              leadingIsCircle: true,
-              hasTags: false,
-            ),
-          );
-        }
-
-        if (state is Failed<WorkerProfile>) {
-          return Center(
-            child: Text('Unable to load profile', style: textTheme.titleMedium),
-          );
-        }
-
-        final profile = (state as Loaded<WorkerProfile>).data;
-        return RefreshIndicator(
-          onRefresh: () => context.read<ProfileCubit>().load(),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 680),
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  context.w(20),
-                  context.h(20),
-                  context.w(20),
-                  context.h(32),
-                ),
-                children: [
-                  _profileHeader(context, profile, textTheme),
-                  SizedBox(height: context.h(16)),
-                  _section(
-                    context,
-                    title: 'Professional details',
-                    icon: Icons.badge_outlined,
-                    children: [
-                      _detail(Icons.phone_outlined, 'Mobile number', '+91 ${profile.phone}'),
-                      _detail(Icons.location_on_outlined, 'Preferred location', profile.city),
-                      _detail(Icons.payments_outlined, 'Salary expectation', profile.salaryExpectation),
-                      _detail(Icons.construction_outlined, 'Skills', profile.skills.join(', ')),
-                    ],
-                  ),
-                  SizedBox(height: context.h(16)),
-                  _section(
-                    context,
-                    title: 'Documents',
-                    icon: Icons.folder_shared_outlined,
-                    children: [
-                      Text(
-                        'Upload documents for contractor verification.',
-                        style: textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      _documentRow('Aadhaar card', 'aadhaar', profile.documents),
-                      _documentRow('Experience certificate', 'experience_certificate', profile.documents),
-                      _documentRow('Skill certificate', 'skill_certificate', profile.documents),
-                      if (_isUploadingDocument) const LinearProgressIndicator(),
-                    ],
-                  ),
-                  SizedBox(height: context.h(12)),
-                  OutlinedButton.icon(
-                    onPressed: () => _editProfile(profile),
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit profile details'),
-                  ),
-                  SizedBox(height: context.h(12)),
-                  OutlinedButton.icon(
-                    onPressed: () => _confirmLogout(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                    ),
-                    icon: const Icon(Icons.logout, color: AppColors.error),
-                    label: const Text('Log out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Log out', style: TextStyle(color: AppColors.dark, fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to log out? ', style: TextStyle(color: AppColors.dark)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Log out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    final confirm = await AppConfirmDialog.show(
+      context,
+      title: 'Log Out',
+      message: 'Are you sure you want to log out of BuildHire? You will need to verify your phone number to sign back in.',
+      confirmLabel: 'Log Out',
+      cancelLabel: 'Cancel',
+      icon: Icons.logout_rounded,
+      isDestructive: true,
     );
 
-    if (confirm == true && context.mounted) {
-      // Capture cubits + navigator BEFORE async gaps (lint-safe).
+    if (confirm && context.mounted) {
       final authCubit = context.read<AuthCubit>();
       final profileCubit = context.read<ProfileCubit>();
       final jobsCubit = context.read<JobsCubit>();
@@ -292,13 +140,9 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       final notificationsCubit = context.read<NotificationsCubit>();
       final navigator = Navigator.of(context, rootNavigator: true);
 
-      // Clear image cache
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
 
-      // Full server logout: unregisters FCM device + POST /auth/logout
-      // (updates job_seeker presence state on backend) while the token
-      // is still in secure storage, then wipes storage + resets state.
       try {
         await NotificationService.instance.handleLogout();
       } catch (_) {}
@@ -306,8 +150,6 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
         await authCubit.logout();
       } catch (_) {}
 
-      // Reset in-memory feature state so the next login starts clean
-      // (prevents stale profile/jobs leaking into a different number).
       try {
         profileCubit.reset();
       } catch (_) {}
@@ -331,141 +173,199 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     }
   }
 
-  Widget _profileHeader(
-    BuildContext context,
-    WorkerProfile profile,
-    TextTheme textTheme,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(context.w(18)),
-      decoration: BoxDecoration(
-        color: AppColors.dark,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              CircleAvatar(
-                radius: context.w(34),
-                backgroundColor: Colors.white,
-                backgroundImage: profile.profilePhotoUrl == null
-                    ? null
-                    : NetworkImage(profile.profilePhotoUrl!),
-                child: profile.profilePhotoUrl == null
-                    ? Icon(Icons.person, size: context.sp(38), color: AppColors.dark)
-                    : null,
-              ),
-              Positioned(
-                right: -3,
-                bottom: -3,
-                child: InkWell(
-                  onTap: _isUploadingPhoto ? null : _uploadPhoto,
-                  child: CircleAvatar(
-                    radius: context.w(14),
-                    backgroundColor: AppColors.primary,
-                    child: _isUploadingPhoto
-                        ? const SizedBox(
-                            height: 14,
-                            width: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.camera_alt, size: 15, color: Colors.white),
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
+      builder: (context, state) {
+        if (state is Idle<WorkerProfile> || state is Loading<WorkerProfile>) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 60),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    color: AppColors.primary,
+                    strokeWidth: 3.5,
                   ),
-                ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Loading profile...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(profile.name, style: textTheme.titleLarge?.copyWith(color: Colors.white)),
-                const SizedBox(height: 3),
-                Text('Worker profile', style: textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-                const SizedBox(height: 8),
-                Text('Tap the camera to update your photo', style: textTheme.bodySmall?.copyWith(color: Colors.white60)),
-              ],
+            ),
+          );
+        }
+
+        if (state is Failed<WorkerProfile>) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: const BoxDecoration(
+                      color: AppColors.peachBackground,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.error_outline_rounded,
+                      size: 40,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Unable to load profile',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.dark,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    state.message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.read<ProfileCubit>().load(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Try Again'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final profile = (state as Loaded<WorkerProfile>).data;
+        final verifiedDocsCount = _countVerifiedDocs(profile.documents);
+        final isKycVerified = _isKycVerified(profile.documents);
+
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () => context.read<ProfileCubit>().load(),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                children: [
+                  // Profile Header Banner Card (Name Card)
+                  ProfileHeaderCard(
+                    profile: profile,
+                    isUploadingPhoto: _isUploadingPhoto,
+                    onUploadPhoto: _uploadPhoto,
+                    isKycVerified: isKycVerified,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Summary Stats Bar (Expected Wages, Trade Skills, Documents)
+                  ProfileStatsBar(
+                    profile: profile,
+                    verifiedDocsCount: verifiedDocsCount,
+                  ),
+
+                  // Professional Details Card
+                  ProfileDetailsCard(
+                    profile: profile,
+                    onEdit: () => _editProfile(profile),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Documents Card
+                  ProfileDocumentsCard(
+                    documents: profile.documents,
+                    isUploadingDocument: _isUploadingDocument,
+                    onUploadDocument: _uploadDocument,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Edit Profile Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _editProfile(profile),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text(
+                        'Edit Profile Details',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Log Out Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _confirmLogout(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(
+                          color: AppColors.error,
+                          width: 1.2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(
+                        Icons.logout_rounded,
+                        color: AppColors.error,
+                        size: 18,
+                      ),
+                      label: const Text(
+                        'Log Out',
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _section(BuildContext context, {required String title, required IconData icon, required List<Widget> children}) {
-    return Container(
-      padding: EdgeInsets.all(context.w(16)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [Icon(icon, color: AppColors.primary), const SizedBox(width: 8), Text(title, style: Theme.of(context).textTheme.titleMedium)]),
-          const SizedBox(height: 10),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _detail(IconData icon, String label, String value) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: AppColors.dark),
-      title: Text(label),
-      subtitle: Text(value),
-    );
-  }
-
-  Widget _documentRow(String title, String type, List<Map<String, dynamic>> docs) {
-    // Backend subtype is aadhaar/experience/skill; the profile-screen row
-    // keys are aadhaar/experience_certificate/skill_certificate.
-    String subtypeOf(String t) {
-      final v = t.trim().toLowerCase();
-      if (v == 'aadhaar') return 'aadhaar';
-      if (v.startsWith('experience')) return 'experience';
-      if (v.startsWith('skill')) return 'skill';
-      return v;
-    }
-
-    final want = subtypeOf(type);
-    Map<String, dynamic>? match;
-    for (final d in docs) {
-      if (subtypeOf((d['type'] ?? '').toString()) == want) {
-        match = d;
-        break;
-      }
-    }
-    final uploadedName =
-        match?['name']?.toString() ?? match?['originalFilename']?.toString();
-
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        match != null ? Icons.verified_outlined : Icons.description_outlined,
-        color: match != null ? Colors.green : AppColors.primary,
-      ),
-      title: Text(title),
-      subtitle: Text(
-        match != null
-            ? (uploadedName != null && uploadedName.isNotEmpty
-                ? 'Uploaded: $uploadedName'
-                : 'Uploaded ✓')
-            : 'Upload for verification',
-      ),
-      trailing: OutlinedButton(
-        onPressed: _isUploadingDocument ? null : () => _uploadDocument(type),
-        child: Text(match != null ? 'Replace' : 'Upload'),
-      ),
+        );
+      },
     );
   }
 }

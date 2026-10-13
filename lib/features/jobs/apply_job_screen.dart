@@ -5,19 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/widgets/sheets/report_job_sheet.dart';
 import '../../features/bloc/worker_blocs.dart';
+import 'widgets/apply_job_documents_card.dart';
+import 'widgets/apply_job_experience_card.dart';
+import 'widgets/apply_job_header_card.dart';
 
-/// Full application flow for a single job: employer requirements up top,
-/// then a form branching on whether the worker has prior experience or is
-/// a fresher, a short profile summary, a read-only view of the documents
-/// that will be shared, then submit.
-///
-/// NOTE: this currently calls `JobsCubit.apply(job.id)` unchanged, which
-/// only flips `applied = true` server-side. The extra fields collected here
-/// (previous company, years of experience, summary, etc.) aren't sent yet —
-/// `WorkerRepository.apply` needs a `details` payload param wired through to
-/// `POST /jobs/:id/applications` for that. Happy to wire it fully once
-/// `worker_repository.dart` is available.
+/// Application screen matching the Jobs Screen aesthetic:
+/// clean white cards, highlights row, peach badges, and sticky bottom action bar.
 class ApplyJobScreen extends StatefulWidget {
   const ApplyJobScreen({super.key, required this.job});
   final Job job;
@@ -97,7 +92,6 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
       await context.read<JobsCubit>().apply(widget.job.id, details: details);
 
-      // Trigger immediate heads-up popup notification banner on device
       NotificationService.instance.showLocalNotification(
         title: 'Application Submitted! 🎉',
         body: 'Your application for "${widget.job.title}" was submitted to ${widget.job.company}.',
@@ -111,7 +105,18 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Application submitted to ${widget.job.company}')),
+        SnackBar(
+          backgroundColor: AppColors.dark,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+              const SizedBox(width: 10),
+              Expanded(child: Text('Application submitted to ${widget.job.company}')),
+            ],
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -125,6 +130,8 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
         SnackBar(
           content: Text(msg),
           backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     } finally {
@@ -133,32 +140,13 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
   }
 
   Future<void> _reportJob(BuildContext context, String jobId) async {
-    final reasonController = TextEditingController();
-    final result = await showDialog<String>(
+    final result = await showModalBottomSheet<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Report Job'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Why are you reporting this job?'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: reasonController,
-              decoration: const InputDecoration(
-                hintText: 'e.g. Fraudulent listing, incorrect pay...',
-              ),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, reasonController.text.trim()),
-            child: const Text('Submit Report'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReportJobSheet(
+        jobTitle: widget.job.title,
+        company: widget.job.company,
       ),
     );
 
@@ -166,13 +154,35 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       try {
         await context.read<JobsCubit>().report(jobId: jobId, reason: result);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Job reported successfully.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.dark,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('Thank you. Your report has been submitted.')),
+                ],
+              ),
+            ),
+          );
         }
       } catch (e) {
         if (context.mounted) {
           String msg = 'Failed to report job.';
-          if (e is DioException) msg = e.response?.data?['message']?.toString() ?? e.message ?? msg;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
+          if (e is DioException) {
+            msg = e.response?.data?['message']?.toString() ?? e.message ?? msg;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
         }
       }
     }
@@ -180,303 +190,185 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final job = widget.job;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Apply for job'),
+        backgroundColor: AppColors.card,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.dark),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Apply for Job',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.dark,
+          ),
+        ),
+        centerTitle: false,
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (val) {
-              if (val == 'report') {
-                _reportJob(context, job.id);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'report',
-                child: Row(
-                  children: [
-                    Icon(Icons.flag_outlined, size: 20),
-                    SizedBox(width: 8),
-                    Text('Report job'),
-                  ],
-                ),
-              ),
-            ],
+          IconButton(
+            tooltip: 'Report Job',
+            icon: const Icon(Icons.flag_outlined, size: 20, color: AppColors.primary),
+            onPressed: () => _reportJob(context, job.id),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: AppColors.border, height: 1),
+        ),
       ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              _employerNeedsCard(context, job, textTheme),
-              const SizedBox(height: 20),
-              Text('Your experience', style: textTheme.titleMedium),
-              const SizedBox(height: 10),
-              _experienceToggle(textTheme),
+              ApplyJobHeaderCard(job: job),
               const SizedBox(height: 16),
-              if (_hasExperience) _experienceFields(textTheme) else _fresherFields(textTheme),
-              const SizedBox(height: 20),
-              Text('Profile summary', style: textTheme.titleMedium),
-              const SizedBox(height: 4),
-              Text(
-                'A short note the employer sees with your application.',
-                style: textTheme.bodySmall,
+              ApplyJobExperienceCard(
+                hasExperience: _hasExperience,
+                onExperienceChanged: (val) => setState(() => _hasExperience = val),
+                companyController: _companyController,
+                roleController: _roleController,
+                yearsController: _yearsController,
+                trainingController: _trainingController,
               ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _summaryController,
-                maxLines: 5,
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please add a short summary' : null,
-                decoration: const InputDecoration(
-                  hintText: 'Tell the employer why you\'re a good fit for this role',
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border, width: 1.2),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x04000000), blurRadius: 6, offset: Offset(0, 2)),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.badge_outlined, size: 18, color: AppColors.primary),
+                        SizedBox(width: 8),
+                        Text(
+                          'Profile Summary',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.dark),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    const Text(
+                      'A short cover note the employer sees with your application',
+                      style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _summaryController,
+                      maxLines: 4,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty) ? 'Please add a short summary' : null,
+                      decoration: InputDecoration(
+                        hintText: 'Tell the contractor why you are a good fit for this role...',
+                        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        filled: true,
+                        fillColor: AppColors.background,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              _documentsSection(context, textTheme),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              const ApplyJobDocumentsCard(),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: _isSubmitting ? null : _submit,
-            child: _isSubmitting
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Submit Application'),
-          ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: const BoxDecoration(
+          color: AppColors.card,
+          border: Border(top: BorderSide(color: AppColors.border, width: 1.2)),
         ),
-      ),
-    );
-  }
-
-  Widget _employerNeedsCard(BuildContext context, Job job, TextTheme textTheme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.dark,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(job.title, style: textTheme.titleLarge?.copyWith(color: Colors.white)),
-          const SizedBox(height: 2),
-          Text(job.company, style: textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _needRow(Icons.location_on_outlined, job.location),
-              _needRow(Icons.payments_outlined, '₹${job.dailyPay}/day'),
-              _needRow(Icons.work_outline, job.projectType),
-              _needRow(Icons.military_tech_outlined, job.experienceLevel == 'Any' ? 'Any experience level' : '${job.experienceLevel} preferred'),
-            ],
-          ),
-          if (job.skills.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: job.skills
-                  .map((s) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(s, style: const TextStyle(color: Colors.white, fontSize: 11.5)),
-                      ))
-                  .toList(),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _needRow(IconData icon, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: Colors.white70),
-        const SizedBox(width: 4),
-        Text(text, style: const TextStyle(color: Colors.white, fontSize: 12.5)),
-      ],
-    );
-  }
-
-  Widget _experienceToggle(TextTheme textTheme) {
-    Widget option(String label, bool value) {
-      final isSelected = _hasExperience == value;
-      return Expanded(
-        child: InkWell(
-          onTap: () => setState(() => _hasExperience = value),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
-            ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(
-                color: isSelected ? Colors.white : Colors.black87,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        option('I have experience', true),
-        const SizedBox(width: 10),
-        option("I'm a fresher", false),
-      ],
-    );
-  }
-
-  Widget _experienceFields(TextTheme textTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: _companyController,
-          validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter your previous company' : null,
-          decoration: const InputDecoration(labelText: 'Previous company name'),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _roleController,
-          decoration: const InputDecoration(labelText: 'Your role / trade there', hintText: 'e.g. Site Electrician'),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _yearsController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Years of experience'),
-        ),
-      ],
-    );
-  }
-
-  Widget _fresherFields(TextTheme textTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(10),
-          ),
+        child: SafeArea(
+          top: false,
           child: Row(
             children: [
-              const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
+              InkWell(
+                onTap: () => Navigator.pop(context),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border, width: 1.2),
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  "No previous experience needed — mention any training or certificates below.",
-                  style: textTheme.bodySmall,
+                child: SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: _isSubmitting ? null : _submit,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Submit Application',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
+                            ],
+                          ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _trainingController,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Training / certifications (optional)',
-            hintText: 'e.g. ITI Electrician certificate, 3-month site safety course',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _documentsSection(BuildContext context, TextTheme textTheme) {
-    return BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
-      builder: (context, state) {
-        final documents = state is Loaded<WorkerProfile> ? state.data.documents : const <Map<String, dynamic>>[];
-
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.folder_shared_outlined, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Text('Documents shared with employer', style: textTheme.titleSmall),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (documents.isEmpty)
-                Text(
-                  "You haven't uploaded any documents yet. Add them from your profile for a stronger application.",
-                  style: textTheme.bodySmall,
-                )
-              else
-                ...documents.map((doc) => _documentRow(textTheme, doc)),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _documentRow(TextTheme textTheme, Map<String, dynamic> doc) {
-    final status = (doc['verificationStatus'] as String?) ?? 'pending';
-    final color = switch (status) {
-      'verified' => Colors.green,
-      'rejected' => AppColors.error,
-      _ => Colors.orange,
-    };
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          const Icon(Icons.description_outlined, size: 18, color: AppColors.dark),
-          const SizedBox(width: 8),
-          Expanded(child: Text((doc['name'] as String?) ?? (doc['type'] as String?) ?? 'Document', style: textTheme.bodyMedium)),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(999)),
-            child: Text(
-              status[0].toUpperCase() + status.substring(1),
-              style: textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,323 +1,182 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
-import '../../core/utils/responsive.dart';
-import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/bloc/worker_blocs.dart';
-import '../../features/repositories/worker_repository.dart';
+import 'widgets/conversation_card.dart';
+import 'widgets/messages_stats_bar.dart';
+
+export 'chat_screen.dart';
 
 class MessagesScreen extends StatefulWidget {
-  const MessagesScreen({super.key});
+  final VoidCallback? onExploreJobs;
+
+  const MessagesScreen({super.key, this.onExploreJobs});
 
   @override
   State<MessagesScreen> createState() => _MessagesScreenState();
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<MessagesCubit>().load();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return BlocBuilder<MessagesCubit, LoadState<List<Conversation>>>(
-      builder: (context, state) {
-        if (state is Idle<List<Conversation>> ||
-            state is Loading<List<Conversation>>) {
-          return const Padding(
-            padding: EdgeInsets.all(20),
-            child: SmartSkeleton.list(
-              itemCount: 4,
-              hasLeading: true,
-              leadingIsCircle: true,
-              hasTags: false,
-            ),
-          );
-        }
-
-        if (state is Failed<List<Conversation>>) {
-          return Center(
-            child: Text('Unable to load messages', style: textTheme.titleMedium),
-          );
-        }
-
-        final conversations = (state as Loaded<List<Conversation>>).data;
-        if (conversations.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.chat_bubble_outline_rounded, size: 56, color: AppColors.textSecondary),
-                  const SizedBox(height: 16),
-                  Text('No conversations yet', style: textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(
-                    'When an employer reviews your application and sends a remark, a conversation will appear here.',
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => context.read<MessagesCubit>().load(),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  context.w(20),
-                  context.h(18),
-                  context.w(20),
-                  context.h(32),
-                ),
-                children: [
-                  Text(
-                    'Messages',
-                    style: textTheme.headlineSmall?.copyWith(color: AppColors.dark),
-                  ),
-                  SizedBox(height: context.h(4)),
-                  Text(
-                    'Stay in touch with contractors about your applications.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: context.h(18)),
-                  ...conversations.map(
-                    (conversation) => ConversationTile(conversation: conversation),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class ConversationTile extends StatelessWidget {
-  const ConversationTile({super.key, required this.conversation});
-  final Conversation conversation;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ChatScreen(conversation: conversation),
-            ),
-          ).then((_) {
-            // Refresh conversations when returning from chat
-            if (context.mounted) {
-              context.read<MessagesCubit>().load();
-            }
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: context.w(24),
-                backgroundColor: AppColors.dark,
-                child: Text(
-                  conversation.company.isNotEmpty ? conversation.company[0].toUpperCase() : 'C',
-                  style: textTheme.titleMedium?.copyWith(color: AppColors.primary),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            conversation.company,
-                            style: textTheme.titleSmall,
-                          ),
-                        ),
-                        Text(conversation.lastMessageAt, style: textTheme.labelSmall),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      conversation.jobTitle,
-                      style: textTheme.bodySmall?.copyWith(color: AppColors.primary),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      conversation.lastMessage,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: conversation.unreadCount > 0
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (conversation.unreadCount > 0)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: CircleAvatar(
-                    radius: 10,
-                    backgroundColor: AppColors.primary,
-                    child: Text(
-                      '${conversation.unreadCount}',
-                      style: textTheme.labelSmall?.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.conversation, this.isCompany = false});
-  final Conversation conversation;
-  final bool isCompany;
-
-  @override
-  State<ChatScreen> createState() => _ChatScreenState();
-}
-
-class _ChatScreenState extends State<ChatScreen> {
-  final _messageController = TextEditingController();
-  final _scrollController = ScrollController();
-  final _repo = WorkerRepository();
-  List<ChatMessage> _messages = [];
-  bool _isLoading = true;
-  bool _isSending = false;
-  bool _isCandidate = false;
+  // 0 = All, 1 = Unread
+  int _selectedFilter = 0;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _checkRole();
-    _loadMessages();
-    _markRead();
-  }
-
-  Future<void> _checkRole() async {
-    if (widget.isCompany) {
-      if (mounted) setState(() => _isCandidate = false);
-      return;
-    }
-    const storage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
-    final role = await storage.read(key: 'role');
-    if (mounted) {
-      setState(() {
-        _isCandidate = (role != 'company');
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<MessagesCubit>().load();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadMessages() async {
-    try {
-      final messages = await _repo.fetchMessages(widget.conversation.id);
-      if (mounted) {
-        setState(() {
-          _messages = messages;
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        // ignore: avoid_print
-        print('⚠️ [ChatScreen] Failed to load messages: $e');
-      }
+  List<Conversation> _filter(List<Conversation> conversations) {
+    var result = _selectedFilter == 1
+        ? conversations.where((c) => c.unreadCount > 0).toList()
+        : conversations;
+
+    if (_searchQuery.isNotEmpty) {
+      result = result.where((c) {
+        final comp = c.company.toLowerCase();
+        final title = c.jobTitle.toLowerCase();
+        final msg = c.lastMessage.toLowerCase();
+        return comp.contains(_searchQuery) ||
+            title.contains(_searchQuery) ||
+            msg.contains(_searchQuery);
+      }).toList();
     }
+
+    return result;
   }
 
-  Future<void> _markRead() async {
-    try {
-      await _repo.markConversationRead(widget.conversation.id);
-    } catch (_) {}
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  Future<void> _sendMessage() async {
-    final text = _messageController.text.trim();
-    if (text.isEmpty || _isSending) return;
-
-    // First message restriction: candidate cannot initiate first message
-    if (_isCandidate && _messages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Only the company can initiate the conversation after reviewing your application.'),
-          backgroundColor: AppColors.error,
+  Widget _buildFilterChip(String label, int index, int count) {
+    final isSelected = _selectedFilter == index;
+    return InkWell(
+      onTap: () => setState(() => _selectedFilter = index),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7.5),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.peachBackground : AppColors.card,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 1.2 : 1,
+          ),
         ),
-      );
-      return;
-    }
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : AppColors.border,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    setState(() {
-      _isSending = true;
-      _messages.add(ChatMessage(id: 'local_${DateTime.now().millisecondsSinceEpoch}', text: text, isMine: true, time: 'Now'));
-      _messageController.clear();
-    });
-    _scrollToBottom();
-
-    try {
-      await _repo.sendMessage(widget.conversation.id, text);
-      // Reload messages to get the server-assigned ID and timestamp
-      await _loadMessages();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send: $e'), backgroundColor: AppColors.error),
-        );
-      }
-    }
-    if (mounted) setState(() => _isSending = false);
+  Widget _buildEmptyState(BuildContext context, TextTheme textTheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 44,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No messages here',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: AppColors.dark,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _searchQuery.isNotEmpty
+                  ? 'No conversations found matching "$_searchQuery"'
+                  : (_selectedFilter == 1
+                      ? 'You have read all your messages'
+                      : 'When an employer reviews your application, conversations will appear here.'),
+              style: textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (widget.onExploreJobs != null) {
+                  widget.onExploreJobs!();
+                } else if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+              icon: const Icon(Icons.explore_outlined, size: 18),
+              label: const Text('Explore Jobs'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -325,209 +184,224 @@ class _ChatScreenState extends State<ChatScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.conversation.company),
-            Text(
-              widget.conversation.jobTitle,
-              style: textTheme.labelSmall?.copyWith(color: Colors.white70),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh messages',
-            onPressed: () {
-              setState(() => _isLoading = true);
-              _loadMessages();
-            },
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: .10),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async => context.read<MessagesCubit>().load(),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.verified_user_outlined, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Discuss job details only. Never share OTPs or banking PINs.',
-                      style: textTheme.bodySmall,
+                  Text(
+                    'Messages',
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.dark,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Stay in touch with employers about your applications',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
-            ),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _messages.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _isCandidate ? Icons.lock_clock_outlined : Icons.chat_bubble_outline,
-                                  size: 48,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  _isCandidate
-                                      ? 'Waiting for contractor to send the first message'
-                                      : 'No messages yet. Send the first message to the candidate!',
-                                  style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+              const SizedBox(height: 14),
+
+              // Search Bar matching Jobs & Feed screen
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border, width: 1.2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x06000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+                  decoration: InputDecoration(
+                    hintText: 'Search messages by employer or job...',
+                    hintStyle: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: AppColors.textSecondary),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  ),
+                ),
+              ),
+
+              // Summary Stats Bar
+              BlocBuilder<MessagesCubit, LoadState<List<Conversation>>>(
+                builder: (context, state) {
+                  final allConversations = state is Loaded<List<Conversation>>
+                      ? state.data
+                      : <Conversation>[];
+                  return MessagesStatsBar(conversations: allConversations);
+                },
+              ),
+
+              // Filter Segment Bar
+              BlocBuilder<MessagesCubit, LoadState<List<Conversation>>>(
+                builder: (context, state) {
+                  final allConversations = state is Loaded<List<Conversation>>
+                      ? state.data
+                      : <Conversation>[];
+                  final total = allConversations.length;
+                  final unreadCount = allConversations.where((c) => c.unreadCount > 0).length;
+
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip('All', 0, total),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('Unread', 1, unreadCount),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+
+              // Section Header matching Jobs Header
+              BlocBuilder<MessagesCubit, LoadState<List<Conversation>>>(
+                builder: (context, state) {
+                  final allConversations = state is Loaded<List<Conversation>>
+                      ? state.data
+                      : <Conversation>[];
+                  final count = _selectedFilter == 1
+                      ? allConversations.where((c) => c.unreadCount > 0).length
+                      : allConversations.length;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 10, bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedFilter == 1 ? 'Unread Messages' : 'Recent Conversations',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                        if (count > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.peachBackground,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                            ),
+                            child: Text(
+                              '$count ${_selectedFilter == 1 ? 'unread' : 'chats'}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.peachText,
+                              ),
                             ),
                           ),
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: context.w(16),
-                            vertical: context.h(10),
-                          ),
-                          itemCount: _messages.length,
-                          itemBuilder: (context, index) => MessageBubble(message: _messages[index]),
+                      ],
+                    ),
+                  );
+                },
+              ),
+
+              // Conversations List Section
+              BlocBuilder<MessagesCubit, LoadState<List<Conversation>>>(
+                builder: (context, state) {
+                  if (state is Idle<List<Conversation>> ||
+                      state is Loading<List<Conversation>>) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 60),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              color: AppColors.primary,
+                              strokeWidth: 3.5,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Loading messages...',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
-            ),
-            _composer(),
-          ],
-        ),
-      ),
-    );
-  }
+                      ),
+                    );
+                  }
 
-  Widget _composer() {
-    // If candidate and conversation has no messages yet -> Candidate cannot send first message!
-    if (_isCandidate && _messages.isEmpty) {
-      final textTheme = Theme.of(context).textTheme;
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.lock_outline, color: AppColors.textSecondary, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Only the company can initiate the conversation after reviewing your application.',
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+                  if (state is Failed<List<Conversation>>) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('Unable to load messages', style: textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () => context.read<MessagesCubit>().load(),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(context.w(16), 10, context.w(16), 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              minLines: 1,
-              maxLines: 4,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _sendMessage(),
-              decoration: const InputDecoration(
-                hintText: 'Write a message...',
-                border: InputBorder.none,
-                filled: false,
+                  final allConversations = (state as Loaded<List<Conversation>>).data;
+                  final conversations = _filter(allConversations);
+
+                  if (conversations.isEmpty) {
+                    return _buildEmptyState(context, textTheme);
+                  }
+
+                  return Column(
+                    children: conversations.map((c) {
+                      return ConversationCard(conversation: c);
+                    }).toList(),
+                  );
+                },
               ),
-            ),
+              const SizedBox(height: 40),
+            ],
           ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: AppColors.primary,
-            child: IconButton(
-              onPressed: _isSending ? null : _sendMessage,
-              icon: const Icon(Icons.send, color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message});
-  final ChatMessage message;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Align(
-      alignment: message.isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * .76),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-        decoration: BoxDecoration(
-          color: message.isMine ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: message.isMine ? null : Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              message.text,
-              style: textTheme.bodyMedium?.copyWith(
-                color: message.isMine ? Colors.white : AppColors.dark,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  message.time,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: message.isMine ? Colors.white70 : Colors.black45,
-                  ),
-                ),
-                if (message.isMine) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    message.isRead ? Icons.done_all : Icons.done,
-                    size: 14,
-                    color: message.isRead ? Colors.white : Colors.white70,
-                  ),
-                ],
-              ],
-            ),
-          ],
         ),
       ),
     );

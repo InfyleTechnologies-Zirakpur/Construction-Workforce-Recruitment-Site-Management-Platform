@@ -121,6 +121,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all),
@@ -200,14 +201,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 return InkWell(
                   onTap: () => _onTapNotification(n),
                   child: Container(
-                    color: n.isRead ? Colors.transparent : color.withOpacity(0.06),
+                    color: n.isRead ? Colors.transparent : color.withValues(alpha: 0.06),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: color.withOpacity(0.12),
+                          backgroundColor: color.withValues(alpha: 0.12),
                           child: Icon(_iconFor(n.type), color: color, size: 20),
                         ),
                         const SizedBox(width: 12),

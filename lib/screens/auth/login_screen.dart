@@ -41,13 +41,18 @@ class _LoginScreenState extends State<LoginScreen> {
           if (state is Loaded<Map<String, dynamic>> && _awaitingOtp) {
             _awaitingOtp = false;
             context.read<AuthCubit>().reset();
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => OtpScreen(phoneNumber: _phoneController.text.trim()),
-            ));
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    OtpScreen(phoneNumber: _phoneController.text.trim()),
+              ),
+            );
           }
           if (state is Failed<Map<String, dynamic>>) {
             _awaitingOtp = false;
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         child: LayoutBuilder(
@@ -62,21 +67,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: IntrinsicHeight(
                   child: Column(
                     children: [
-                     
                       SizedBox(
                         height: headerHeight,
                         width: double.infinity,
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                           
                             Image.asset(
                               'assets/worker_bg.jpg',
                               fit: BoxFit.cover,
                               alignment: Alignment.center,
                             ),
 
-             
                             Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
@@ -103,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Logo
+                            
                                     Image.asset(
                                       'assets/logo_worker.png',
                                       width: context.w(52),
@@ -112,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     const Spacer(),
 
-                                    // Heading: "Find your\nnext site job."
+                                  
                                     RichText(
                                       text: TextSpan(
                                         text: 'Find your\n',
@@ -129,7 +131,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                             style: TextStyle(
                                               fontSize: context.sp(28),
                                               fontWeight: FontWeight.w800,
-                                              color: const Color(0xFFF7A600), // golden yellow accent
+                                              color: const Color(
+                                                0xFFF7A600,
+                                              ), // golden yellow accent
                                               height: 1.15,
                                               letterSpacing: -0.5,
                                             ),
@@ -144,7 +148,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       'Sign in with your phone number to browse jobs, apply, and get hired faster.',
                                       style: TextStyle(
                                         fontSize: context.sp(13.5),
-                                        color: Colors.white.withValues(alpha: 0.85),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.85,
+                                        ),
                                         height: 1.35,
                                       ),
                                     ),
@@ -202,7 +208,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Row(
                                     children: [
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                        ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: const [
@@ -249,16 +257,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                             enabledBorder: InputBorder.none,
                                             focusedBorder: InputBorder.none,
                                             errorBorder: InputBorder.none,
-                                            focusedErrorBorder: InputBorder.none,
-                                            contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 14,
-                                            ),
+                                            focusedErrorBorder:
+                                                InputBorder.none,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 14,
+                                                  vertical: 14,
+                                                ),
                                           ),
                                           validator: (value) {
                                             final v = value?.trim() ?? '';
-                                            if (v.isEmpty) return 'Enter your phone number';
-                                            if (v.length != 10) return 'Enter a valid 10-digit number';
+                                            if (v.isEmpty)
+                                              return 'Enter your phone number';
+                                            if (v.length != 10)
+                                              return 'Enter a valid 10-digit number';
                                             return null;
                                           },
                                         ),
@@ -272,45 +284,70 @@ class _LoginScreenState extends State<LoginScreen> {
                                 SizedBox(
                                   width: double.infinity,
                                   height: context.h(52),
-                                  child: BlocBuilder<AuthCubit, LoadState<Map<String, dynamic>>>(
-                                    builder: (context, state) => ElevatedButton(
-                                      onPressed: state is Loading<Map<String, dynamic>> ? null : _handleSendOtp,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFFA6400),
-                                        foregroundColor: Colors.white,
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                  child:
+                                      BlocBuilder<
+                                        AuthCubit,
+                                        LoadState<Map<String, dynamic>>
+                                      >(
+                                        builder: (context, state) => ElevatedButton(
+                                          onPressed:
+                                              state
+                                                  is Loading<
+                                                    Map<String, dynamic>
+                                                  >
+                                              ? null
+                                              : _handleSendOtp,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFFFA6400,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child:
+                                              state
+                                                  is Loading<
+                                                    Map<String, dynamic>
+                                                  >
+                                              ? const SizedBox(
+                                                  width: 22,
+                                                  height: 22,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        color: Colors.white,
+                                                        strokeWidth: 2.2,
+                                                      ),
+                                                )
+                                              : const Text(
+                                                  'Send OTP',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
                                         ),
                                       ),
-                                      child: state is Loading<Map<String, dynamic>>
-                                          ? const SizedBox(
-                                              width: 22,
-                                              height: 22,
-                                              child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 2.2,
-                                              ),
-                                            )
-                                          : const Text(
-                                              'Send OTP',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                    ),
-                                  ),
                                 ),
                                 SizedBox(height: context.h(18)),
 
                                 // Divider with "OR"
                                 Row(
                                   children: const [
-                                    Expanded(child: Divider(color: Color(0xFFE5E7EB), thickness: 1)),
+                                    Expanded(
+                                      child: Divider(
+                                        color: Color(0xFFE5E7EB),
+                                        thickness: 1,
+                                      ),
+                                    ),
                                     Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 14),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                      ),
                                       child: Text(
                                         'OR',
                                         style: TextStyle(
@@ -320,7 +357,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                       ),
                                     ),
-                                    Expanded(child: Divider(color: Color(0xFFE5E7EB), thickness: 1)),
+                                    Expanded(
+                                      child: Divider(
+                                        color: Color(0xFFE5E7EB),
+                                        thickness: 1,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 SizedBox(height: context.h(18)),
@@ -335,10 +377,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(12),
                                       onTap: () => Navigator.of(context).push(
-                                        MaterialPageRoute(builder: (_) => const CompanyLoginScreen()),
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const CompanyLoginScreen(),
+                                        ),
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: const [
                                           Icon(
                                             Icons.mail_outline_rounded,

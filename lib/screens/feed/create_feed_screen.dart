@@ -6,7 +6,10 @@ import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
+import 'widgets/create_post_tags_card.dart';
 
+/// Screen to create or edit a community feed post, matching the Jobs & Apply screen flow:
+/// clean white cards, peach badges, consistent form inputs, and sticky bottom action bar.
 class CreateFeedScreen extends StatefulWidget {
   const CreateFeedScreen({super.key, this.postToEdit});
 
@@ -49,37 +52,22 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
       var cName = await storage.read(key: 'companyName');
 
       if (role == 'company') {
-        // Always try to refresh company name from the backend profile
         try {
           final profiles = await CompanyRepository().getMyProfiles();
-          // ignore: avoid_print
-          print('🏢 [CreateFeedScreen] getMyProfiles response: $profiles');
           if (profiles.isNotEmpty) {
             final p = profiles.first;
-            // Try all possible company name fields from the backend
             final freshName = p['companyName']?.toString() ??
                 p['businessName']?.toString() ??
                 p['organizationName']?.toString() ??
-                p['name']?.toString();
+                p['name']?.toString() ??
+                p['fullName']?.toString();
 
-            String? resolvedName = freshName;
-         
-            if ((resolvedName == null || resolvedName.isEmpty) && p['fullName'] != null) {
-              resolvedName = p['fullName'].toString();
-            }
-
-            // ignore: avoid_print
-            print('🏢 [CreateFeedScreen] Resolved companyName: "$resolvedName" (was: "$cName")');
-
-            if (resolvedName != null && resolvedName.isNotEmpty) {
-              cName = resolvedName;
+            if (freshName != null && freshName.isNotEmpty) {
+              cName = freshName;
               await storage.write(key: 'companyName', value: cName);
             }
           }
-        } catch (e) {
-          // ignore: avoid_print
-          print('⚠️ [CreateFeedScreen] Failed to fetch company profiles: $e');
-        }
+        } catch (_) {}
       }
 
       if (mounted) {
@@ -105,9 +93,11 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
     final text = _contentController.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please write something to share in your post.'),
+        SnackBar(
+          content: const Text('Please write something to share in your post.'),
           backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
@@ -127,15 +117,17 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
           );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
+        SnackBar(
+          content: const Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.white),
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
               SizedBox(width: 8),
               Text('Your feed post has been updated!'),
             ],
           ),
-          backgroundColor: Color(0xFF16A34A),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     } else {
@@ -148,15 +140,17 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
           );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
+        SnackBar(
+          content: const Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.white),
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
               SizedBox(width: 8),
               Text('Your feed post has been published!'),
             ],
           ),
-          backgroundColor: Color(0xFF16A34A),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -164,10 +158,33 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
     Navigator.of(context).pop(true);
   }
 
+  InputDecoration _inputDeco({required String hint, String? label, IconData? prefixIcon}) {
+    return InputDecoration(
+      hintText: hint,
+      labelText: label,
+      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+      labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 18, color: AppColors.primary) : null,
+      filled: true,
+      fillColor: AppColors.background,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
       builder: (context, profileState) {
         String authorName = _isCompany ? (_companyName ?? 'Company') : '';
@@ -182,68 +199,58 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
           }
         }
 
+        final isEditing = widget.postToEdit != null;
+
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.background,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card,
             elevation: 0,
+            surfaceTintColor: Colors.transparent,
             leading: IconButton(
-              icon: const Icon(Icons.close, color: AppColors.dark),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.dark),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              widget.postToEdit != null ? 'Edit Feed Post' : 'Create Feed Post',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              isEditing ? 'Edit Feed Post' : 'Create Feed Post',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
                 color: AppColors.dark,
               ),
             ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 16, top: 10, bottom: 10),
-                child: ElevatedButton(
-                  onPressed: _isPosting ? null : () => _submitPost(authorName, authorRole),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: _isPosting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          widget.postToEdit != null ? 'Save' : 'Post',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                ),
-              ),
-            ],
+            centerTitle: false,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(color: AppColors.border, height: 1),
+            ),
           ),
           body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Author Header Info
-                  Row(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              children: [
+                // Author Header Card
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border, width: 1.2),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x04000000), blurRadius: 6, offset: Offset(0, 2)),
+                    ],
+                  ),
+                  child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.peachBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.peachBorder, width: 1),
+                        ),
+                        alignment: Alignment.center,
                         child: Text(
                           authorName.isNotEmpty ? authorName[0].toUpperCase() : 'W',
                           style: const TextStyle(
@@ -254,208 +261,166 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              authorName.isNotEmpty ? authorName : 'Verified Member',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: AppColors.dark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 3),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: AppColors.peachBackground,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                              ),
+                              child: Text(
+                                authorRole,
+                                style: const TextStyle(
+                                  color: AppColors.peachText,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Post Content Input Card
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border, width: 1.2),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x04000000), blurRadius: 6, offset: Offset(0, 2)),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
                         children: [
+                          Icon(Icons.edit_note_rounded, size: 20, color: AppColors.primary),
+                          SizedBox(width: 8),
                           Text(
-                            authorName,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
+                            'Post Content',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.dark,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.dark.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              authorRole,
-                              style: textTheme.labelSmall?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
                         ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Share work updates, questions, material queries, or announcements',
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _contentController,
+                        maxLines: 6,
+                        style: const TextStyle(fontSize: 14.5, height: 1.45, color: AppColors.dark),
+                        decoration: _inputDeco(
+                          hint: "What's happening on your site? (e.g. Need 4 bar benders in Mohali, concrete pouring safety guidelines updated...)",
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                ),
+                const SizedBox(height: 16),
 
-                  // Text Content Input
+                // Optional Tags Card
+                CreatePostTagsCard(
+                  showTitleField: _showTitleField,
+                  showLocationField: _showLocationField,
+                  onToggleTitle: () => setState(() => _showTitleField = !_showTitleField),
+                  onToggleLocation: () => setState(() => _showLocationField = !_showLocationField),
+                  titleController: _titleController,
+                  locationController: _locationController,
+                ),
+              ],
+            ),
+          ),
+          bottomNavigationBar: Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: const BoxDecoration(
+              color: AppColors.card,
+              border: Border(top: BorderSide(color: AppColors.border, width: 1.2)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border, width: 1.2),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: TextField(
-                      controller: _contentController,
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        height: 1.4,
-                        color: AppColors.dark,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: "What's happening on your construction site?\nShare work updates, safety tips, material queries, or announcements...",
-                        hintStyle: TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 15,
+                    child: SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                      ),
-                    ),
-                  ),
-
-                  // Optional Tagged Role / Job Title Field
-                  if (_showTitleField) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.work_outline,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _titleController,
-                              autofocus: true,
-                              decoration: const InputDecoration(
-                                hintText: 'Tag Job/Role (e.g. Construction Workers & Site Incharge)',
-                                hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
-                                border: InputBorder.none,
-                                isDense: true,
+                        onPressed: _isPosting ? null : () => _submitPost(authorName, authorRole),
+                        child: _isPosting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    isEditing ? 'Save Changes' : 'Publish Post',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.send_rounded, size: 18, color: Colors.white),
+                                ],
                               ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 18, color: Colors.black45),
-                            onPressed: () {
-                              _titleController.clear();
-                              setState(() => _showTitleField = false);
-                            },
-                          ),
-                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // Optional Location Tag Field
-                  if (_showLocationField) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _locationController,
-                              decoration: const InputDecoration(
-                                hintText: 'Enter site location (e.g. Mohali Sector 82)',
-                                hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
-                                border: InputBorder.none,
-                                isDense: true,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 18, color: Colors.black45),
-                            onPressed: () {
-                              _locationController.clear();
-                              setState(() => _showLocationField = false);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  const Divider(height: 1),
-                  const SizedBox(height: 12),
-
-                  // Option Bar (Tag Location & Tag Role optional)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ActionChip(
-                        avatar: Icon(
-                          _showLocationField ? Icons.location_on : Icons.add_location_alt_outlined,
-                          size: 18,
-                          color: _showLocationField ? AppColors.primary : AppColors.dark,
-                        ),
-                        label: Text(
-                          _showLocationField ? 'Location Tagged' : 'Tag Location (Optional)',
-                          style: TextStyle(
-                            color: _showLocationField ? AppColors.primary : AppColors.dark,
-                            fontSize: 12.5,
-                            fontWeight: _showLocationField ? FontWeight.bold : FontWeight.w500,
-                          ),
-                        ),
-                        backgroundColor: _showLocationField ? AppColors.primary.withValues(alpha: 0.1) : AppColors.background,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: _showLocationField ? AppColors.primary : Colors.black12,
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _showLocationField = !_showLocationField;
-                          });
-                        },
-                      ),
-                      ActionChip(
-                        avatar: Icon(
-                          _showTitleField ? Icons.work : Icons.work_outline,
-                          size: 18,
-                          color: _showTitleField ? AppColors.primary : AppColors.dark,
-                        ),
-                        label: Text(
-                          _showTitleField ? 'Role Tagged' : 'Tag Role/Job (Optional)',
-                          style: TextStyle(
-                            color: _showTitleField ? AppColors.primary : AppColors.dark,
-                            fontSize: 12.5,
-                            fontWeight: _showTitleField ? FontWeight.bold : FontWeight.w500,
-                          ),
-                        ),
-                        backgroundColor: _showTitleField ? AppColors.primary.withValues(alpha: 0.1) : AppColors.background,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: _showTitleField ? AppColors.primary : Colors.black12,
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _showTitleField = !_showTitleField;
-                          });
-                        },
-                      ),
-                    ],
                   ),
                 ],
               ),
