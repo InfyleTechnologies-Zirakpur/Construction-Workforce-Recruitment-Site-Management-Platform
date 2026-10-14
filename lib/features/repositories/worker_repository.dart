@@ -290,10 +290,7 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
       WorkerProfile.fromJson(
         (await _client.dio.put('/profile', data: body)).data['data'],
       );
-  /// Infer a real Content-Type for the multipart part.
-  /// Without this, Dio sends `application/octet-stream` for every part and
-  /// the backend rejects seeker documents (aadhaar / experience / skill)
-  /// with 400 `Invalid mime application/octet-stream`.
+
   static String _mimeForFilename(String filename) {
     final ext = filename.toLowerCase().split('.').last;
     switch (ext) {

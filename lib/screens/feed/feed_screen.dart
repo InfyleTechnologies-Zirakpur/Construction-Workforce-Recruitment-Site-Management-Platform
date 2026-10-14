@@ -23,8 +23,6 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   // 0 = All Feed, 1 = My Posts
   int _selectedFilter = 0;
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   int _activeJobs = 0;
   int _newJobsToday = 0;
@@ -52,11 +50,7 @@ class _FeedScreenState extends State<FeedScreen> {
     } catch (_) {}
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+
 
   void _openCreatePost() {
     Navigator.of(context)
@@ -182,7 +176,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Construction Feed',
+                    'Company Feed',
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.dark,
@@ -191,7 +185,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Real-time site updates, discussions, and trade notices',
+                    'See here whats happening in the market',
                     style: textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                       fontSize: 13,
@@ -201,45 +195,6 @@ class _FeedScreenState extends State<FeedScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Search Bar matching Jobs screen
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border, width: 1.2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x06000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
-                  decoration: InputDecoration(
-                    hintText: 'Search feed by role, trade, or location...',
-                    hintStyle: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 14,
-                    ),
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18, color: AppColors.textSecondary),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  ),
-                ),
-              ),
 
               // Feed Highlights Stat Bar matching JobsStatsBar
               BlocBuilder<FeedCubit, LoadState<List<FeedPost>>>(
@@ -323,22 +278,9 @@ class _FeedScreenState extends State<FeedScreen> {
                   }
 
                   final allPosts = (state as Loaded<List<FeedPost>>).data;
-                  var posts = _selectedFilter == 1
+                  final posts = _selectedFilter == 1
                       ? allPosts.where((p) => p.isMyPost).toList()
                       : allPosts;
-
-                  if (_searchQuery.isNotEmpty) {
-                    posts = posts.where((p) {
-                      final c = p.content.toLowerCase();
-                      final loc = (p.location ?? '').toLowerCase();
-                      final title = (p.taggedTitle ?? '').toLowerCase();
-                      final role = p.authorRole.toLowerCase();
-                      return c.contains(_searchQuery) ||
-                          loc.contains(_searchQuery) ||
-                          title.contains(_searchQuery) ||
-                          role.contains(_searchQuery);
-                    }).toList();
-                  }
 
                   if (posts.isEmpty) {
                     return Padding(
@@ -371,11 +313,9 @@ class _FeedScreenState extends State<FeedScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              _searchQuery.isNotEmpty
-                                  ? 'No posts matching "$_searchQuery"'
-                                  : (_selectedFilter == 1
-                                      ? 'You haven\'t posted anything yet'
-                                      : 'No feed posts available right now'),
+                              _selectedFilter == 1
+                                  ? 'You haven\'t posted anything yet'
+                                  : 'No feed posts available right now',
                               style: textTheme.bodySmall?.copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,

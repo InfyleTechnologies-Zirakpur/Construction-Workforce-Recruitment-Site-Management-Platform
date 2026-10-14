@@ -30,7 +30,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             text: const TextSpan(
               children: [
                 TextSpan(
-                  text: 'Build',
+                  text: 'Flow',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,

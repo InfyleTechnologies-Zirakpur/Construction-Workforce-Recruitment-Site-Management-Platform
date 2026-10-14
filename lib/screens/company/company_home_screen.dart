@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
+import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
 import '../auth/login_screen.dart';
 import '../feed/feed_screen.dart';
-import '../notifications/notifications_screen.dart';
 import 'company_profile_screen.dart';
 import 'widgets/company_analytics_view.dart';
+import 'widgets/company_app_bar.dart';
 import 'widgets/company_applications_view.dart';
 import 'widgets/company_chats_view.dart';
 import 'widgets/company_post_job_sheet.dart';
@@ -45,6 +47,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   void initState() {
     super.initState();
     _tabIndex = widget.initialTabIndex;
+    context.read<NotificationsCubit>().load();
     _loadCompanyData();
   }
 
@@ -52,7 +55,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
-        _repo.getCompanyApplications(status: _appStatusFilter == 'all' ? null : _appStatusFilter)
+        _repo.getCompanyApplications(limit: 100)
             .catchError((_) => <Map<String, dynamic>>[]),
         _repo.getMyProfiles()
             .catchError((_) => <Map<String, dynamic>>[]),
@@ -65,13 +68,64 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       ]);
 
       if (mounted) {
+        final rawApps = results[0] as List<Map<String, dynamic>>;
+        final profiles = results[1] as List<Map<String, dynamic>>;
+        final myProfile = profiles.isNotEmpty ? profiles.first : null;
+        final rawJobs = results[2] as List<Map<String, dynamic>>;
+        final reportsData = results[3] as Map<String, dynamic>;
+        final conversations = results[4] as List<Map<String, dynamic>>;
+
+        final myCompanyId = (myProfile?['id'] ?? myProfile?['_id'])?.toString().trim();
+        final myCompanyName = myProfile?['name']?.toString().toLowerCase().trim();
+
+        // 1. Filter jobs that belong to this company
+        List<Map<String, dynamic>> companyJobs = rawJobs;
+        if (myCompanyId != null && myCompanyId.isNotEmpty) {
+          final matchedJobs = rawJobs.where((j) {
+            final c = j['company'];
+            final cId = (j['companyId'] ?? (c is Map ? (c['id'] ?? c['_id']) : null))?.toString().trim();
+            final cName = (c is Map ? c['name'] : null)?.toString().toLowerCase().trim();
+            return (cId != null && cId == myCompanyId) || (myCompanyName != null && cName != null && cName == myCompanyName);
+          }).toList();
+          if (matchedJobs.isNotEmpty) {
+            companyJobs = matchedJobs;
+          }
+        }
+
+        // 2. Collect all job IDs belonging to this company
+        final companyJobIds = companyJobs
+            .map((j) => (j['id'] ?? j['_id'] ?? j['jobId'])?.toString().trim())
+            .where((id) => id != null && id.isNotEmpty)
+            .toSet();
+
+        // 3. Filter applications to only those submitted for this company's jobs
+        List<Map<String, dynamic>> companyApps = rawApps;
+        if (myCompanyId != null && myCompanyId.isNotEmpty) {
+          companyApps = rawApps.where((app) {
+            final rawJob = app['job'];
+            final appJob = rawJob is Map ? rawJob as Map<String, dynamic> : <String, dynamic>{};
+            final appJobId = (app['jobId'] ?? app['job_id'] ?? (rawJob is String ? rawJob : (appJob['id'] ?? appJob['_id'])))?.toString().trim();
+
+            if (appJobId != null && companyJobIds.contains(appJobId)) {
+              return true;
+            }
+
+            final appCompany = appJob['company'];
+            final appCompId = (appJob['companyId'] ?? (appCompany is Map ? (appCompany['id'] ?? appCompany['_id']) : null))?.toString().trim();
+            final appCompName = (appCompany is Map ? appCompany['name'] : null)?.toString().toLowerCase().trim();
+            if (appCompId != null && appCompId == myCompanyId) return true;
+            if (myCompanyName != null && appCompName != null && appCompName == myCompanyName) return true;
+
+            return false;
+          }).toList();
+        }
+
         setState(() {
-          _applications = results[0] as List<Map<String, dynamic>>;
-          final profiles = results[1] as List<Map<String, dynamic>>;
-          _myProfile = profiles.isNotEmpty ? profiles.first : null;
-          _companyJobs = results[2] as List<Map<String, dynamic>>;
-          _reportsData = results[3] as Map<String, dynamic>;
-          _companyConversations = results[4] as List<Map<String, dynamic>>;
+          _applications = companyApps;
+          _myProfile = myProfile;
+          _companyJobs = companyJobs;
+          _reportsData = reportsData;
+          _companyConversations = conversations;
           _selectedAppIds.clear();
           _isLoading = false;
         });
@@ -214,17 +268,23 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     }
   }
 
+  bool get _isCompanyVerified {
+    final status = (_myProfile?['verificationStatus'] ?? 'pending').toString().toLowerCase().trim();
+    return status == 'verified' || status == 'approved' || status == 'completed';
+  }
+
   Widget _companyHeader(TextTheme textTheme) {
+    if (_isCompanyVerified) return const SizedBox.shrink();
+
     final rawName = _myProfile?['name']?.toString() ??
         _myProfile?['companyName']?.toString() ??
         _myProfile?['fullName']?.toString() ??
-        'Employer Portal';
+        'infyle';
     final companyName = rawName.replaceAll(RegExp(r'\s+Admin$', caseSensitive: false), '');
-    final logoUrl = _myProfile?['logoUrl']?.toString();
     final status = (_myProfile?['verificationStatus'] ?? 'pending').toString().toUpperCase();
     final statusColor = status == 'VERIFIED'
-        ? Colors.green
-        : (status == 'REJECTED' ? AppColors.error : Colors.orange);
+        ? AppColors.success
+        : (status == 'REJECTED' ? AppColors.error : const Color(0xFFF59E0B));
 
     return InkWell(
       onTap: () => Navigator.push(
@@ -233,52 +293,125 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       ).then((_) => _loadCompanyData()),
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(18),
+        height: 78,
         decoration: BoxDecoration(
           color: AppColors.dark,
           borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: AppColors.primary,
-              radius: 22,
-              child: logoUrl != null && logoUrl.isNotEmpty
-                  ? ClipOval(
-                      child: Image.network(
-                        logoUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.domain, color: Colors.white),
-                      ),
-                    )
-                  : Text(
-                      companyName.isNotEmpty ? companyName[0].toUpperCase() : 'C',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(companyName, style: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                  Text(
-                    _myProfile == null ? 'Tap to setup company profile' : 'Manage site hiring & company details',
-                    style: textTheme.bodySmall?.copyWith(color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: statusColor),
-              ),
-              child: Text(status, style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/company_bg.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerRight,
+                  errorBuilder: (_, __, ___) => const SizedBox(),
+                ),
+              ),
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        AppColors.dark,
+                        AppColors.dark.withValues(alpha: 0.94),
+                        AppColors.dark.withValues(alpha: 0.65),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.apartment_rounded,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            companyName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Manage site hiring & company details',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.7),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -290,65 +423,103 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.dark,
-        elevation: 0,
-        title: Row(
-          children: [
-            const Icon(Icons.business, color: AppColors.primary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'BuildHire',
-                style: textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            tooltip: 'Notifications',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_circle, color: Colors.white, size: 28),
-            tooltip: 'Company Profile',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
-            ).then((_) => _loadCompanyData()),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: 'Logout Company',
-            onPressed: _logout,
-          ),
-        ],
+      appBar: CompanyAppBar(
+        logoUrl: _myProfile?['logoUrl']?.toString() ?? _myProfile?['avatarUrl']?.toString(),
+        companyName: _myProfile?['name']?.toString(),
+        onProfileTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
+        ).then((_) => _loadCompanyData()),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabIndex,
         onTap: (idx) => setState(() => _tabIndex = idx),
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
         backgroundColor: AppColors.card,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dynamic_feed_outlined), activeIcon: Icon(Icons.dynamic_feed), label: 'Feed'),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment_ind_outlined), activeIcon: Icon(Icons.assignment_ind), label: 'Applications'),
-          BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Site Jobs'),
-          BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics), label: 'Analytics'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_outlined), activeIcon: Icon(Icons.chat), label: 'Chats'),
+        items: [
+          BottomNavigationBarItem(
+            icon: const Padding(
+              padding: EdgeInsets.only(bottom: 2),
+              child: Icon(Icons.layers_outlined, size: 22),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.peachBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.layers_rounded, color: AppColors.primary, size: 22),
+            ),
+            label: 'Feed',
+          ),
+          BottomNavigationBarItem(
+            icon: const Padding(
+              padding: EdgeInsets.only(bottom: 2),
+              child: Icon(Icons.people_alt_outlined, size: 22),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.peachBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.people_alt_rounded, color: AppColors.primary, size: 22),
+            ),
+            label: 'Applications',
+          ),
+          BottomNavigationBarItem(
+            icon: const Padding(
+              padding: EdgeInsets.only(bottom: 2),
+              child: Icon(Icons.business_center_outlined, size: 22),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.peachBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.business_center_rounded, color: AppColors.primary, size: 22),
+            ),
+            label: 'Site Jobs',
+          ),
+          BottomNavigationBarItem(
+            icon: const Padding(
+              padding: EdgeInsets.only(bottom: 2),
+              child: Icon(Icons.bar_chart_outlined, size: 22),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.peachBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 22),
+            ),
+            label: 'Analytics',
+          ),
+          BottomNavigationBarItem(
+            icon: const Padding(
+              padding: EdgeInsets.only(bottom: 2),
+              child: Icon(Icons.chat_bubble_outline_rounded, size: 22),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.peachBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.chat_bubble_rounded, color: AppColors.primary, size: 22),
+            ),
+            label: 'Chats',
+          ),
         ],
       ),
-      floatingActionButton: _tabIndex == 0
-          ? null
-          : FloatingActionButton(
+      floatingActionButton: (_tabIndex == 1 || _tabIndex == 2)
+          ? FloatingActionButton(
               onPressed: () => CompanyPostJobSheet.show(
                 context,
                 myProfile: _myProfile,
@@ -357,7 +528,8 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               backgroundColor: AppColors.primary,
               tooltip: 'Post Job',
               child: const Icon(Icons.add, color: Colors.white, size: 28),
-            ),
+            )
+          : null,
       body: _tabIndex == 0
           ? const FeedScreen()
           : SafeArea(
@@ -369,24 +541,27 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                     : ListView(
                         padding: const EdgeInsets.all(20),
                         children: [
-                          _companyHeader(textTheme),
-                          const SizedBox(height: 16),
+                          if (!_isCompanyVerified) ...[
+                            _companyHeader(textTheme),
+                            const SizedBox(height: 16),
+                          ],
                           if (_tabIndex == 1)
                             CompanyApplicationsView(
                               applications: _applications,
                               statusFilter: _appStatusFilter,
                               onStatusFilterChanged: (st) {
                                 setState(() => _appStatusFilter = st);
-                                _loadCompanyData();
                               },
                               selectedAppIds: _selectedAppIds,
                               isBulkAction: _isBulkAction,
                               onBulkShortlist: _bulkShortlist,
                               onUpdateStatus: _updateAppStatus,
+                              onRefresh: _loadCompanyData,
                             )
                           else if (_tabIndex == 2)
                             CompanySiteJobsView(
                               companyJobs: _companyJobs,
+                              applications: _applications,
                               onNewJob: () => CompanyPostJobSheet.show(
                                 context,
                                 myProfile: _myProfile,
@@ -394,12 +569,23 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                               ),
                               onPublishJob: _publishJob,
                               onCloseJob: _closeJob,
+                              onUpdateStatus: _updateAppStatus,
+                              onViewApplicants: () => setState(() => _tabIndex = 1),
                             )
                           else if (_tabIndex == 3)
                             CompanyAnalyticsView(
                               reportsData: _reportsData,
                               jobsCount: _companyJobs.length,
                               applicationsCount: _applications.length,
+                              companyJobs: _companyJobs,
+                              applications: _applications,
+                              onNavigateToJobs: () => setState(() => _tabIndex = 2),
+                              onNavigateToApplications: (status) {
+                                setState(() {
+                                  _appStatusFilter = status;
+                                  _tabIndex = 1;
+                                });
+                              },
                             )
                           else
                             CompanyChatsView(

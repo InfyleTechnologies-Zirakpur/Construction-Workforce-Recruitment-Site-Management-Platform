@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/repositories/company_repository.dart';
 import 'company_home_screen.dart';
+import 'widgets/company_app_bar.dart';
 
 class CompanyProfileFormScreen extends StatefulWidget {
   final Map<String, dynamic>? profile;
@@ -17,7 +18,6 @@ class CompanyProfileFormScreen extends StatefulWidget {
     this.initialEmail,
     this.initialName,
   });
-
   @override
   State<CompanyProfileFormScreen> createState() => _CompanyProfileFormScreenState();
 }
@@ -193,27 +193,46 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(isEdit ? 'Edit Company Profile' : 'Register Company'),
+      appBar: const CompanyAppBar(
+        showBackButton: true,
+        showNotifications: false,
+        showProfileAvatar: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(context.w(20)),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isEdit ? 'Update Company Details' : 'Register Company Profile',
-                  style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.dark),
-                ),
-                SizedBox(height: context.h(4)),
-                Text(
-                  'Provide verified credentials for worker trust & site management.',
-                  style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-                ),
-                SizedBox(height: context.h(20)),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEdit ? 'Update Company Details' : 'Register Company Profile',
+                          style: textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.dark,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isEdit
+                              ? 'Update your company details and verification credentials'
+                              : 'Provide verified credentials for worker trust & site management',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
 
                 if (_error != null) ...[
                   Container(
@@ -399,31 +418,63 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                 SizedBox(height: context.h(28)),
                 SizedBox(
                   width: double.infinity,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _saving ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: context.h(16)),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _saving
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(isEdit ? 'Save Changes' : 'Submit Registration', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.2,
+                            ),
+                          )
+                        : Text(
+                            isEdit ? 'Save Changes' : 'Submit Registration',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
                   ),
                 ),
-                SizedBox(height: context.h(16)),
+                const SizedBox(height: 16),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _sectionHeader(String title, IconData icon, TextTheme textTheme) {
     return Row(
       children: [
-        Icon(icon, color: AppColors.primary, size: 18),
-        const SizedBox(width: 8),
-        Text(title, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.dark)),
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: AppColors.peachBackground,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: AppColors.primary, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.dark,
+          ),
+        ),
       ],
     );
   }

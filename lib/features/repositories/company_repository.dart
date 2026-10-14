@@ -112,7 +112,7 @@ class CompanyRepository {
   /// 2. GET /jobs - LIST COMPANY JOBS
   Future<List<Map<String, dynamic>>> getCompanyJobs({
     int page = 1,
-    int limit = 10,
+    int limit = 50,
     String? search,
     String? location,
     num? minDailyPay,
@@ -171,15 +171,47 @@ class CompanyRepository {
   // --- APPLICATION MANAGEMENT APIS FOR COMPANY ---
 
   /// 10. GET /applications - LIST JOB APPLICATIONS SUBMITTED TO COMPANY JOBS
-  Future<List<Map<String, dynamic>>> getCompanyApplications({String? status, int page = 1, int limit = 10}) async {
-    final r = await _client.dio.get('/applications', queryParameters: {
-      'page': page,
-      'limit': limit,
-      if (status != null && status.isNotEmpty) 'status': status,
-    });
-    final d = r.data['data'];
-    if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
-    if (d is List) return List<Map<String, dynamic>>.from(d);
+  Future<List<Map<String, dynamic>>> getCompanyApplications({
+    String? status,
+    String? jobId,
+    int page = 1,
+    int limit = 50,
+  }) async {
+    try {
+      final r = await _client.dio.get('/applications', queryParameters: {
+        'page': page,
+        'limit': limit,
+        if (status != null && status.isNotEmpty) 'status': status,
+        if (jobId != null && jobId.isNotEmpty) 'jobId': jobId,
+      });
+      final raw = r.data;
+      if (raw is Map) {
+        final d = raw['data'];
+        if (d is List) return List<Map<String, dynamic>>.from(d);
+        if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+        if (d is Map && d['items'] is List) return List<Map<String, dynamic>>.from(d['items']);
+        if (d is Map && d['applications'] is List) return List<Map<String, dynamic>>.from(d['applications']);
+        if (raw['items'] is List) return List<Map<String, dynamic>>.from(raw['items']);
+        if (raw['applications'] is List) return List<Map<String, dynamic>>.from(raw['applications']);
+      }
+      if (raw is List) return List<Map<String, dynamic>>.from(raw);
+    } catch (_) {}
+
+    // Fallback: if jobId is provided and /applications didn't return or failed, try /jobs/:jobId/applications
+    if (jobId != null && jobId.isNotEmpty) {
+      try {
+        final r = await _client.dio.get('/jobs/$jobId/applications');
+        final raw = r.data;
+        if (raw is Map) {
+          final d = raw['data'];
+          if (d is List) return List<Map<String, dynamic>>.from(d);
+          if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+          if (d is Map && d['items'] is List) return List<Map<String, dynamic>>.from(d['items']);
+        }
+        if (raw is List) return List<Map<String, dynamic>>.from(raw);
+      } catch (_) {}
+    }
+
     return [];
   }
 
