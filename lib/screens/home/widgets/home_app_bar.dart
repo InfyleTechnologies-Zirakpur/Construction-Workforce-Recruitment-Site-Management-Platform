@@ -64,6 +64,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
           builder: (context, state) {
+            final hasUnread = state is Loaded<List<WorkerNotification>> &&
+                state.data.any((n) => !n.isRead);
+
             return Padding(
               padding: const EdgeInsets.only(right: 16),
               child: InkWell(
@@ -86,19 +89,20 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         size: 26,
                       ),
                     ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
+                    if (hasUnread)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

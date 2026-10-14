@@ -428,16 +428,29 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
       return Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
+          backgroundColor: AppColors.card,
+          foregroundColor: AppColors.dark,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.dark, size: 19),
+            tooltip: 'Back',
+            onPressed: () => Navigator.maybePop(context),
+          ),
           title: Text(
             _selectedFilter == MyJobsFilter.applied
                 ? 'My Applications'
                 : _selectedFilter == MyJobsFilter.saved
                     ? 'Saved Opportunities'
                     : 'My Jobs',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: AppColors.dark,
+              letterSpacing: -0.3,
+            ),
           ),
-          backgroundColor: AppColors.card,
-          elevation: 0,
         ),
         body: SafeArea(child: content),
       );

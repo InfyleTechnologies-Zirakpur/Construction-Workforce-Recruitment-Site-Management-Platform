@@ -86,6 +86,16 @@
    - Set explicit white background (`backgroundColor: Colors.white`) and high contrast dark/red text (`AppColors.dark`, `AppColors.error`).
 4. **API Base URL Configuration**:
    - Updated `ApiConfig.baseUrl` in `lib/core/api/api_config.dart` to the Render backend endpoint: `https://constructor-backend-bhah.onrender.com/api/v1`.
+5. **Job Seeker Notifications Screen Redesign**:
+   - Overhauled `NotificationsScreen` to harmonize with BuildHire's visual design system (white AppBar, dark text, peach/orange accents, and rounded cards).
+   - Streamlined interface by keeping focus on content category filter chips (*All, Applications, Messages*).
+   - Built modern `NotificationCard` with category tags, custom icon colors, and "NEW" pill indicators.
+   - Added role-aware direct redirection for all notification types:
+     - Applications ➡️ [`MyJobsScreen(initialFilter: applied)`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/jobs/my_jobs_screen.dart) for Job Seekers / [`CompanyHomeScreen(initialTabIndex: 1)`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/company/company_home_screen.dart) for Employers
+     - Jobs ➡️ [`HomePage(initialNavIndex: 1)`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/home/home_page.dart) (Jobs Tab) / [`CompanyHomeScreen(initialTabIndex: 2)`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/company/company_home_screen.dart) (Site Jobs)
+     - Messages ➡️ [`MessagesScreen`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/messages/messages_screen.dart) with back navigation / [`CompanyHomeScreen(initialTabIndex: 4)`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/company/company_home_screen.dart) (Company Chats)
+     - General / Announcements ➡️ [`NotificationDetailsSheet`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/notifications/widgets/notification_details_sheet.dart) full message reader
+   - Updated `HomeAppBar` to only display the orange unread dot when unread notifications actually exist.
 
 ---
 
@@ -104,3 +114,7 @@
 | [`lib/core/api/api_config.dart`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/core/api/api_config.dart) | API Configuration & Base URL |
 | [`lib/screens/profile/worker_profile_screen.dart`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/profile/worker_profile_screen.dart) | Logout Dialog Styling Fix |
 | [`lib/core/widgets/skeleton/smart_skeleton.dart`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/core/widgets/skeleton/smart_skeleton.dart) | Skeleton Overflow Fix |
+| [`lib/screens/notifications/notifications_screen.dart`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/notifications/notifications_screen.dart) | Redesigned Notifications Screen to match App Design System |
+| [`lib/screens/notifications/widgets/notification_card.dart`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/notifications/widgets/notification_card.dart) | Card container with type-specific color palette and badges |
+| [`lib/screens/notifications/widgets/notification_details_sheet.dart`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/notifications/widgets/notification_details_sheet.dart) | Interactive modal bottom sheet with contextual actions |
+| [`lib/screens/home/widgets/home_app_bar.dart`](file:///d:/programs/Construction-Workforce-Recruitment-Site-Management-Platform/lib/screens/home/widgets/home_app_bar.dart) | Dynamic unread notification dot badge |

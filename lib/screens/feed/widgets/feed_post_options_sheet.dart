@@ -161,11 +161,11 @@ class FeedPostOptionsSheet extends StatelessWidget {
               if (onDelete != null) ...[
                 _buildOptionTile(
                   icon: Icons.delete_outline_rounded,
-                  iconColor: AppColors.error,
-                  iconBgColor: const Color(0xFFFEE4E2),
+                  iconColor: AppColors.primary,
+                  iconBgColor: AppColors.peachBackground,
                   title: 'Delete Post',
                   subtitle: 'Permanently remove this post from the feed',
-                  isDestructive: true,
+                  isDestructive: false,
                   onTap: () {
                     Navigator.of(context).pop();
                     onDelete!();
@@ -190,11 +190,11 @@ class FeedPostOptionsSheet extends StatelessWidget {
               if (!post.isMyPost && onReport != null) ...[
                 _buildOptionTile(
                   icon: Icons.flag_outlined,
-                  iconColor: AppColors.error,
-                  iconBgColor: const Color(0xFFFEE4E2),
+                  iconColor: AppColors.primary,
+                  iconBgColor: AppColors.peachBackground,
                   title: 'Report Post',
                   subtitle: 'Flag abusive, fake, or unsafe content',
-                  isDestructive: true,
+                  isDestructive: false,
                   onTap: () {
                     Navigator.of(context).pop();
                     onReport!();

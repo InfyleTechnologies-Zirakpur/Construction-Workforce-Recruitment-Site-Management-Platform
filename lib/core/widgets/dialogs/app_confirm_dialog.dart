@@ -75,15 +75,13 @@ class AppConfirmDialog extends StatelessWidget {
             Container(
               width: 58,
               height: 58,
-              decoration: BoxDecoration(
-                color: isDestructive
-                    ? const Color(0xFFFEE4E2)
-                    : AppColors.peachBackground,
+              decoration: const BoxDecoration(
+                color: AppColors.peachBackground,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                color: isDestructive ? AppColors.error : AppColors.primary,
+                color: AppColors.primary,
                 size: 28,
               ),
             ),
@@ -145,9 +143,7 @@ class AppConfirmDialog extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDestructive
-                            ? AppColors.error
-                            : AppColors.primary,
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

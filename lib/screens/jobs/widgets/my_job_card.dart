@@ -59,7 +59,7 @@ class MyJobCard extends StatelessWidget {
       confirmLabel: 'Withdraw',
       cancelLabel: 'Keep Application',
       icon: Icons.assignment_return_outlined,
-      isDestructive: true,
+      isDestructive: false,
     );
 
     if (confirm && context.mounted) {
@@ -302,16 +302,33 @@ class MyJobCard extends StatelessWidget {
                         ),
                       ),
                       if (status == 'pending' && (job.applicationId != null || job.id.isNotEmpty))
-                        TextButton(
-                          onPressed: () => _withdrawApplication(context),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            visualDensity: VisualDensity.compact,
-                            foregroundColor: AppColors.error,
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.peachBackground,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.peachBorder,
+                              width: 0.9,
+                            ),
                           ),
-                          child: const Text(
-                            'Withdraw',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          child: InkWell(
+                            onTap: () => _withdrawApplication(context),
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              child: Text(
+                                'Withdraw',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                     ],

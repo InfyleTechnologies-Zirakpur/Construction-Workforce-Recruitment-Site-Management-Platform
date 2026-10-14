@@ -117,7 +117,7 @@ class _FeedScreenState extends State<FeedScreen> {
       confirmLabel: 'Delete',
       cancelLabel: 'Cancel',
       icon: Icons.delete_outline_rounded,
-      isDestructive: true,
+      isDestructive: false,
     );
 
     if (confirmed && mounted) {

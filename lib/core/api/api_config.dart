@@ -5,7 +5,8 @@ class ApiConfig {
 //static const String baseUrl = 'https://constructor-backend-bhah.onrender.com/api/v1';
 // static const String baseUrl = 'http://192.168.1.8:3000/api/v1';
  static const bool useDummyApi = false;
- static const String baseUrl = 'https://unbent-smashing-negation.ngrok-free.dev/api/v1';
+// static const String baseUrl = 'https://unbent-smashing-negation.ngrok-free.dev/api/v1';
+static const String baseUrl = 'http://129.121.133.31:3000/api/v1';
   static const Duration connectTimeout = Duration(seconds: 30);
 }
 

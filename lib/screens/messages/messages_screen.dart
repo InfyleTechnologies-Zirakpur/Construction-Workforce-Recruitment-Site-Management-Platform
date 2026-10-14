@@ -183,13 +183,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: () async => context.read<MessagesCubit>().load(),
-          child: ListView(
+    final content = RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () async => context.read<MessagesCubit>().load(),
+      child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             children: [
@@ -402,8 +399,39 @@ class _MessagesScreenState extends State<MessagesScreen> {
               const SizedBox(height: 40),
             ],
           ),
+        );
+
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
+    if (canPop) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.card,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.dark, size: 19),
+            tooltip: 'Back',
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          title: const Text(
+            'Messages',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: AppColors.dark,
+              letterSpacing: -0.3,
+            ),
+          ),
         ),
-      ),
+        body: SafeArea(child: content),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(child: content),
     );
   }
 }

@@ -17,14 +17,16 @@ import 'widgets/company_post_job_sheet.dart';
 import 'widgets/company_site_jobs_view.dart';
 
 class CompanyHomeScreen extends StatefulWidget {
-  const CompanyHomeScreen({super.key});
+  final int initialTabIndex;
+
+  const CompanyHomeScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<CompanyHomeScreen> createState() => _CompanyHomeScreenState();
 }
 
 class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
-  int _tabIndex = 0;
+  late int _tabIndex;
   bool _isLoading = true;
 
   List<Map<String, dynamic>> _applications = [];
@@ -42,6 +44,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _tabIndex = widget.initialTabIndex;
     _loadCompanyData();
   }
 
@@ -86,7 +89,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       confirmLabel: 'Log Out',
       cancelLabel: 'Cancel',
       icon: Icons.logout_rounded,
-      isDestructive: true,
+      isDestructive: false,
     );
 
     if (confirm && mounted) {

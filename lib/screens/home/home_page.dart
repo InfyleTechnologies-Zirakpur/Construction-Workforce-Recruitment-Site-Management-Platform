@@ -17,21 +17,21 @@ import 'widgets/jobs_stats_bar.dart';
 import 'widgets/trade_filter_bar.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialNavIndex;
+
+  const HomePage({super.key, this.initialNavIndex = 1});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  // Default to Jobs tab (index 1) matching user specification
-  int _navIndex = 1;
+  late int _navIndex;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
   String? _selectedTrade;
-  bool _defaultTradeApplied = false;
 
   static const List<String> _tradeList = [
     'All',
@@ -47,6 +47,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _navIndex = widget.initialNavIndex;
     context.read<JobsCubit>().load();
     context.read<NotificationsCubit>().load();
     context.read<ProfileCubit>().load();
@@ -68,22 +69,6 @@ class _HomePageState extends State<HomePage> {
         job.description.toLowerCase().contains(key);
   }
 
-  void _applyDefaultTrade(WorkerProfile profile) {
-    if (_defaultTradeApplied) return;
-    String? match;
-    for (final trade in _tradeList) {
-      if (trade == 'All') continue;
-      final key = _tradeKey(trade);
-      if (profile.skills.any((s) => s.toLowerCase().contains(key))) {
-        match = trade;
-        break;
-      }
-    }
-    setState(() {
-      _selectedTrade = match;
-      _defaultTradeApplied = true;
-    });
-  }
 
   void _showJobDetails(BuildContext context, Job job) {
     showModalBottomSheet(
@@ -312,11 +297,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProfileCubit, LoadState<WorkerProfile>>(
-      listener: (context, state) {
-        if (state is Loaded<WorkerProfile>) _applyDefaultTrade(state.data);
-      },
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: AppColors.background,
         appBar: HomeAppBar(navIndex: _navIndex),
         body: _navIndex == 4
@@ -399,7 +380,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

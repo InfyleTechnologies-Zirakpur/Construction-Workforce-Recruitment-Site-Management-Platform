@@ -128,7 +128,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       confirmLabel: 'Log Out',
       cancelLabel: 'Cancel',
       icon: Icons.logout_rounded,
-      isDestructive: true,
+      isDestructive: false,
     );
 
     if (confirm && context.mounted) {
@@ -336,9 +336,10 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _confirmLogout(context),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
+                        backgroundColor: AppColors.peachBackground,
+                        foregroundColor: AppColors.primary,
                         side: const BorderSide(
-                          color: AppColors.error,
+                          color: AppColors.peachBorder,
                           width: 1.2,
                         ),
                         shape: RoundedRectangleBorder(
@@ -347,13 +348,13 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                       ),
                       icon: const Icon(
                         Icons.logout_rounded,
-                        color: AppColors.error,
+                        color: AppColors.primary,
                         size: 18,
                       ),
                       label: const Text(
                         'Log Out',
                         style: TextStyle(
-                          color: AppColors.error,
+                          color: AppColors.primary,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
