@@ -70,33 +70,45 @@ class _OtpScreenState extends State<OtpScreen> {
   String get _enteredOtp => _otpController.text.trim();
 
   Future<void> _handleVerify() async {
-    if (_enteredOtp.length != _otpLength) {
-      setState(() => _errorText = 'Enter the complete 6-digit code');
+    final otp = _enteredOtp;
+    if (otp.isEmpty) {
+      setState(() => _errorText = 'Please enter the 6-digit verification code');
+      return;
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(otp)) {
+      setState(() => _errorText = 'Verification code must contain digits only');
+      return;
+    }
+    if (otp.length != _otpLength) {
+      setState(() => _errorText = 'Enter all 6 digits of the verification code');
       return;
     }
 
-    setState(() => _isVerifying = true);
+    setState(() {
+      _errorText = null;
+      _isVerifying = true;
+    });
 
-    context.read<AuthCubit>().verifyOtp(widget.phoneNumber, _enteredOtp);
+    context.read<AuthCubit>().verifyOtp(widget.phoneNumber, otp);
   }
 
   void _handleResend() {
     if (_secondsLeft > 0) return;
     _otpController.clear();
+    setState(() => _errorText = null);
     _focusNode.requestFocus();
-    // TODO: trigger a real "resend OTP" API call.
+    context.read<AuthCubit>().requestOtp(widget.phoneNumber);
     _startTimer();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('A new 6-digit OTP has been sent to your number.'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
-  /// Robust existing-user detection.
-  /// Backend (bipul/auth.service) is the source of truth and now returns
-  /// top-level `isNewUser` / `isProfileComplete` + the same flags inside
-  /// `worker`. The fallback below mirrors the backend rule so old builds /
-  /// cached responses still route correctly.
-  /// A brand-new number (e.g. 1234567891) is auto-created with
-  /// name='Job Seeker' + empty city/skills → must go to
-  /// CompleteProfileScreen; an existing number (e.g. 9878261754) with a
-  /// saved real name + city/skills → HomePage.
+
   static const _placeholderNames = {
     '',
     'null',
@@ -242,7 +254,9 @@ class _OtpScreenState extends State<OtpScreen> {
           if (state is Failed<Map<String, dynamic>>) {
             setState(() {
               _isVerifying = false;
-              _errorText = 'Verification failed. Please try again.';
+              _errorText = state.message.isNotEmpty
+                  ? state.message
+                  : 'Invalid OTP code. Please enter the correct code.';
             });
             _focusNode.requestFocus();
           }
@@ -268,10 +282,41 @@ class _OtpScreenState extends State<OtpScreen> {
               SizedBox(height: context.h(28)),
               _buildOtpBoxes(context),
               if (_errorText != null) ...[
-                SizedBox(height: context.h(10)),
-                Text(
-                  _errorText!,
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.error),
+                SizedBox(height: context.h(12)),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.35)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        _errorText!.toLowerCase().contains('internet') ||
+                                _errorText!.toLowerCase().contains('connection') ||
+                                _errorText!.toLowerCase().contains('network') ||
+                                _errorText!.toLowerCase().contains('timed out')
+                            ? Icons.wifi_off_rounded
+                            : Icons.error_outline_rounded,
+                        color: const Color(0xFFDC2626),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorText!,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF991B1B),
+                            fontWeight: FontWeight.w500,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
               SizedBox(height: context.h(28)),

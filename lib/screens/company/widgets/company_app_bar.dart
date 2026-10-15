@@ -13,6 +13,7 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final bool showNotifications;
   final bool showProfileAvatar;
+  final VoidCallback? onBackPressed;
 
   const CompanyAppBar({
     super.key,
@@ -22,6 +23,7 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBackButton = false,
     this.showNotifications = true,
     this.showProfileAvatar = true,
+    this.onBackPressed,
   });
 
   @override
@@ -63,7 +65,7 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.dark, size: 19),
               tooltip: 'Back',
-              onPressed: () => Navigator.maybePop(context),
+              onPressed: onBackPressed ?? () => Navigator.maybePop(context),
             )
           : null,
       title: Column(

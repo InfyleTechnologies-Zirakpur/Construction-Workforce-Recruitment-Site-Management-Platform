@@ -84,6 +84,16 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
 
   void _submit() {
     final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Full name cannot be empty.'),
+          backgroundColor: Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     final city = _cityController.text.trim();
     final rawSalary = _salaryController.text.trim();
     final salary = rawSalary.isNotEmpty ? '₹$rawSalary/day' : '';

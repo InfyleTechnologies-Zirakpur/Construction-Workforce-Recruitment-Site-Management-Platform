@@ -111,11 +111,43 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   }
 
   void _showMessage(String message) {
+    final isErr = message.toLowerCase().contains('failed') ||
+        message.toLowerCase().contains('error') ||
+        message.toLowerCase().contains('internet') ||
+        message.toLowerCase().contains('connection');
+    final isNet = message.toLowerCase().contains('internet') ||
+        message.toLowerCase().contains('connection') ||
+        message.toLowerCase().contains('network') ||
+        message.toLowerCase().contains('timed out');
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Row(
+          children: [
+            Icon(
+              isNet
+                  ? Icons.wifi_off_rounded
+                  : (isErr ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded),
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isErr ? const Color(0xFFDC2626) : Colors.green.shade700,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -216,8 +248,13 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                       color: AppColors.peachBackground,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.error_outline_rounded,
+                    child: Icon(
+                      state.message.toLowerCase().contains('internet') ||
+                              state.message.toLowerCase().contains('connection') ||
+                              state.message.toLowerCase().contains('network') ||
+                              state.message.toLowerCase().contains('timed out')
+                          ? Icons.wifi_off_rounded
+                          : Icons.error_outline_rounded,
                       size: 40,
                       color: AppColors.primary,
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../../features/repositories/company_repository.dart';
 import '../company_profile_form_screen.dart';
 
@@ -20,37 +21,37 @@ class CompanyPostJobSheet extends StatefulWidget {
     required VoidCallback onJobPosted,
   }) async {
     if (myProfile == null) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.card,
-          title: const Text(
-            'Company Profile Required',
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.dark),
-          ),
-          content: const Text(
+      final shouldSetup = await AppConfirmDialog.show(
+        context,
+        title: 'Company Profile Required',
+        message:
             'You must register your company profile credentials before posting job requirements on the platform.',
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CompanyProfileFormScreen()),
-                ).then((_) => onJobPosted());
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Setup Profile', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
+        confirmLabel: 'Setup Profile',
+        cancelLabel: 'Cancel',
+        icon: Icons.business_rounded,
+        isDestructive: false,
       );
+
+      if (shouldSetup && context.mounted) {
+        final created = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(builder: (_) => const CompanyProfileFormScreen()),
+        );
+        if (created == true && context.mounted) {
+          onJobPosted();
+          try {
+            final profiles = await CompanyRepository().getMyProfiles();
+            final updatedProfile = profiles.isNotEmpty ? profiles.first : null;
+            if (updatedProfile != null && context.mounted) {
+              CompanyPostJobSheet.show(
+                context,
+                myProfile: updatedProfile,
+                onJobPosted: onJobPosted,
+              );
+            }
+          } catch (_) {}
+        }
+      }
       return;
     }
 
@@ -245,17 +246,25 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
       final errStr = e.toString();
       if (errStr.contains('Company profile not found')) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please complete your company profile first.'),
-            backgroundColor: AppColors.primary,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        Navigator.push(
+        final shouldSetup = await AppConfirmDialog.show(
           context,
-          MaterialPageRoute(builder: (_) => const CompanyProfileFormScreen()),
-        ).then((_) => widget.onJobPosted());
+          title: 'Company Profile Required',
+          message:
+              'Please complete your company profile details before posting job requirements.',
+          confirmLabel: 'Setup Profile',
+          cancelLabel: 'Cancel',
+          icon: Icons.business_rounded,
+          isDestructive: false,
+        );
+        if (shouldSetup && context.mounted) {
+          final created = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (_) => const CompanyProfileFormScreen()),
+          );
+          if (created == true && context.mounted) {
+            widget.onJobPosted();
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

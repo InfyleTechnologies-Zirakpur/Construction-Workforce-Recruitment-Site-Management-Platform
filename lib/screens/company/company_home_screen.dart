@@ -10,6 +10,7 @@ import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
 import '../auth/login_screen.dart';
 import '../feed/feed_screen.dart';
+import 'company_profile_form_screen.dart';
 import 'company_profile_screen.dart';
 import 'widgets/company_analytics_view.dart';
 import 'widgets/company_app_bar.dart';
@@ -191,24 +192,18 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   }
 
   Future<void> _closeJob(String jobId) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.card,
-        title: const Text('Close Job Requirement', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.dark)),
-        content: const Text('Are you sure you want to close this job posting? Workers will no longer be able to apply.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Close Job', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    final confirm = await AppConfirmDialog.show(
+      context,
+      title: 'Close Job Requirement?',
+      message:
+          'Are you sure you want to close this job posting? Workers will no longer be able to apply.',
+      confirmLabel: 'Close Job',
+      cancelLabel: 'Cancel',
+      icon: Icons.work_off_rounded,
+      isDestructive: true,
     );
 
-    if (confirm == true && mounted) {
+    if (confirm && mounted) {
       try {
         await _repo.closeJob(jobId);
         if (mounted) {
@@ -276,21 +271,48 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   Widget _companyHeader(TextTheme textTheme) {
     if (_isCompanyVerified) return const SizedBox.shrink();
 
+    final hasProfile = _myProfile != null;
     final rawName = _myProfile?['name']?.toString() ??
         _myProfile?['companyName']?.toString() ??
         _myProfile?['fullName']?.toString() ??
-        'infyle';
+        'Company Profile';
     final companyName = rawName.replaceAll(RegExp(r'\s+Admin$', caseSensitive: false), '');
-    final status = (_myProfile?['verificationStatus'] ?? 'pending').toString().toUpperCase();
-    final statusColor = status == 'VERIFIED'
-        ? AppColors.success
-        : (status == 'REJECTED' ? AppColors.error : const Color(0xFFF59E0B));
+    final status = hasProfile
+        ? (_myProfile?['verificationStatus'] ?? 'pending').toString().toUpperCase()
+        : 'REQUIRED';
+    final statusColor = !hasProfile
+        ? AppColors.primary
+        : (status == 'VERIFIED'
+            ? AppColors.success
+            : (status == 'REJECTED' ? AppColors.error : const Color(0xFFF59E0B)));
 
     return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
-      ).then((_) => _loadCompanyData()),
+      onTap: () async {
+        if (!hasProfile) {
+          final shouldSetup = await AppConfirmDialog.show(
+            context,
+            title: 'Company Profile Required',
+            message:
+                'You must register your company profile credentials before posting job requirements on the platform.',
+            confirmLabel: 'Setup Profile',
+            cancelLabel: 'Cancel',
+            icon: Icons.business_rounded,
+            isDestructive: false,
+          );
+          if (shouldSetup && mounted) {
+            final created = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(builder: (_) => const CompanyProfileFormScreen()),
+            );
+            if (created == true && mounted) _loadCompanyData();
+          }
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
+          ).then((_) => _loadCompanyData());
+        }
+      },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 78,
@@ -341,12 +363,12 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: !hasProfile ? AppColors.peachBackground : AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.apartment_rounded,
-                        color: Colors.white,
+                      child: Icon(
+                        !hasProfile ? Icons.domain_add_rounded : Icons.apartment_rounded,
+                        color: !hasProfile ? AppColors.primary : Colors.white,
                         size: 26,
                       ),
                     ),
@@ -357,7 +379,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            companyName,
+                            hasProfile ? companyName : 'Complete Profile',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -368,11 +390,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'Manage site hiring & company details',
+                          Text(
+                            hasProfile
+                                ? 'Manage site hiring & company details'
+                                : 'Set up credentials to start posting job requirements',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),

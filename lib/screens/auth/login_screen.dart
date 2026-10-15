@@ -5,7 +5,7 @@ import '../../features/bloc/worker_blocs.dart';
 import 'company_login_screen.dart';
 import 'otp_screen.dart';
 
-/// Worker / Job Seeker login screen.
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _phoneController = TextEditingController();
   bool _awaitingOtp = false;
+  String? _phoneError;
 
   @override
   void dispose() {
@@ -24,8 +25,30 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  String? _validatePhone(String? value) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) {
+      return 'Mobile number is required';
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(v)) {
+      return 'Mobile number must contain digits only';
+    }
+    if (v.length != 10) {
+      return 'Mobile number must be exactly 10 digits';
+    }
+    if (!RegExp(r'^[6-9]').hasMatch(v)) {
+      return 'Enter a valid mobile number ';
+    }
+    if (RegExp(r'^(.)\1{9}$').hasMatch(v)) {
+      return 'Invalid mobile number (all repeating digits)';
+    }
+    return null;
+  }
+
   Future<void> _handleSendOtp() async {
-    if (!_formKey.currentState!.validate()) return;
+    final err = _validatePhone(_phoneController.text);
+    setState(() => _phoneError = err);
+    if (err != null) return;
 
     FocusScope.of(context).unfocus();
     setState(() => _awaitingOtp = true);
@@ -50,9 +73,39 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           if (state is Failed<Map<String, dynamic>>) {
             _awaitingOtp = false;
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            final isNet = state.message.toLowerCase().contains('internet') ||
+                state.message.toLowerCase().contains('connection') ||
+                state.message.toLowerCase().contains('server') ||
+                state.message.toLowerCase().contains('timed out');
+            setState(() => _phoneError = state.message);
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(
+                      isNet ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        state.message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFFE53935),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 4),
+              ),
+            );
           }
         },
         child: LayoutBuilder(
@@ -201,8 +254,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: const Color(0xFFE5E7EB),
-                                      width: 1.2,
+                                      color: _phoneError != null
+                                          ? const Color(0xFFE53935)
+                                          : const Color(0xFFE5E7EB),
+                                      width: _phoneError != null ? 1.5 : 1.2,
                                     ),
                                   ),
                                   child: Row(
@@ -265,20 +320,49 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   vertical: 14,
                                                 ),
                                           ),
-                                          validator: (value) {
-                                            final v = value?.trim() ?? '';
-                                            if (v.isEmpty)
-                                              return 'Enter your phone number';
-                                            if (v.length != 10)
-                                              return 'Enter a valid 10-digit number';
-                                            return null;
+                                          onChanged: (val) {
+                                            if (_phoneError != null) {
+                                              setState(() => _phoneError = _validatePhone(val));
+                                            }
                                           },
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                SizedBox(height: context.h(20)),
+                                if (_phoneError != null) ...[
+                                  const SizedBox(height: 6),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          _phoneError!.toLowerCase().contains('internet') ||
+                                                  _phoneError!.toLowerCase().contains('connection') ||
+                                                  _phoneError!.toLowerCase().contains('network') ||
+                                                  _phoneError!.toLowerCase().contains('timed out')
+                                              ? Icons.wifi_off_rounded
+                                              : Icons.error_outline_rounded,
+                                          color: const Color(0xFFE53935),
+                                          size: 15,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Expanded(
+                                          child: Text(
+                                            _phoneError!,
+                                            style: const TextStyle(
+                                              color: Color(0xFFE53935),
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                SizedBox(height: context.h(16)),
 
                                 // Send OTP Button
                                 SizedBox(

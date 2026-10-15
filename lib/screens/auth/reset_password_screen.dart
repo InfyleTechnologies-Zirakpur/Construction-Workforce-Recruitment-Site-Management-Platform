@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -56,10 +57,48 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         );
         Navigator.of(context).pop();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        final errorMsg = ApiErrorParser.extractMessage(
+          e,
+          fallbackMessage: _step == 0
+              ? 'Failed to send OTP to this mobile number.'
+              : _step == 1
+                  ? 'Invalid verification code. Please check and try again.'
+                  : 'Failed to reset password. Please try again.',
+        );
+        final isNet = ApiErrorParser.isNetworkError(e) ||
+            errorMsg.toLowerCase().contains('internet') ||
+            errorMsg.toLowerCase().contains('connection') ||
+            errorMsg.toLowerCase().contains('network') ||
+            errorMsg.toLowerCase().contains('timed out');
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to continue. Please try again.')),
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  isNet ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    errorMsg,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
         );
       }
     } finally {
@@ -147,9 +186,25 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           labelText: 'Mobile number',
           prefixText: '+91 ',
         ),
-        validator: (value) => (value ?? '').trim().length == 10
-            ? null
-            : 'Enter a valid 10-digit number',
+        validator: (value) {
+          final phone = (value ?? '').trim();
+          if (phone.isEmpty) {
+            return 'Mobile number is required';
+          }
+          if (!RegExp(r'^[0-9]+$').hasMatch(phone)) {
+            return 'Mobile number must contain digits only';
+          }
+          if (phone.length != 10) {
+            return 'Please enter a valid 10-digit mobile number';
+          }
+          if (!RegExp(r'^[6-9]').hasMatch(phone)) {
+            return 'Mobile number must start with 6, 7, 8, or 9';
+          }
+          if (RegExp(r'^([0-9])\1{9}$').hasMatch(phone)) {
+            return 'Please enter a valid mobile number';
+          }
+          return null;
+        },
       );
     }
     if (_step == 1) {
@@ -158,18 +213,35 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         maxLength: 6,
         keyboardType: TextInputType.number,
         decoration: const InputDecoration(labelText: '6-digit OTP'),
-        validator: (value) => (value ?? '').trim().length == 6
-            ? null
-            : 'Enter the complete OTP',
+        validator: (value) {
+          final otp = (value ?? '').trim();
+          if (otp.isEmpty) {
+            return 'Verification code is required';
+          }
+          if (!RegExp(r'^[0-9]+$').hasMatch(otp)) {
+            return 'OTP must contain numbers only';
+          }
+          if (otp.length != 6) {
+            return 'Please enter the complete 6-digit OTP';
+          }
+          return null;
+        },
       );
     }
     return TextFormField(
       controller: _passwordController,
       obscureText: true,
       decoration: const InputDecoration(labelText: 'New password'),
-      validator: (value) => (value ?? '').length >= 6
-          ? null
-          : 'Use at least 6 characters',
+      validator: (value) {
+        final pass = value ?? '';
+        if (pass.isEmpty) {
+          return 'New password is required';
+        }
+        if (pass.length < 6) {
+          return 'Password must be at least 6 characters long';
+        }
+        return null;
+      },
     );
   }
 

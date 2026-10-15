@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../features/repositories/company_repository.dart';
 import 'company_home_screen.dart';
 import 'widgets/company_app_bar.dart';
@@ -99,6 +100,24 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
     _teamSizeRange = p['teamSizeRange']?.toString();
   }
 
+  String? get _selectedBusinessType {
+    if (_businessType == null) return null;
+    final normalized = _businessType!.trim().toLowerCase();
+    for (final t in _businessTypes) {
+      if (t.trim().toLowerCase() == normalized) return t;
+    }
+    return null;
+  }
+
+  String? get _selectedTeamSize {
+    if (_teamSizeRange == null) return null;
+    final normalized = _teamSizeRange!.trim().toLowerCase();
+    for (final s in _teamSizes) {
+      if (s.trim().toLowerCase() == normalized) return s;
+    }
+    return null;
+  }
+
   @override
   void dispose() {
     _name.dispose();
@@ -186,18 +205,49 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
     }
   }
 
+  Future<void> _handleBack() async {
+    if (widget.isInitialSetup) {
+      final confirm = await AppConfirmDialog.show(
+        context,
+        title: 'Exit Profile Setup?',
+        message:
+            'You can complete your company profile details later from your employer portal before posting job requirements.',
+        confirmLabel: 'Go to Dashboard',
+        cancelLabel: 'Stay Here',
+        icon: Icons.dashboard_customize_rounded,
+        isDestructive: false,
+      );
+      if (confirm && mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const CompanyHomeScreen()),
+          (_) => false,
+        );
+      }
+    } else {
+      Navigator.maybePop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final isEdit = widget.profile != null;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CompanyAppBar(
-        showBackButton: true,
-        showNotifications: false,
-        showProfileAvatar: false,
-      ),
+    return PopScope(
+      canPop: !widget.isInitialSetup,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _handleBack();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CompanyAppBar(
+          showBackButton: true,
+          showNotifications: false,
+          showProfileAvatar: false,
+          onBackPressed: _handleBack,
+        ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -363,9 +413,58 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                 _sectionHeader('Business Scope', Icons.work_outline, textTheme),
                 SizedBox(height: context.h(12)),
                 DropdownButtonFormField<String>(
-                  initialValue: _businessTypes.contains(_businessType) ? _businessType : null,
-                  decoration: const InputDecoration(labelText: 'Business Structure'),
-                  items: _businessTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  value: _selectedBusinessType,
+                  isExpanded: true,
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  elevation: 3,
+                  menuMaxHeight: 320,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.dark,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Business Structure / Scope',
+                    hintText: 'Select entity type',
+                  ),
+                  items: _businessTypes.map((t) {
+                    final isSelected = t == _selectedBusinessType;
+                    return DropdownMenuItem<String>(
+                      value: t,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.business_outlined,
+                            size: 18,
+                            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              t,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected ? AppColors.primary : AppColors.dark,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            const Icon(
+                              Icons.check_rounded,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                   onChanged: (v) => setState(() => _businessType = v),
                 ),
                 SizedBox(height: context.h(12)),
@@ -381,9 +480,58 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        initialValue: _teamSizes.contains(_teamSizeRange) ? _teamSizeRange : null,
-                        decoration: const InputDecoration(labelText: 'Team Size'),
-                        items: _teamSizes.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                        value: _selectedTeamSize,
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.primary,
+                          size: 22,
+                        ),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        elevation: 3,
+                        menuMaxHeight: 320,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.dark,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Team Size',
+                          hintText: 'Select size',
+                        ),
+                        items: _teamSizes.map((s) {
+                          final isSelected = s == _selectedTeamSize;
+                          return DropdownMenuItem<String>(
+                            value: s,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.groups_outlined,
+                                  size: 18,
+                                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    s,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                      color: isSelected ? AppColors.primary : AppColors.dark,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check_rounded,
+                                    size: 18,
+                                    color: AppColors.primary,
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                         onChanged: (v) => setState(() => _teamSizeRange = v),
                       ),
                     ),
@@ -452,8 +600,9 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
       ),
     ),
   ),
-);
-}
+),
+    );
+  }
 
   Widget _sectionHeader(String title, IconData icon, TextTheme textTheme) {
     return Row(

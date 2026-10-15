@@ -239,9 +239,14 @@ class MyJobCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
-                        Text(
-                          job.location,
-                          style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 180),
+                          child: Text(
+                            job.location,
+                            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/models/models.dart';
+import '../../core/utils/api_error_parser.dart';
 import '../repositories/worker_repository.dart';
 
 export 'feed_cubit.dart';
@@ -39,7 +40,10 @@ class JobsCubit extends Cubit<LoadState<List<Job>>> {
       emit(Loaded(await _repo.fetchJobs(query: query)));
     } catch (e) {
       if (state is! Loaded<List<Job>>) {
-        emit(Failed(e.toString()));
+        emit(Failed(ApiErrorParser.extractMessage(
+          e,
+          fallback: 'Failed to load jobs. Please check your internet connection.',
+        )));
       }
     }
   }
@@ -114,7 +118,10 @@ class ProfileCubit extends Cubit<LoadState<WorkerProfile>> {
     try {
       emit(Loaded(await _repo.profile()));
     } catch (e) {
-      emit(Failed(e.toString()));
+      emit(Failed(ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Failed to load profile. Please check your internet connection.',
+      )));
     }
   }
 
@@ -134,7 +141,10 @@ class ProfileCubit extends Cubit<LoadState<WorkerProfile>> {
       } catch (_) {}
       emit(Loaded(updatedProfile));
     } catch (e) {
-      emit(Failed(e.toString()));
+      emit(Failed(ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Failed to save profile. Please check your inputs.',
+      )));
     }
   }
 
@@ -167,7 +177,10 @@ class AttendanceCubit extends Cubit<LoadState<List<Attendance>>> {
     try {
       emit(Loaded(await _repo.attendance()));
     } catch (e) {
-      emit(Failed(e.toString()));
+      emit(Failed(ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Failed to load attendance records. Please check your connection.',
+      )));
     }
   }
 
@@ -191,7 +204,10 @@ class DashboardCubit extends Cubit<LoadState<Map<String, dynamic>>> {
     try {
       emit(Loaded(await _repo.dashboard()));
     } catch (e) {
-      emit(Failed(e.toString()));
+      emit(Failed(ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Failed to load dashboard data. Please check your connection.',
+      )));
     }
   }
 }
@@ -205,7 +221,10 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
       final res = await _repo.requestOtp(phone);
       emit(Loaded(<String, dynamic>{'otpSent': true, ...res}));
     } catch (e) {
-      emit(Failed(e.toString()));
+      emit(Failed(ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Failed to send OTP. Please check your phone number.',
+      )));
     }
   }
 
@@ -245,7 +264,10 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
       }
       emit(Loaded(data));
     } catch (e) {
-      emit(Failed(e.toString()));
+      emit(Failed(ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Invalid OTP code. Please enter the correct code.',
+      )));
     }
   }
 

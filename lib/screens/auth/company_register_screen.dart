@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/repositories/company_repository.dart';
 import '../company/company_profile_form_screen.dart';
@@ -98,7 +99,10 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Unable to register company account. Please check your details.',
+      ));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -268,10 +272,26 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
                                   ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
                                 ),
-                                validator: (v) => (v == null || v.trim().isEmpty)
-                                    ? 'Enter representative name'
-                                    : null,
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) {
+                                    return 'Representative full name is required';
+                                  }
+                                  if (v.trim().length < 3) {
+                                    return 'Please enter a valid full name (minimum 3 characters)';
+                                  }
+                                  return null;
+                                },
                               ),
                               SizedBox(height: context.h(14)),
 
@@ -303,10 +323,27 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
                                   ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
                                 ),
-                                validator: (v) => (v == null || !v.contains('@'))
-                                    ? 'Enter valid email'
-                                    : null,
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) {
+                                    return 'Official company email is required';
+                                  }
+                                  final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                                  if (!emailRegex.hasMatch(v.trim())) {
+                                    return 'Please enter a valid email address (e.g. name@company.com)';
+                                  }
+                                  return null;
+                                },
                               ),
                               SizedBox(height: context.h(14)),
 
@@ -346,8 +383,26 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
                                   ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
                                 ),
-                                validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) {
+                                    return 'Password is required';
+                                  }
+                                  if (v.length < 6) {
+                                    return 'Password must be at least 6 characters long';
+                                  }
+                                  return null;
+                                },
                               ),
                               SizedBox(height: context.h(14)),
 
@@ -387,13 +442,69 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
                                   ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
                                 ),
                                 validator: (v) {
-                                  if (v != _pass.text) return 'Passwords do not match';
+                                  if (v == null || v.isEmpty) {
+                                    return 'Please confirm your password';
+                                  }
+                                  if (v != _pass.text) {
+                                    return 'Passwords do not match. Please verify your password.';
+                                  }
                                   return null;
                                 },
                               ),
-                              SizedBox(height: context.h(24)),
+                              SizedBox(height: context.h(20)),
+
+                              if (_error != null) ...[
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.4)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        _error!.toLowerCase().contains('internet') ||
+                                                _error!.toLowerCase().contains('connection') ||
+                                                _error!.toLowerCase().contains('server') ||
+                                                _error!.toLowerCase().contains('network') ||
+                                                _error!.toLowerCase().contains('timed out')
+                                            ? Icons.wifi_off_rounded
+                                            : Icons.error_outline_rounded,
+                                        color: const Color(0xFFDC2626),
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _error!,
+                                          style: const TextStyle(
+                                            color: Color(0xFF991B1B),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: context.h(16)),
+                              ],
 
                               // Create Account Button
                               SizedBox(

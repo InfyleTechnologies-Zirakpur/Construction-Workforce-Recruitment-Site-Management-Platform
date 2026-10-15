@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
 import '../company/company_home_screen.dart';
 import '../../features/repositories/company_repository.dart';
@@ -65,7 +66,10 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Invalid email or password. Please verify your credentials.',
+      ));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -213,7 +217,17 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                     borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
                                   ),
                                 ),
-                                validator: (v) => (v != null && v.contains('@')) ? null : 'Enter valid email',
+                                validator: (v) {
+                                  final email = v?.trim() ?? '';
+                                  if (email.isEmpty) {
+                                    return 'Email address is required';
+                                  }
+                                  final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                                  if (!emailRegex.hasMatch(email)) {
+                                    return 'Enter a valid email address (e.g. name@company.com)';
+                                  }
+                                  return null;
+                                },
                               ),
                               SizedBox(height: context.h(14)),
 
@@ -254,14 +268,46 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                     borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
                                   ),
                                 ),
-                                validator: (v) => (v != null && v.length >= 6) ? null : 'Min 6 characters',
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) {
+                                    return 'Password is required';
+                                  }
+                                  if (v.length < 6) {
+                                    return 'Password must be at least 6 characters';
+                                  }
+                                  return null;
+                                },
                               ),
 
                               if (_error != null) ...[
-                                SizedBox(height: context.h(10)),
-                                Text(
-                                  _error!,
-                                  style: const TextStyle(color: AppColors.error, fontSize: 13),
+                                SizedBox(height: context.h(12)),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 2),
+                                        child: Icon(Icons.error_outline_rounded, color: AppColors.error, size: 16),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _error!,
+                                          style: const TextStyle(
+                                            color: AppColors.error,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                               SizedBox(height: context.h(14)),
@@ -321,7 +367,48 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                   ),
                                 ],
                               ),
-                              SizedBox(height: context.h(24)),
+                              SizedBox(height: context.h(16)),
+
+                              if (_error != null) ...[
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.4)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        _error!.toLowerCase().contains('internet') ||
+                                                _error!.toLowerCase().contains('connection') ||
+                                                _error!.toLowerCase().contains('server') ||
+                                                _error!.toLowerCase().contains('network') ||
+                                                _error!.toLowerCase().contains('timed out')
+                                            ? Icons.wifi_off_rounded
+                                            : Icons.error_outline_rounded,
+                                        color: const Color(0xFFDC2626),
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _error!,
+                                          style: const TextStyle(
+                                            color: Color(0xFF991B1B),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: context.h(16)),
+                              ],
 
                               // Sign In Button
                               SizedBox(
