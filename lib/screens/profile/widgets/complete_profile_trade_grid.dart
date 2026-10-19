@@ -81,7 +81,7 @@ class CompleteProfileTradeGrid extends StatelessWidget {
                         Text(
                           name,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                             color: isSelected ? const Color(0xFF9A3412) : AppColors.dark,
                             letterSpacing: -0.2,
@@ -93,7 +93,7 @@ class CompleteProfileTradeGrid extends StatelessWidget {
                         Text(
                           specialty,
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: isSelected ? AppColors.primary : const Color(0xFF64748B),
                             fontWeight: FontWeight.w500,
                           ),

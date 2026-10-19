@@ -41,7 +41,7 @@ class CompleteProfileWageStudio extends StatelessWidget {
                   child: Text(
                     'Market Rate: $benchmark/day for ${selectedTrade}s in this region',
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFFB45309),
                     ),
@@ -75,20 +75,20 @@ class CompleteProfileWageStudio extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.w900,
                   color: AppColors.dark,
                 ),
                 decoration: InputDecoration(
                   prefixText: '₹ ',
                   prefixStyle: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
                     color: AppColors.primary,
                   ),
                   suffixText: '/ day',
                   suffixStyle: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 15,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w600,
                   ),
@@ -152,7 +152,7 @@ class CompleteProfileWageStudio extends StatelessWidget {
                 child: Text(
                   '₹$rate',
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 14.5,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                     color: isSelected ? AppColors.primary : const Color(0xFF475569),
                   ),

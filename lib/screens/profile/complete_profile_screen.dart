@@ -426,7 +426,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         child: Text(
                           _countUploadedDocs() == 3 ? '3/3 Complete ✓' : '${_countUploadedDocs()}/3 Uploaded',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: _countUploadedDocs() == 3 ? const Color(0xFF15803D) : AppColors.peachText,
                           ),
@@ -483,7 +483,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             label: Text(
               isLoading ? 'Saving Profile...' : 'Save Profile & Explore Jobs',
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
               ),
             ),

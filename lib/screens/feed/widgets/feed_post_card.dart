@@ -27,6 +27,10 @@ class FeedPostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final hasRole = post.taggedTitle != null &&
+        post.taggedTitle!.trim().isNotEmpty &&
+        post.taggedTitle!.trim().toLowerCase() != 'site report';
+    final hasLocation = post.location != null && post.location!.trim().isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -49,70 +53,57 @@ class FeedPostCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: post.isMyPost ? AppColors.primary : const Color(0xFFF5A623),
-                child: Text(
-                  post.authorName.length >= 3 && post.authorName.contains(' ')
-                      ? post.authorName
-                            .split(' ')
-                            .take(2)
-                            .map((e) => e.isNotEmpty ? e[0] : '')
-                            .join('')
-                            .toUpperCase()
-                      : (post.authorName.isNotEmpty
-                            ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
-                            : 'U'),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
+                backgroundColor: AppColors.primary,
+                backgroundImage: (post.authorAvatarUrl != null &&
+                        post.authorAvatarUrl!.trim().isNotEmpty &&
+                        post.authorAvatarUrl != 'null' &&
+                        post.authorAvatarUrl != 'undefined')
+                    ? NetworkImage(post.authorAvatarUrl!.trim())
+                    : null,
+                child: (post.authorAvatarUrl != null &&
+                        post.authorAvatarUrl!.trim().isNotEmpty &&
+                        post.authorAvatarUrl != 'null' &&
+                        post.authorAvatarUrl != 'undefined')
+                    ? null
+                    : Text(
+                        post.authorName.length >= 3 && post.authorName.contains(' ')
+                            ? post.authorName
+                                  .split(' ')
+                                  .take(2)
+                                  .map((e) => e.isNotEmpty ? e[0] : '')
+                                  .join('')
+                                  .toUpperCase()
+                            : (post.authorName.isNotEmpty
+                                  ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
+                                  : 'U'),
+                        style: const TextStyle(
+                          color: AppColors.dark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            post.authorName,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: AppColors.dark,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (post.isMyPost) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'YOU',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      post.authorName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 17,
+                        color: AppColors.dark,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       formattedTime,
-                      style: textTheme.bodySmall?.copyWith(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -131,7 +122,7 @@ class FeedPostCard extends StatelessWidget {
                     padding: EdgeInsets.all(6),
                     child: Icon(
                       Icons.more_vert,
-                      color: AppColors.textSecondary,
+                      color: Color(0xFF6B7280),
                       size: 20,
                     ),
                   ),
@@ -141,63 +132,59 @@ class FeedPostCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             post.content,
-            style: textTheme.bodyMedium?.copyWith(
+            style: const TextStyle(
               fontSize: 14.5,
-              height: 1.45,
+              height: 1.4,
               color: AppColors.dark,
             ),
           ),
-          if ((post.taggedTitle != null && post.taggedTitle!.isNotEmpty) ||
-              (post.location != null && post.location!.isNotEmpty)) ...[
+          if (hasRole || hasLocation) ...[
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.peachBackground,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (post.taggedTitle != null && post.taggedTitle!.isNotEmpty) ...[
-                    const Icon(Icons.work_outline, size: 14, color: AppColors.peachText),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        post.taggedTitle!,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.peachText,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  if (hasRole)
+                    Text(
+                      post.taggedTitle!.trim(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.dark,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                  if (post.taggedTitle != null &&
-                      post.taggedTitle!.isNotEmpty &&
-                      post.location != null &&
-                      post.location!.isNotEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('|', style: TextStyle(color: AppColors.peachBorder, fontSize: 12)),
-                    ),
-                  if (post.location != null && post.location!.isNotEmpty) ...[
-                    const Icon(Icons.location_on_outlined, size: 14, color: AppColors.peachText),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        post.location!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.peachText,
+                  if (hasLocation) ...[
+                    if (hasRole) const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 15,
+                          color: Color(0xFF6B7280),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            post.location!.trim(),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF6B7280),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],
@@ -206,10 +193,12 @@ class FeedPostCard extends StatelessWidget {
           ],
           const SizedBox(height: 14),
           Text(
-            '${post.likesCount} likes   ${post.commentsCount} comments   ${post.sharesCount} shares',
-            style: textTheme.bodySmall?.copyWith(
-              fontSize: 12.5,
-              color: AppColors.textSecondary,
+            '${post.likesCount} ${post.likesCount == 1 ? 'like' : 'likes'}   '
+            '${post.commentsCount} ${post.commentsCount == 1 ? 'comment' : 'comments'}   '
+            '${post.sharesCount} ${post.sharesCount == 1 ? 'share' : 'shares'}',
+            style: const TextStyle(
+              fontSize: 14.5,
+              color: Color(0xFF6B7280),
             ),
           ),
           const SizedBox(height: 10),
@@ -234,7 +223,7 @@ class FeedPostCard extends StatelessWidget {
                       Text(
                         'Like',
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 15.5,
                           fontWeight: post.isLiked ? FontWeight.bold : FontWeight.w600,
                           color: post.isLiked ? AppColors.primary : AppColors.dark,
                         ),
@@ -254,7 +243,7 @@ class FeedPostCard extends StatelessWidget {
                       SizedBox(width: 6),
                       Text(
                         'Comment',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.dark),
+                        style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: AppColors.dark),
                       ),
                     ],
                   ),
@@ -271,7 +260,7 @@ class FeedPostCard extends StatelessWidget {
                       SizedBox(width: 6),
                       Text(
                         'Share',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.dark),
+                        style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: AppColors.dark),
                       ),
                     ],
                   ),

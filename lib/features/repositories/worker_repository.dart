@@ -119,6 +119,9 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
             final appData = Map<String, dynamic>.from(item);
             final appId = appData['id']?.toString();
             final appStatus = appData['status']?.toString();
+            final appRemarks = appData['reviewRemarks']?.toString() ??
+                appData['remark']?.toString() ??
+                appData['remarks']?.toString();
             final jobData = appData['job'] is Map ? Map<String, dynamic>.from(appData['job']) : null;
             final jobId = appData['jobId']?.toString() ?? jobData?['id']?.toString() ?? '';
 
@@ -138,6 +141,7 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
                 applied: true,
                 applicationId: appId ?? existing?.applicationId,
                 applicationStatus: appStatus ?? existing?.applicationStatus ?? 'pending',
+                reviewRemarks: appRemarks ?? existing?.reviewRemarks,
                 projectType: existing?.projectType ?? aJob?.projectType ?? 'Full-time',
                 experienceLevel: existing?.experienceLevel ?? aJob?.experienceLevel ?? 'Any',
               );
@@ -223,7 +227,6 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
     }
   }
 
-  /// Get Active and New Job Counts (GET /jobs/counts)
   Future<Map<String, int>> getJobCounts() async {
     try {
       final response = await _client.dio.get('/jobs/counts');

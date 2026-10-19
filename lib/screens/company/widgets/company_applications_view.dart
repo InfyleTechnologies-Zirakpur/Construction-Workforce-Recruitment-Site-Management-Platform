@@ -11,7 +11,7 @@ class CompanyApplicationsView extends StatefulWidget {
   final Set<String>? selectedAppIds;
   final bool? isBulkAction;
   final VoidCallback? onBulkShortlist;
-  final Function(String appId, String status, {String? remarks}) onUpdateStatus;
+  final void Function(String appId, String status, {String? remarks, Map<String, dynamic>? app}) onUpdateStatus;
   final Future<void> Function()? onRefresh;
 
   const CompanyApplicationsView({
@@ -165,7 +165,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                 const Text(
                   'Sort Applications',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.dark,
                   ),
@@ -221,7 +221,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? primaryColor : AppColors.dark,
                 ),
@@ -296,7 +296,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                         Text(
                           label,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                             color: isSelected ? Colors.white : const Color(0xFF344054),
                           ),
@@ -311,7 +311,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                           child: Text(
                             '$count',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: isSelected ? primaryColor : AppColors.textSecondary,
                             ),
@@ -351,7 +351,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                 const SizedBox(height: 14),
                 Text(
                   'No ${_activeStatus == 'all' ? '' : _activeStatus.capitalize()} Applications Found',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.dark),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.dark),
                 ),
                 const SizedBox(height: 6),
                 const Text(
@@ -531,7 +531,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                         userName.isNotEmpty ? userName[0].toUpperCase() : 'W',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 17,
+                                          fontSize: 19,
                                           color: Color(0xFF344054),
                                         ),
                                       )
@@ -565,7 +565,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     color: AppColors.dark,
                                   ),
                                 ),
@@ -576,7 +576,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 13,
+                                    fontSize: 15,
                                     color: AppColors.peachText,
                                   ),
                                 ),
@@ -594,7 +594,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                             child: Text(
                               status.toUpperCase(),
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
                                 color: statusFg,
                                 letterSpacing: 0.3,
@@ -622,11 +622,11 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                   onUpdateStatus: widget.onUpdateStatus,
                                 );
                               } else if (val == 'shortlist') {
-                                widget.onUpdateStatus(appId, 'shortlisted');
+                                widget.onUpdateStatus(appId, 'shortlisted', app: app);
                               } else if (val == 'accept') {
-                                widget.onUpdateStatus(appId, 'accepted');
+                                widget.onUpdateStatus(appId, 'accepted', app: app);
                               } else if (val == 'reject') {
-                                widget.onUpdateStatus(appId, 'rejected');
+                                widget.onUpdateStatus(appId, 'rejected', app: app);
                               } else if (val == 'call') {
                                 _callCandidate(userPhone);
                               }
@@ -650,7 +650,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                     const Text(
                                       'View Profile & Review',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.dark,
                                       ),
@@ -676,7 +676,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                     const Text(
                                       'Shortlist Candidate',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.dark,
                                       ),
@@ -702,7 +702,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                     const Text(
                                       'Accept Application',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.dark,
                                       ),
@@ -728,7 +728,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                     const Text(
                                       'Reject Application',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.dark,
                                       ),
@@ -755,7 +755,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                       const Text(
                                         'Call Candidate',
                                         style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: 15,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.dark,
                                         ),
@@ -775,7 +775,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 14.5,
                           color: Color(0xFF475467),
                           height: 1.35,
                         ),
@@ -794,7 +794,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                               Text(
                                 '$expYears Years',
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   color: Color(0xFF344054),
                                 ),
@@ -816,7 +816,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF344054),
                                     ),
@@ -834,7 +834,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                               const Text(
                                 '₹',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF344054),
                                 ),
@@ -843,7 +843,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                               Text(
                                 payText,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   color: Color(0xFF344054),
                                 ),
@@ -873,7 +873,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                       child: Text(
                                         s,
                                         style: const TextStyle(
-                                          fontSize: 11.5,
+                                          fontSize: 13.5,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF344054),
                                         ),
@@ -889,7 +889,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                     child: Text(
                                       '+$remainingSkillsCount',
                                       style: const TextStyle(
-                                        fontSize: 11.5,
+                                        fontSize: 13.5,
                                         fontWeight: FontWeight.w700,
                                         color: Color(0xFF344054),
                                       ),
@@ -921,7 +921,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                     'View Profile',
                                     style: TextStyle(
                                       color: AppColors.peachText,
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),

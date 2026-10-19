@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/bloc/worker_blocs.dart';
 import 'company_login_screen.dart';
@@ -95,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 13.5,
+                          fontSize: 15.5,
                         ),
                       ),
                     ),
@@ -146,8 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-
-                            // Header Content: Logo + Title + Subtitle
+              
                             SafeArea(
                               bottom: false,
                               child: Padding(
@@ -184,9 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             style: TextStyle(
                                               fontSize: context.sp(28),
                                               fontWeight: FontWeight.w800,
-                                              color: const Color(
-                                                0xFFF7A600,
-                                              ), // golden yellow accent
+                                              color: AppColors.primary,
                                               height: 1.15,
                                               letterSpacing: -0.5,
                                             ),
@@ -200,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Text(
                                       'Sign in with your phone number to browse jobs, apply, and get hired faster.',
                                       style: TextStyle(
-                                        fontSize: context.sp(13.5),
+                                        fontSize: context.sp(15.5),
                                         color: Colors.white.withValues(
                                           alpha: 0.85,
                                         ),
@@ -241,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 const Text(
                                   'Phone number',
                                   style: TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 17,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF1E2A38),
                                   ),
@@ -272,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Text(
                                               '+91',
                                               style: TextStyle(
-                                                fontSize: 15,
+                                                fontSize: 17,
                                                 fontWeight: FontWeight.w600,
                                                 color: Color(0xFF1E2A38),
                                               ),
@@ -297,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           keyboardType: TextInputType.phone,
                                           maxLength: 10,
                                           style: const TextStyle(
-                                            fontSize: 15,
+                                            fontSize: 17,
                                             fontWeight: FontWeight.w500,
                                             color: Color(0xFF1E2A38),
                                           ),
@@ -306,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             hintText: '98765 43210',
                                             hintStyle: TextStyle(
                                               color: Color(0xFF9CA3AF),
-                                              fontSize: 15,
+                                              fontSize: 17,
                                             ),
                                             border: InputBorder.none,
                                             enabledBorder: InputBorder.none,
@@ -353,7 +351,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             _phoneError!,
                                             style: const TextStyle(
                                               color: Color(0xFFE53935),
-                                              fontSize: 12.5,
+                                              fontSize: 14.5,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -382,9 +380,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ? null
                                               : _handleSendOtp,
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFFFA6400,
-                                            ),
+                                            backgroundColor: AppColors.primary,
                                             foregroundColor: Colors.white,
                                             elevation: 0,
                                             shape: RoundedRectangleBorder(
@@ -409,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               : const Text(
                                                   'Send OTP',
                                                   style: TextStyle(
-                                                    fontSize: 16,
+                                                    fontSize: 18,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
                                                   ),
@@ -436,7 +432,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         'OR',
                                         style: TextStyle(
                                           color: Color(0xFF9CA3AF),
-                                          fontSize: 12,
+                                          fontSize: 14,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -479,7 +475,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           Text(
                                             'Company login with email',
                                             style: TextStyle(
-                                              fontSize: 15,
+                                              fontSize: 17,
                                               fontWeight: FontWeight.w600,
                                               color: Color(0xFF1E2A38),
                                             ),
@@ -499,14 +495,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                     TextSpan(
                                       text: 'By continuing, you agree to our ',
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 14,
                                         color: Color(0xFF6B7280),
                                       ),
                                       children: [
                                         TextSpan(
                                           text: 'Terms',
                                           style: const TextStyle(
-                                            color: Color(0xFFFA6400),
+                                            color: AppColors.primary,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -514,7 +510,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         TextSpan(
                                           text: 'Privacy Policy',
                                           style: const TextStyle(
-                                            color: Color(0xFFFA6400),
+                                            color: AppColors.primary,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),

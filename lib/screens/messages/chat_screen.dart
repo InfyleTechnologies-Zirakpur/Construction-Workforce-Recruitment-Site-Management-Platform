@@ -62,7 +62,24 @@ class _ChatScreenState extends State<ChatScreen> {
       final messages = await _repo.fetchMessages(widget.conversation.id);
       if (mounted) {
         setState(() {
-          _messages = messages;
+          if (messages.isNotEmpty) {
+            _messages = messages;
+          } else if (widget.conversation.messages.isNotEmpty) {
+            _messages = List<ChatMessage>.from(widget.conversation.messages);
+          } else if (widget.conversation.lastMessage.isNotEmpty) {
+            _messages = [
+              ChatMessage(
+                id: 'init_${widget.conversation.id}',
+                text: widget.conversation.lastMessage,
+                isMine: widget.isCompany,
+                time: widget.conversation.lastMessageAt.isNotEmpty
+                    ? widget.conversation.lastMessageAt
+                    : 'Earlier',
+              ),
+            ];
+          } else {
+            _messages = [];
+          }
           _isLoading = false;
         });
         if (!isPullToRefresh) {
@@ -71,7 +88,23 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          if (widget.conversation.messages.isNotEmpty) {
+            _messages = List<ChatMessage>.from(widget.conversation.messages);
+          } else if (widget.conversation.lastMessage.isNotEmpty) {
+            _messages = [
+              ChatMessage(
+                id: 'init_${widget.conversation.id}',
+                text: widget.conversation.lastMessage,
+                isMine: widget.isCompany,
+                time: widget.conversation.lastMessageAt.isNotEmpty
+                    ? widget.conversation.lastMessageAt
+                    : 'Earlier',
+              ),
+            ];
+          }
+          _isLoading = false;
+        });
       }
     }
   }
@@ -99,7 +132,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty || _isSending) return;
 
-    if (_isCandidate && _messages.isEmpty) {
+    if (_isCandidate && _messages.isEmpty && widget.conversation.lastMessage.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Contractors must initiate the conversation first.'),
@@ -156,7 +189,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               widget.conversation.company,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: AppColors.dark,
               ),
@@ -252,7 +285,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _composer() {
-    if (_isCandidate && _messages.isEmpty) {
+    if (_isCandidate && _messages.isEmpty && widget.conversation.lastMessage.isEmpty) {
       final textTheme = Theme.of(context).textTheme;
       return Container(
         width: double.infinity,

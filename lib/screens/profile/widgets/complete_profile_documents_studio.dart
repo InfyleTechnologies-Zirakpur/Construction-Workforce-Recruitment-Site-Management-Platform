@@ -61,7 +61,7 @@ class CompleteProfileDocumentsStudio extends StatelessWidget {
                           Text(
                             title,
                             style: const TextStyle(
-                              fontSize: 13.5,
+                              fontSize: 15.5,
                               fontWeight: FontWeight.w700,
                               color: AppColors.dark,
                             ),
@@ -92,7 +92,7 @@ class CompleteProfileDocumentsStudio extends StatelessWidget {
                       Text(
                         isUploaded ? 'Uploaded: $uploadedFilename' : subtitle,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 13.5,
                           color: isUploaded ? const Color(0xFF16A34A) : const Color(0xFF64748B),
                           fontWeight: isUploaded ? FontWeight.w600 : FontWeight.w400,
                         ),
@@ -129,7 +129,7 @@ class CompleteProfileDocumentsStudio extends StatelessWidget {
                       child: Text(
                         isUploaded ? 'Replace' : 'Upload',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: isUploaded ? AppColors.dark : AppColors.primary,
                         ),

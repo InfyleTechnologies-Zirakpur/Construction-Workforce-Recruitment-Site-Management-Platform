@@ -53,7 +53,7 @@ class ProfileDetailsCard extends StatelessWidget {
                   const Text(
                     'Professional Details',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: AppColors.dark,
                     ),
@@ -76,7 +76,7 @@ class ProfileDetailsCard extends StatelessWidget {
                       Text(
                         'Edit',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -135,7 +135,7 @@ class ProfileDetailsCard extends StatelessWidget {
                       const Text(
                         'Trade Skills',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textSecondary,
                         ),
@@ -145,7 +145,7 @@ class ProfileDetailsCard extends StatelessWidget {
                         const Text(
                           'No skills specified',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: AppColors.dark,
                           ),
@@ -171,7 +171,7 @@ class ProfileDetailsCard extends StatelessWidget {
                               child: Text(
                                 skill,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.peachText,
                                 ),
@@ -215,7 +215,7 @@ class ProfileDetailsCard extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
                   ),
@@ -224,7 +224,7 @@ class ProfileDetailsCard extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.dark,
                   ),

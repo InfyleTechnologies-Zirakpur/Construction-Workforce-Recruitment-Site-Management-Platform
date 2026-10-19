@@ -40,7 +40,7 @@ class JobDetailsLocationCard extends StatelessWidget {
                 const Text(
                   'Work Site Location',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF64748B),
                   ),
@@ -49,7 +49,7 @@ class JobDetailsLocationCard extends StatelessWidget {
                 Text(
                   location.isNotEmpty ? location : 'Site address shared upon hiring',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
                     height: 1.35,

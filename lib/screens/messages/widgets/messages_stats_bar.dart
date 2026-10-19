@@ -60,7 +60,7 @@ class MessagesStatsBar extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 17,
+              fontSize: 19,
               fontWeight: FontWeight.w800,
               color: AppColors.dark,
             ),
@@ -69,7 +69,7 @@ class MessagesStatsBar extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),

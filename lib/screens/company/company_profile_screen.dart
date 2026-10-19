@@ -187,7 +187,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                         Text(
                           'Loading company profile...',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                           ),
@@ -219,7 +219,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                             const Text(
                               'Unable to load company profile',
                               style: TextStyle(
-                                fontSize: 17,
+                                fontSize: 19,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.dark,
                               ),
@@ -229,7 +229,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                               _error!,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontSize: 13,
+                                fontSize: 15,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -295,7 +295,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.dark,
-                      fontSize: 18,
+                      fontSize: 20,
                     ),
                   ),
                   SizedBox(height: context.h(8)),
@@ -304,7 +304,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                     textAlign: TextAlign.center,
                     style: textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                   SizedBox(height: context.h(24)),
@@ -332,7 +332,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                       icon: const Icon(Icons.add_business, size: 18),
                       label: const Text(
                         'Register Company Profile',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -358,7 +358,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                         'Log Out Company',
                         style: TextStyle(
                           color: AppColors.primary,
-                          fontSize: 15,
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -499,7 +499,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                             Text(
                               companyName,
                               style: const TextStyle(
-                                fontSize: 20,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
                                 letterSpacing: -0.3,
@@ -524,7 +524,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                     child: Text(
                                       businessType,
                                       style: const TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.primary,
                                       ),
@@ -558,7 +558,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                       Text(
                                         status.toUpperCase(),
                                         style: TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 13,
                                           fontWeight: FontWeight.w700,
                                           color: statusColor,
                                         ),
@@ -582,7 +582,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                     child: Text(
                                       location,
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 14,
                                         color: Colors.white70,
                                         fontWeight: FontWeight.w400,
                                       ),
@@ -670,7 +670,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 child: Text(
                   p['description'].toString().trim(),
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 15.5,
                     height: 1.5,
                     color: AppColors.textSecondary,
                   ),
@@ -744,7 +744,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 child: Text(
                   status.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: isVerified ? const Color(0xFF15803D) : AppColors.peachText,
                   ),
@@ -792,7 +792,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                       const Text(
                         'Project Specializations',
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 14.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.dark,
                         ),
@@ -812,7 +812,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                             child: Text(
                               s,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.peachText,
                               ),
@@ -827,7 +827,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                       const Text(
                         'Operational Areas',
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 14.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.dark,
                         ),
@@ -847,7 +847,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                             child: Text(
                               a,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.dark,
                               ),
@@ -881,7 +881,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 label: const Text(
                   'Edit Company Details',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -915,7 +915,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                   'Log Out Company',
                   style: TextStyle(
                     color: AppColors.primary,
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -972,7 +972,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: AppColors.dark,
                     ),
@@ -996,7 +996,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                         Text(
                           'Edit',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
@@ -1048,7 +1048,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
                   ),
@@ -1057,7 +1057,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.dark,
                   ),
@@ -1079,7 +1079,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w800,
               color: AppColors.dark,
             ),
@@ -1091,7 +1091,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),

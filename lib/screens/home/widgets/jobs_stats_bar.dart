@@ -92,7 +92,7 @@ class JobsStatsBar extends StatelessWidget {
           Text(
             count,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: AppColors.dark,
               letterSpacing: -0.5,
@@ -102,7 +102,7 @@ class JobsStatsBar extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),

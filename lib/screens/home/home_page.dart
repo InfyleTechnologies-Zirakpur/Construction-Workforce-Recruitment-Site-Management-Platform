@@ -19,7 +19,7 @@ import 'widgets/trade_filter_bar.dart';
 class HomePage extends StatefulWidget {
   final int initialNavIndex;
 
-  const HomePage({super.key, this.initialNavIndex = 1});
+  const HomePage({super.key, this.initialNavIndex = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -91,7 +91,7 @@ class _HomePageState extends State<HomePage> {
               const Text(
                 'Open Opportunities',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.dark,
                   letterSpacing: -0.3,
@@ -114,7 +114,7 @@ class _HomePageState extends State<HomePage> {
                   child: Text(
                     '$total active',
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.peachText,
                     ),
@@ -181,7 +181,7 @@ class _HomePageState extends State<HomePage> {
                           const Text(
                             'Unable to load jobs',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w600,
                               color: AppColors.dark,
                             ),
@@ -239,7 +239,7 @@ class _HomePageState extends State<HomePage> {
                                 ? 'No job postings yet'
                                 : 'No matching jobs found',
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 17,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF344054),
                             ),
@@ -307,7 +307,7 @@ class _HomePageState extends State<HomePage> {
             : _navIndex == 2
             ? MyJobsScreen(onExploreJobs: () => setState(() => _navIndex = 1))
             : _navIndex == 0
-            ? const FeedScreen()
+            ? const FeedScreen(isCompany: false)
             : _buildJobsTab(context),
         bottomNavigationBar: NavigationBarTheme(
           data: NavigationBarThemeData(
@@ -329,13 +329,13 @@ class _HomePageState extends State<HomePage> {
               if (states.contains(WidgetState.selected)) {
                 return const TextStyle(
                   color: AppColors.primary,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                 );
               }
               return const TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               );
             }),

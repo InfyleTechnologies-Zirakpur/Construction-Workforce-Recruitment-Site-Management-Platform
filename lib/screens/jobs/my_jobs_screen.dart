@@ -96,7 +96,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
@@ -111,7 +111,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
               child: Text(
                 '$count',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isSelected ? Colors.white : AppColors.textSecondary,
                 ),
@@ -147,7 +147,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
               'No jobs here',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                fontSize: 18,
+                fontSize: 20,
                 color: AppColors.dark,
               ),
               textAlign: TextAlign.center,
@@ -163,7 +163,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                           : 'Jobs you archive will appear here'),
               style: textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: 15,
               ),
               textAlign: TextAlign.center,
             ),
@@ -224,7 +224,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                 'Track saved roles and every application in one place',
                 style: textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
-                  fontSize: 13,
+                  fontSize: 15,
                 ),
               ),
             ],
@@ -253,7 +253,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                 hintText: 'Search saved or applied jobs...',
                 hintStyle: const TextStyle(
                   color: AppColors.textMuted,
-                  fontSize: 14,
+                  fontSize: 16,
                 ),
                 prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
                 suffixIcon: _searchQuery.isNotEmpty
@@ -324,7 +324,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                               ? 'Saved Opportunities'
                               : 'Archived Jobs',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: AppColors.dark,
                       ),
@@ -340,7 +340,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                         child: Text(
                           '$count ${_selectedFilter == MyJobsFilter.applied ? 'applied' : 'saved'}',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.peachText,
                           ),
@@ -360,7 +360,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                   padding: EdgeInsets.symmetric(vertical: 60),
                   child: Center(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.min, 
                       children: [
                         CircularProgressIndicator(
                           color: AppColors.primary,
@@ -370,7 +370,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                         Text(
                           'Loading jobs...',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                           ),
@@ -446,7 +446,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                     : 'My Jobs',
             style: const TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontSize: 20,
               color: AppColors.dark,
               letterSpacing: -0.3,
             ),

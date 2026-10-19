@@ -165,7 +165,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                       const Text(
                         'Company Sign Up',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1E2A38),
                         ),
@@ -209,7 +209,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                         Text(
                           'Register your company to post site requirements and hire verified skilled workers.',
                           style: TextStyle(
-                            fontSize: context.sp(14),
+                            fontSize: context.sp(16),
                             color: const Color(0xFF6B7280),
                             height: 1.4,
                           ),
@@ -248,7 +248,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                               // Full Name / Contact Representative *
                               TextFormField(
                                 controller: _fullName,
-                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
                                 decoration: InputDecoration(
                                   hintText: 'Full Name / Contact Representative *',
                                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
@@ -270,7 +270,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -299,7 +299,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                               TextFormField(
                                 controller: _email,
                                 keyboardType: TextInputType.emailAddress,
-                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
                                 decoration: InputDecoration(
                                   hintText: 'Official Company Email *',
                                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
@@ -321,7 +321,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -351,7 +351,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                               TextFormField(
                                 controller: _pass,
                                 obscureText: _obscurePass,
-                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
                                 decoration: InputDecoration(
                                   hintText: 'Password *',
                                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
@@ -381,7 +381,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -410,7 +410,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                               TextFormField(
                                 controller: _confirmPass,
                                 obscureText: _obscureConfirm,
-                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
                                 decoration: InputDecoration(
                                   hintText: 'Confirm Password *',
                                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
@@ -440,7 +440,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -494,7 +494,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                           _error!,
                                           style: const TextStyle(
                                             color: Color(0xFF991B1B),
-                                            fontSize: 13,
+                                            fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                             height: 1.3,
                                           ),
@@ -513,7 +513,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                 child: ElevatedButton(
                                   onPressed: _loading ? null : _register,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFA6400),
+                                    backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
@@ -533,7 +533,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                           'Create Account',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 16,
+                                            fontSize: 18,
                                             color: Colors.white,
                                           ),
                                         ),
@@ -550,13 +550,13 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                       text: 'Already registered? ',
                                       style: TextStyle(
                                         color: Color(0xFF6B7280),
-                                        fontSize: 14,
+                                        fontSize: 16,
                                       ),
                                       children: [
                                         TextSpan(
                                           text: 'Sign In',
                                           style: TextStyle(
-                                            color: Color(0xFFFA6400),
+                                            color: AppColors.primary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),

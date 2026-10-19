@@ -134,7 +134,7 @@ class NotificationDetailsSheet extends StatelessWidget {
                         child: Text(
                           category,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: color,
                           ),
@@ -153,7 +153,7 @@ class NotificationDetailsSheet extends StatelessWidget {
                             Text(
                               dateString,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -178,7 +178,7 @@ class NotificationDetailsSheet extends StatelessWidget {
               notification.title,
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                fontSize: 18,
+                fontSize: 20,
                 color: AppColors.dark,
                 letterSpacing: -0.2,
               ),
@@ -199,7 +199,7 @@ class NotificationDetailsSheet extends StatelessWidget {
                     ? notification.body
                     : 'No additional details provided for this alert.',
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   height: 1.5,
                   color: AppColors.dark,
                   fontWeight: FontWeight.w400,

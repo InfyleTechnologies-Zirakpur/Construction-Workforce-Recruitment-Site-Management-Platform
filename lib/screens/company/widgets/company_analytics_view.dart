@@ -106,7 +106,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                   Text(
                     value,
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: AppColors.dark,
                       letterSpacing: -0.5,
@@ -118,7 +118,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.dark,
                     ),
@@ -129,7 +129,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -200,7 +200,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                                 label,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
+                                  fontSize: 15.5,
                                   color: AppColors.dark,
                                 ),
                               ),
@@ -210,7 +210,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   color: color,
-                                  fontSize: 15,
+                                  fontSize: 17,
                                 ),
                               ),
                               Text(
@@ -218,7 +218,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.textSecondary,
-                                  fontSize: 12,
+                                  fontSize: 14,
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -284,7 +284,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                 Text(
                   'Hiring & Operations Analytics',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 19,
                     fontWeight: FontWeight.w800,
                     color: AppColors.dark,
                     letterSpacing: -0.3,
@@ -294,7 +294,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                 Text(
                   'Live recruitment performance metrics',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -314,7 +314,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                   Text(
                     'Live',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: AppColors.success,
                     ),
@@ -400,7 +400,7 @@ class CompanyAnalyticsView extends StatelessWidget {
             Text(
               'Recruitment Funnel Breakdown',
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: AppColors.dark,
               ),
@@ -408,7 +408,7 @@ class CompanyAnalyticsView extends StatelessWidget {
             Text(
               'Tap stage to view',
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
               ),

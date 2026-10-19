@@ -101,7 +101,7 @@ class FeedShareSheet extends StatelessWidget {
             Text(
               label,
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.dark,
               ),

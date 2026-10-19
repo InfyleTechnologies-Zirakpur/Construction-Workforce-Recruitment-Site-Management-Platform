@@ -171,7 +171,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           CompanyApplicantReviewSheet.show(
             context,
             app: matchedApp,
-            onUpdateStatus: (appId, status, {remarks}) async {
+            onUpdateStatus: (appId, status, {remarks, app}) async {
               try {
                 await CompanyRepository().updateApplicationStatus(appId, status: status, remark: remarks);
               } catch (_) {}
@@ -333,7 +333,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
@@ -348,7 +348,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Text(
                 '$count',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isSelected ? Colors.white : AppColors.textSecondary,
                 ),
@@ -384,7 +384,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               "You're all caught up",
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                fontSize: 18,
+                fontSize: 20,
                 color: AppColors.dark,
               ),
               textAlign: TextAlign.center,
@@ -394,7 +394,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               'When companies update applications or post matching jobs, they will appear here.',
               style: textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: 15,
               ),
               textAlign: TextAlign.center,
             ),
@@ -452,7 +452,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           'Notifications',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 18,
+            fontSize: 20,
             color: AppColors.dark,
             letterSpacing: -0.3,
           ),
@@ -612,7 +612,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         'Stay informed on applications and messages',
                         style: textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
-                          fontSize: 13,
+                          fontSize: 15,
                         ),
                       ),
                     ],

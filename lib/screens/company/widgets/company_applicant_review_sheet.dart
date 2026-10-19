@@ -4,7 +4,7 @@ import '../../../core/constants/app_colors.dart';
 
 class CompanyApplicantReviewSheet extends StatefulWidget {
   final Map<String, dynamic> app;
-  final Function(String appId, String status, {String? remarks}) onUpdateStatus;
+  final void Function(String appId, String status, {String? remarks, Map<String, dynamic>? app}) onUpdateStatus;
 
   const CompanyApplicantReviewSheet({
     super.key,
@@ -15,7 +15,7 @@ class CompanyApplicantReviewSheet extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     required Map<String, dynamic> app,
-    required Function(String appId, String status, {String? remarks}) onUpdateStatus,
+    required void Function(String appId, String status, {String? remarks, Map<String, dynamic>? app}) onUpdateStatus,
   }) async {
     showModalBottomSheet(
       context: context,
@@ -54,8 +54,8 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
         children: [
           Icon(icon, size: 16, color: AppColors.textSecondary),
           const SizedBox(width: 8),
-          Text('$label: ', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          Expanded(child: Text(val, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.dark))),
+          Text('$label: ', style: const TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+          Expanded(child: Text(val, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.dark))),
         ],
       ),
     );
@@ -119,7 +119,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Candidate Review', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.dark)),
+                  const Text('Candidate Review', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.dark)),
                   IconButton(icon: const Icon(Icons.close, color: AppColors.textSecondary), onPressed: () => Navigator.pop(context)),
                 ],
               ),
@@ -137,8 +137,8 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(user['fullName'] ?? user['name'] ?? 'Worker Candidate', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.dark)),
-                        Text('Applied for: ${job['title'] ?? 'Site Job'}', style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text(user['fullName'] ?? user['name'] ?? 'Worker Candidate', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.dark)),
+                        Text('Applied for: ${job['title'] ?? 'Site Job'}', style: const TextStyle(color: AppColors.primary, fontSize: 15, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -153,7 +153,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
 
               if (app['coverNote'] != null && app['coverNote'].toString().isNotEmpty) ...[
                 const SizedBox(height: 12),
-                const Text('Cover Note:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.dark)),
+                const Text('Cover Note:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.dark)),
                 const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.all(10),
@@ -163,7 +163,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: Text(app['coverNote'].toString(), style: const TextStyle(fontSize: 13, color: AppColors.dark)),
+                  child: Text(app['coverNote'].toString(), style: const TextStyle(fontSize: 15, color: AppColors.dark)),
                 ),
               ],
 
@@ -183,7 +183,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
               const SizedBox(height: 20),
               Row(
                 children: [
-                  const Text('Change Status:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.dark)),
+                  const Text('Change Status:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.dark)),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -193,7 +193,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                     ),
                     child: Text(
                       status.toUpperCase(),
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusFgColor(status)),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _getStatusFgColor(status)),
                     ),
                   ),
                 ],
@@ -209,14 +209,14 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                       child: OutlinedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          widget.onUpdateStatus(appId, 'rejected', remarks: _remarksController.text.trim());
+                          widget.onUpdateStatus(appId, 'rejected', remarks: _remarksController.text.trim(), app: widget.app);
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.error,
                           side: BorderSide(color: status == 'rejected' ? AppColors.error : AppColors.error.withValues(alpha: 0.5)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.error)),
+                        child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.error)),
                       ),
                     ),
                   ),
@@ -229,14 +229,14 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                       child: OutlinedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          widget.onUpdateStatus(appId, 'shortlisted', remarks: _remarksController.text.trim());
+                          widget.onUpdateStatus(appId, 'shortlisted', remarks: _remarksController.text.trim(), app: widget.app);
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFD97706),
                           side: const BorderSide(color: Color(0xFFF59E0B)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Shortlist', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFD97706))),
+                        child: const Text('Shortlist', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFFD97706))),
                       ),
                     ),
                   ),
@@ -249,7 +249,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          widget.onUpdateStatus(appId, 'accepted', remarks: _remarksController.text.trim());
+                          widget.onUpdateStatus(appId, 'accepted', remarks: _remarksController.text.trim(), app: widget.app);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF16A34A),
@@ -257,7 +257,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white)),
+                        child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
                       ),
                     ),
                   ),

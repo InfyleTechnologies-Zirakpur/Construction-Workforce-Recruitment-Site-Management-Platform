@@ -107,7 +107,7 @@ class CompleteProfileHeroCard extends StatelessWidget {
                 Text(
                   name,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     letterSpacing: -0.3,
@@ -133,7 +133,7 @@ class CompleteProfileHeroCard extends StatelessWidget {
                         child: Text(
                           selectedTrade,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
@@ -166,7 +166,7 @@ class CompleteProfileHeroCard extends StatelessWidget {
                           Text(
                             '+91 $phoneNumber',
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF4ADE80),
                             ),
@@ -189,7 +189,7 @@ class CompleteProfileHeroCard extends StatelessWidget {
                       child: Text(
                         location,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: Colors.white70,
                           fontWeight: FontWeight.w400,
                         ),

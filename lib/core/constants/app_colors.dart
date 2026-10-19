@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  /// BuildHire vibrant brand orange
-  static const Color primary = Color(0xFFFF7A00);
+  /// Brand primary color (#F7B532)
+  static const Color primary = Color(0xFFF7B532);
 
   /// Dark typography and prominent headers
   static const Color dark = Color(0xFF101828);
@@ -36,8 +36,8 @@ class AppColors {
   static const Color blue = Color(0xFF007BFF);
   static const Color backgroundBlue = Color(0xFF007BFF);
 
-  /// Warm peach / apricot tag accents
-  static const Color peachBackground = Color(0xFFFFF4ED);
-  static const Color peachBorder = Color(0xFFFFD9C7);
-  static const Color peachText = Color(0xFFF95724);
+  /// Warm amber / gold tag accents (harmonized with primary #F7B532)
+  static const Color peachBackground = Color(0xFFFFFBEB);
+  static const Color peachBorder = Color(0xFFFDE68A);
+  static const Color peachText = Color(0xFFB45309);
 }

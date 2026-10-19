@@ -77,7 +77,7 @@ class CreatePostTagsCard extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 14.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
@@ -109,14 +109,14 @@ class CreatePostTagsCard extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 'Optional Tags & Location',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.dark),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.dark),
               ),
             ],
           ),
           const SizedBox(height: 4),
           const Text(
             'Tag a role or site location to help nearby workers find your post',
-            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 14.5, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 14),
           Wrap(

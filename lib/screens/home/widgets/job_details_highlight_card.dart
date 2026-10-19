@@ -38,7 +38,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                     child: Text(
                       '₹',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFFEA580C),
                       ),
@@ -53,7 +53,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                       const Text(
                         'Daily Wage',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
                         ),
@@ -62,7 +62,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                       Text(
                         '₹$dailyPay',
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 24,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFFEA580C),
                           letterSpacing: -0.5,
@@ -73,7 +73,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                       const Text(
                         'per day',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 13,
                           color: Color(0xFF94A3B8),
                           fontWeight: FontWeight.w500,
                         ),
@@ -115,7 +115,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                       const Text(
                         'Job Type',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
                         ),
@@ -124,7 +124,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                       Text(
                         projectType.isNotEmpty ? projectType : 'Full-time',
                         style: const TextStyle(
-                          fontSize: 17,
+                          fontSize: 19,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF0F172A),
                           letterSpacing: -0.3,

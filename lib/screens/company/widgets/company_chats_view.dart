@@ -57,7 +57,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
@@ -72,7 +72,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
               child: Text(
                 '$count',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isSelected ? Colors.white : AppColors.textSecondary,
                 ),
@@ -129,7 +129,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 17,
+              fontSize: 19,
               fontWeight: FontWeight.w800,
               color: AppColors.dark,
             ),
@@ -138,7 +138,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),
@@ -182,7 +182,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
             'No messages here',
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: 18,
+              fontSize: 20,
               color: AppColors.dark,
             ),
             textAlign: TextAlign.center,
@@ -194,7 +194,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                 : 'When you update application status or chat with candidates, conversations will appear here.',
             style: textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
-              fontSize: 13,
+              fontSize: 15,
             ),
             textAlign: TextAlign.center,
           ),
@@ -274,7 +274,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                               candidateName,
                               style: textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 15,
+                                fontSize: 17,
                                 color: AppColors.dark,
                               ),
                               maxLines: 1,
@@ -285,7 +285,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                             Text(
                               conv.lastMessageAt,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
                                 color: hasUnread ? AppColors.primary : AppColors.textSecondary,
                               ),
@@ -303,7 +303,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                           child: Text(
                             conv.jobTitle,
                             style: const TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w700,
                               color: AppColors.peachText,
                             ),
@@ -318,7 +318,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                           color: hasUnread ? AppColors.dark : AppColors.textSecondary,
                         ),
@@ -337,7 +337,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                     child: Text(
                       '${conv.unreadCount}',
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -356,7 +356,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : 'C',
         style: const TextStyle(
-          fontSize: 18,
+          fontSize: 20,
           fontWeight: FontWeight.w800,
           color: AppColors.primary,
         ),
@@ -403,7 +403,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
               Text(
                 _selectedFilter == 1 ? 'Unread Messages' : 'Recent Conversations',
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.dark,
                 ),
@@ -419,7 +419,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                   child: Text(
                     '$displayCount ${_selectedFilter == 1 ? 'unread' : 'chats'}',
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.peachText,
                     ),

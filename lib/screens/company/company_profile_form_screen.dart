@@ -277,7 +277,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                               : 'Provide verified credentials for worker trust & site management',
                           style: textTheme.bodySmall?.copyWith(
                             color: AppColors.textSecondary,
-                            fontSize: 13,
+                            fontSize: 15,
                           ),
                         ),
                       ],
@@ -425,7 +425,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                   elevation: 3,
                   menuMaxHeight: 320,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.dark,
                   ),
@@ -449,7 +449,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                             child: Text(
                               t,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                 color: isSelected ? AppColors.primary : AppColors.dark,
                               ),
@@ -492,7 +492,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                         elevation: 3,
                         menuMaxHeight: 320,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: AppColors.dark,
                         ),
@@ -516,7 +516,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                                   child: Text(
                                     s,
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                       color: isSelected ? AppColors.primary : AppColors.dark,
                                     ),
@@ -619,7 +619,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
         Text(
           title,
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: 17,
             fontWeight: FontWeight.w700,
             color: AppColors.dark,
           ),

@@ -40,7 +40,7 @@ class CompleteProfileAppBar extends StatelessWidget implements PreferredSizeWidg
                 TextSpan(
                   text: 'Flow',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: AppColors.dark,
                     letterSpacing: -0.5,
@@ -49,7 +49,7 @@ class CompleteProfileAppBar extends StatelessWidget implements PreferredSizeWidg
                 TextSpan(
                   text: 'Hire',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: AppColors.primary,
                     letterSpacing: -0.5,
@@ -62,7 +62,7 @@ class CompleteProfileAppBar extends StatelessWidget implements PreferredSizeWidg
           const Text(
             'Complete Profile Registration',
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: 13.5,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),
@@ -93,7 +93,7 @@ class CompleteProfileAppBar extends StatelessWidget implements PreferredSizeWidg
               Text(
                 '$progressPercent% Done',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: progressPercent == 100 ? const Color(0xFF15803D) : AppColors.primary,
                 ),

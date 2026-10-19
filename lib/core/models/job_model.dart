@@ -17,6 +17,7 @@ class JobModel {
   final String? companyId;
   final String? applicationId;
   final String? applicationStatus;
+  final String? reviewRemarks;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -39,6 +40,7 @@ class JobModel {
     this.companyId,
     this.applicationId,
     this.applicationStatus,
+    this.reviewRemarks,
     this.createdAt,
     this.updatedAt,
   });
@@ -85,6 +87,9 @@ class JobModel {
       applicationId: json['applicationId']?.toString(),
       applicationStatus:
           json['applicationStatus']?.toString() ?? json['status']?.toString(),
+      reviewRemarks: json['reviewRemarks']?.toString() ??
+          json['remark']?.toString() ??
+          json['remarks']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
@@ -114,6 +119,7 @@ class JobModel {
       if (companyId != null) 'companyId': companyId,
       if (applicationId != null) 'applicationId': applicationId,
       if (applicationStatus != null) 'applicationStatus': applicationStatus,
+      if (reviewRemarks != null) 'reviewRemarks': reviewRemarks,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };

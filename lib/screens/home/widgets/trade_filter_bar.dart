@@ -24,7 +24,7 @@ class TradeFilterBar extends StatelessWidget {
           child: Text(
             'Browse by Trade',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               color: AppColors.dark,
             ),
@@ -70,7 +70,7 @@ class TradeFilterBar extends StatelessWidget {
                       color: isSelected ? Colors.white : AppColors.dark,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w500,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ),

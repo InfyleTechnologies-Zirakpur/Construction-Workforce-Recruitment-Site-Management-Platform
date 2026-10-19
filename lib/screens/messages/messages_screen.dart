@@ -80,7 +80,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
@@ -95,7 +95,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               child: Text(
                 '$count',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isSelected ? Colors.white : AppColors.textSecondary,
                 ),
@@ -131,7 +131,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               'No messages here',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                fontSize: 18,
+                fontSize: 20,
                 color: AppColors.dark,
               ),
               textAlign: TextAlign.center,
@@ -145,7 +145,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       : 'When an employer reviews your application, conversations will appear here.'),
               style: textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: 15,
               ),
               textAlign: TextAlign.center,
             ),
@@ -206,7 +206,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     'Stay in touch with employers about your applications',
                     style: textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ],
@@ -235,7 +235,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     hintText: 'Search messages by employer or job...',
                     hintStyle: const TextStyle(
                       color: AppColors.textMuted,
-                      fontSize: 14,
+                      fontSize: 16,
                     ),
                     prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -304,7 +304,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         Text(
                           _selectedFilter == 1 ? 'Unread Messages' : 'Recent Conversations',
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: AppColors.dark,
                           ),
@@ -320,7 +320,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             child: Text(
                               '$count ${_selectedFilter == 1 ? 'unread' : 'chats'}',
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.peachText,
                               ),
@@ -351,7 +351,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             Text(
                               'Loading messages...',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textSecondary,
                               ),
@@ -419,7 +419,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
             'Messages',
             style: TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontSize: 20,
               color: AppColors.dark,
               letterSpacing: -0.3,
             ),

@@ -8,8 +8,7 @@ import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
 import 'widgets/create_post_tags_card.dart';
 
-/// Screen to create or edit a community feed post, matching the Jobs & Apply screen flow:
-/// clean white cards, peach badges, consistent form inputs, and sticky bottom action bar.
+
 class CreateFeedScreen extends StatefulWidget {
   const CreateFeedScreen({super.key, this.postToEdit});
 
@@ -214,7 +213,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
             title: Text(
               isEditing ? 'Edit Feed Post' : 'Create Feed Post',
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppColors.dark,
               ),
@@ -256,7 +255,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                           style: const TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 20,
                           ),
                         ),
                       ),
@@ -269,7 +268,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                               authorName.isNotEmpty ? authorName : 'Verified Member',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 15,
+                                fontSize: 17,
                                 color: AppColors.dark,
                               ),
                               maxLines: 1,
@@ -287,7 +286,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                                 authorRole,
                                 style: const TextStyle(
                                   color: AppColors.peachText,
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -321,7 +320,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                           Text(
                             'Post Content',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 17,
                               fontWeight: FontWeight.w700,
                               color: AppColors.dark,
                             ),
@@ -331,7 +330,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                       const SizedBox(height: 4),
                       const Text(
                         'Share work updates, questions, material queries, or announcements',
-                        style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 14.5, color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
@@ -410,7 +409,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                                   Text(
                                     isEditing ? 'Save Changes' : 'Publish Post',
                                     style: const TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 17,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
                                     ),

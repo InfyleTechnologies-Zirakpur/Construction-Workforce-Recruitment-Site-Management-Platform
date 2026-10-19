@@ -76,7 +76,7 @@ class FeedPostOptionsSheet extends StatelessWidget {
                       const Text(
                         'Post Options',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: AppColors.dark,
                           letterSpacing: -0.3,
@@ -86,7 +86,7 @@ class FeedPostOptionsSheet extends StatelessWidget {
                       Text(
                         'Post by ${post.authorName}',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
@@ -110,7 +110,7 @@ class FeedPostOptionsSheet extends StatelessWidget {
                       child: Text(
                         post.taggedTitle!,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColors.peachText,
                         ),
@@ -133,7 +133,7 @@ class FeedPostOptionsSheet extends StatelessWidget {
                       child: Text(
                         post.tags.first,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColors.peachText,
                         ),
@@ -221,7 +221,7 @@ class FeedPostOptionsSheet extends StatelessWidget {
                   child: const Text(
                     'Cancel',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: AppColors.dark,
                     ),
@@ -271,7 +271,7 @@ class FeedPostOptionsSheet extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 17,
                       fontWeight: FontWeight.w700,
                       color: isDestructive ? AppColors.error : AppColors.dark,
                     ),
@@ -280,7 +280,7 @@ class FeedPostOptionsSheet extends StatelessWidget {
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w400,
                     ),

@@ -71,7 +71,7 @@ class ConversationCard extends StatelessWidget {
                           ? conversation.company[0].toUpperCase()
                           : 'C',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
                       ),
@@ -91,7 +91,7 @@ class ConversationCard extends StatelessWidget {
                               conversation.company,
                               style: textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 15,
+                                fontSize: 17,
                                 color: AppColors.dark,
                               ),
                               maxLines: 1,
@@ -101,7 +101,7 @@ class ConversationCard extends StatelessWidget {
                           Text(
                             conversation.lastMessageAt,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 14,
                               fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
                               color: hasUnread ? AppColors.primary : AppColors.textSecondary,
                             ),
@@ -119,7 +119,7 @@ class ConversationCard extends StatelessWidget {
                           child: Text(
                             conversation.jobTitle,
                             style: const TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w700,
                               color: AppColors.peachText,
                             ),
@@ -136,7 +136,7 @@ class ConversationCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                           color: hasUnread ? AppColors.dark : AppColors.textSecondary,
                         ),
@@ -155,7 +155,7 @@ class ConversationCard extends StatelessWidget {
                     child: Text(
                       '${conversation.unreadCount}',
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),

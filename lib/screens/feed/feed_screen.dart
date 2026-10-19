@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -14,7 +15,8 @@ import 'widgets/feed_share_sheet.dart';
 import 'widgets/feed_stats_bar.dart';
 
 class FeedScreen extends StatefulWidget {
-  const FeedScreen({super.key});
+  final bool? isCompany;
+  const FeedScreen({super.key, this.isCompany});
 
   @override
   State<FeedScreen> createState() => _FeedScreenState();
@@ -26,16 +28,35 @@ class _FeedScreenState extends State<FeedScreen> {
 
   int _activeJobs = 0;
   int _newJobsToday = 0;
+  late bool _isCompany;
 
   @override
   void initState() {
     super.initState();
+    _isCompany = widget.isCompany ?? true;
+    if (widget.isCompany == null) {
+      _checkUserRole();
+    }
     _loadJobCounts();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<FeedCubit>().load();
       }
     });
+  }
+
+  Future<void> _checkUserRole() async {
+    try {
+      const storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      final role = await storage.read(key: 'role');
+      if (mounted && role != null) {
+        setState(() {
+          _isCompany = role == 'company';
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadJobCounts() async {
@@ -66,8 +87,8 @@ class _FeedScreenState extends State<FeedScreen> {
     final diff = DateTime.now().difference(time);
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours} hours ago';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    if (diff.inHours < 24) return diff.inHours == 1 ? '1 hour ago' : '${diff.inHours} hours ago';
+    if (diff.inDays < 7) return diff.inDays == 1 ? '1 day ago' : '${diff.inDays} days ago';
     return '${time.day}/${time.month}/${time.year}';
   }
 
@@ -132,21 +153,21 @@ class _FeedScreenState extends State<FeedScreen> {
       onTap: () => setState(() => _selectedFilter = index),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6.5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.peachBackground : AppColors.card,
+          color: isSelected ? const Color(0xFFFFFBEB) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 1.2 : 1,
+            color: isSelected ? const Color(0xFFFDE68A) : const Color(0xFFEAECF0),
+            width: 1.0,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            fontSize: 15,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? const Color(0xFFD97706) : const Color(0xFF6B7280),
           ),
         ),
       ),
@@ -188,7 +209,7 @@ class _FeedScreenState extends State<FeedScreen> {
                     'See here whats happening in the market',
                     style: textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ],
@@ -216,15 +237,17 @@ class _FeedScreenState extends State<FeedScreen> {
                     'Latest Updates',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 18,
+                      fontSize: 20,
                       color: AppColors.dark,
                     ),
                   ),
                   Row(
                     children: [
                       _buildFilterChip('All Feed', 0),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('My Posts', 1),
+                      if (_isCompany) ...[
+                        const SizedBox(width: 8),
+                        _buildFilterChip('My Posts', 1),
+                      ],
                     ],
                   ),
                 ],
@@ -249,7 +272,7 @@ class _FeedScreenState extends State<FeedScreen> {
                             Text(
                               'Loading posts...',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textSecondary,
                               ),
@@ -306,7 +329,7 @@ class _FeedScreenState extends State<FeedScreen> {
                               'No post here',
                               style: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 18,
+                                fontSize: 20,
                                 color: AppColors.dark,
                               ),
                               textAlign: TextAlign.center,
@@ -318,28 +341,30 @@ class _FeedScreenState extends State<FeedScreen> {
                                   : 'No feed posts available right now',
                               style: textTheme.bodySmall?.copyWith(
                                 color: AppColors.textSecondary,
-                                fontSize: 13,
+                                fontSize: 15,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 18),
-                            ElevatedButton.icon(
-                              onPressed: _openCreatePost,
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Create Post'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                            if (_isCompany) ...[
+                              const SizedBox(height: 18),
+                              ElevatedButton.icon(
+                                onPressed: _openCreatePost,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Create Post'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -369,15 +394,26 @@ class _FeedScreenState extends State<FeedScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCreatePost,
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.edit_note_rounded, color: Colors.white, size: 24),
-        label: const Text(
-          'Create Post',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-      ),
+      floatingActionButton: _isCompany
+          ? FloatingActionButton.extended(
+              onPressed: _openCreatePost,
+              backgroundColor: AppColors.primary,
+              elevation: 2,
+              highlightElevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+              label: const Text(
+                'Create Post',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

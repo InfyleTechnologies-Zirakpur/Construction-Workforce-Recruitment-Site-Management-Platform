@@ -250,7 +250,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                               decoration: InputDecoration(
                                 hintText: 'Add a comment...',
                                 hintStyle: const TextStyle(
-                                  fontSize: 13.5,
+                                  fontSize: 15.5,
                                   color: AppColors.textMuted,
                                 ),
                                 filled: true,
@@ -305,7 +305,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                       : 'C',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -330,7 +330,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                                 comment.authorName,
                                 style: textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                                  fontSize: 15,
                                   color: AppColors.dark,
                                 ),
                               ),
@@ -338,7 +338,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                               Text(
                                 '• ${_formatCommentTime(comment.createdAt)}',
                                 style: textTheme.bodySmall?.copyWith(
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   color: AppColors.textMuted,
                                 ),
                               ),
@@ -348,7 +348,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                           Text(
                             comment.text,
                             style: textTheme.bodyMedium?.copyWith(
-                              fontSize: 13.5,
+                              fontSize: 15.5,
                               color: AppColors.dark,
                             ),
                           ),
@@ -389,7 +389,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                   : 'R',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -411,7 +411,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                         reply.authorName,
                         style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontSize: 14,
                           color: AppColors.dark,
                         ),
                       ),
@@ -419,7 +419,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                       Text(
                         '• ${_formatCommentTime(reply.createdAt)}',
                         style: textTheme.bodySmall?.copyWith(
-                          fontSize: 10.5,
+                          fontSize: 12.5,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -429,7 +429,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                   Text(
                     reply.text,
                     style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 12.5,
+                      fontSize: 14.5,
                       color: AppColors.dark,
                     ),
                   ),

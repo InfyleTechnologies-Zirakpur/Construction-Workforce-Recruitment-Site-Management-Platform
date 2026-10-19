@@ -60,13 +60,13 @@ class HomeSearchBar extends StatelessWidget {
                 hintText: 'Trade, role, or keyword',
                 hintStyle: TextStyle(
                   color: AppColors.textMuted,
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
               ),
               style: const TextStyle(
                 color: AppColors.dark,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
             ),

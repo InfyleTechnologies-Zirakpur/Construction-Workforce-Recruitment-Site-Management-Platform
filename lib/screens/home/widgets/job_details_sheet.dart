@@ -135,7 +135,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                                   child: Text(
                                     job.company,
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       color: Color(0xFF64748B),
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -186,7 +186,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                     const Text(
                       'Required Skills',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF0F172A),
                       ),
@@ -207,7 +207,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                           style: const TextStyle(
                             color: Color(0xFFEA580C),
                             fontWeight: FontWeight.w700,
-                            fontSize: 13,
+                            fontSize: 15,
                           ),
                         ),
                       )).toList(),
@@ -219,7 +219,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                   const Text(
                     'Job Description',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
                     ),
@@ -236,7 +236,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                     child: Text(
                       job.description.isNotEmpty ? job.description : 'No additional description provided for this job listing.',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         height: 1.5,
                         color: Color(0xFF334155),
                         fontWeight: FontWeight.w500,
@@ -250,7 +250,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                     const Text(
                       'Requirements',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF0F172A),
                       ),
@@ -269,7 +269,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                           Expanded(
                             child: Text(
                               req,
-                              style: const TextStyle(fontSize: 14, color: Color(0xFF334155), height: 1.4),
+                              style: const TextStyle(fontSize: 16, color: Color(0xFF334155), height: 1.4),
                             ),
                           ),
                         ],
@@ -287,7 +287,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                         Text(
                           'Experience: ${job.experienceLevel}',
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF475569),
                           ),
@@ -306,7 +306,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF94A3B8),
                         textStyle: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -371,7 +371,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                         child: Text(
                           job.applied ? 'Already Applied' : 'Apply Now',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: job.applied ? const Color(0xFF94A3B8) : Colors.white,
                           ),

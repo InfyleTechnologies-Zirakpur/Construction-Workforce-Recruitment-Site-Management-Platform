@@ -54,7 +54,7 @@ class CompleteProfileSectionCard extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: AppColors.dark,
                       letterSpacing: -0.2,
@@ -69,7 +69,7 @@ class CompleteProfileSectionCard extends StatelessWidget {
           Text(
             subtitle,
             style: const TextStyle(
-              fontSize: 12.5,
+              fontSize: 14.5,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w400,
             ),

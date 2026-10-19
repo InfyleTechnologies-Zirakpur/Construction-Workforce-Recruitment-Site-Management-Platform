@@ -222,12 +222,108 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     }
   }
 
-  Future<void> _updateAppStatus(String appId, String status, {String? remarks}) async {
+  Future<void> _updateAppStatus(
+    String appId,
+    String status, {
+    String? remarks,
+    Map<String, dynamic>? app,
+  }) async {
+    final note = remarks?.trim();
     try {
-      await _repo.updateApplicationStatus(appId, status: status, remark: remarks);
+      await _repo.updateApplicationStatus(appId, status: status, remark: note);
+
+   
+      final targetApp = app ??
+          _applications.firstWhere(
+            (a) => (a['id'] ?? a['_id'])?.toString() == appId,
+            orElse: () => <String, dynamic>{},
+          );
+
+      final rawJob = targetApp['job'];
+      final jobMap = rawJob is Map ? Map<String, dynamic>.from(rawJob) : <String, dynamic>{};
+      final jobId = (targetApp['jobId'] ?? jobMap['id'] ?? jobMap['_id'])?.toString() ?? '';
+      final jobTitle = (jobMap['title'] ?? targetApp['jobTitle'] ?? 'Job').toString();
+
+      final rawUser = targetApp['user'] ?? targetApp['worker'] ?? targetApp['seeker'];
+      final userMap = rawUser is Map ? Map<String, dynamic>.from(rawUser) : <String, dynamic>{};
+      final candidateUserId = (targetApp['userId'] ?? userMap['id'] ?? userMap['_id'] ?? targetApp['seekerId'])?.toString();
+
+      // If remarks were entered, send them as chat message & notification
+      if (note != null && note.isNotEmpty) {
+        final statusCapitalized = status.substring(0, 1).toUpperCase() + status.substring(1);
+        final chatText = 'Application $statusCapitalized: $note';
+
+        // 1. Send as chat message if conversation exists or can be matched
+        try {
+          Map<String, dynamic>? matchedConv;
+          for (final conv in _companyConversations) {
+            final convAppId = conv['applicationId']?.toString();
+            final convJobId = (conv['jobId'] ?? (conv['job'] is Map ? conv['job']['id'] : null))?.toString();
+            final convSeekerId = (conv['seekerId'] ??
+                    (conv['seeker'] is Map ? conv['seeker']['id'] : null) ??
+                    conv['userId'])
+                ?.toString();
+
+            if (convAppId != null && convAppId.isNotEmpty && convAppId == appId) {
+              matchedConv = conv;
+              break;
+            }
+            if (candidateUserId != null &&
+                candidateUserId.isNotEmpty &&
+                convSeekerId == candidateUserId) {
+              if (jobId.isEmpty || convJobId == null || convJobId.isEmpty || convJobId == jobId) {
+                matchedConv = conv;
+                break;
+              }
+            }
+          }
+
+          if (matchedConv != null) {
+            final convId = matchedConv['id']?.toString() ?? '';
+            if (convId.isNotEmpty) {
+              await _repo.sendMessage(convId, chatText);
+            }
+          } else {
+            // Attempt to dispatch to conversation ID = appId in case backend matches conversation to application
+            try {
+              await _repo.sendMessage(appId, chatText);
+            } catch (_) {}
+          }
+        } catch (_) {}
+
+        // 2. Dispatch in-app notification directly to candidate
+        if (candidateUserId != null && candidateUserId.isNotEmpty) {
+          try {
+            await _repo.sendNotification(
+              title: 'Application $statusCapitalized: $jobTitle',
+              body: note,
+              event: 'application_update',
+              userIds: [candidateUserId],
+              referenceId: appId,
+            );
+          } catch (_) {}
+        }
+      }
+
       if (mounted) {
+        setState(() {
+          for (final a in _applications) {
+            if ((a['id'] ?? a['_id'])?.toString() == appId) {
+              a['status'] = status;
+              if (note != null && note.isNotEmpty) {
+                a['reviewRemarks'] = note;
+                a['remark'] = note;
+              }
+            }
+          }
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Application $status!'), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(note != null && note.isNotEmpty
+                ? 'Application $status & remarks sent to candidate!'
+                : 'Application $status!'),
+            backgroundColor: Colors.green,
+          ),
         );
         _loadCompanyData();
       }
@@ -384,7 +480,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                               letterSpacing: -0.2,
                             ),
@@ -398,7 +494,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white70,
-                              fontSize: 12,
+                              fontSize: 14,
                             ),
                           ),
                         ],
@@ -419,7 +515,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                         status,
                         style: TextStyle(
                           color: statusColor,
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.4,
                         ),
@@ -448,99 +544,99 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CompanyAppBar(
-        logoUrl: _myProfile?['logoUrl']?.toString() ?? _myProfile?['avatarUrl']?.toString(),
-        companyName: _myProfile?['name']?.toString(),
+        logoUrl: _myProfile?['logoUrl']?.toString() ??
+            _myProfile?['avatarUrl']?.toString() ??
+            _myProfile?['logo']?.toString() ??
+            _myProfile?['avatar']?.toString() ??
+            _myProfile?['profileImage']?.toString() ??
+            _myProfile?['imageUrl']?.toString() ??
+            _myProfile?['image']?.toString() ??
+            (_myProfile?['user'] is Map
+                ? (_myProfile!['user']['avatarUrl'] ?? _myProfile!['user']['avatar'])?.toString()
+                : null),
+        companyName: _myProfile?['name']?.toString() ??
+            _myProfile?['companyName']?.toString() ??
+            _myProfile?['businessName']?.toString(),
         onProfileTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
         ).then((_) => _loadCompanyData()),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _tabIndex,
-        onTap: (idx) => setState(() => _tabIndex = idx),
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-        backgroundColor: AppColors.card,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Padding(
-              padding: EdgeInsets.only(bottom: 2),
-              child: Icon(Icons.layers_outlined, size: 22),
-            ),
-            activeIcon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.peachBackground,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.layers_rounded, color: AppColors.primary, size: 22),
-            ),
-            label: 'Feed',
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
           ),
-          BottomNavigationBarItem(
-            icon: const Padding(
-              padding: EdgeInsets.only(bottom: 2),
-              child: Icon(Icons.people_alt_outlined, size: 22),
-            ),
-            activeIcon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.peachBackground,
-                borderRadius: BorderRadius.circular(12),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _tabIndex,
+          onTap: (idx) => setState(() => _tabIndex = idx),
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: const Color(0xFF6B7280),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.home_outlined, size: 23),
               ),
-              child: const Icon(Icons.people_alt_rounded, color: AppColors.primary, size: 22),
-            ),
-            label: 'Applications',
-          ),
-          BottomNavigationBarItem(
-            icon: const Padding(
-              padding: EdgeInsets.only(bottom: 2),
-              child: Icon(Icons.business_center_outlined, size: 22),
-            ),
-            activeIcon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.peachBackground,
-                borderRadius: BorderRadius.circular(12),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.home, size: 23, color: AppColors.primary),
               ),
-              child: const Icon(Icons.business_center_rounded, color: AppColors.primary, size: 22),
+              label: 'Feed',
             ),
-            label: 'Site Jobs',
-          ),
-          BottomNavigationBarItem(
-            icon: const Padding(
-              padding: EdgeInsets.only(bottom: 2),
-              child: Icon(Icons.bar_chart_outlined, size: 22),
-            ),
-            activeIcon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.peachBackground,
-                borderRadius: BorderRadius.circular(12),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.group_outlined, size: 23),
               ),
-              child: const Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 22),
-            ),
-            label: 'Analytics',
-          ),
-          BottomNavigationBarItem(
-            icon: const Padding(
-              padding: EdgeInsets.only(bottom: 2),
-              child: Icon(Icons.chat_bubble_outline_rounded, size: 22),
-            ),
-            activeIcon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.peachBackground,
-                borderRadius: BorderRadius.circular(12),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.group, size: 23, color: AppColors.primary),
               ),
-              child: const Icon(Icons.chat_bubble_rounded, color: AppColors.primary, size: 22),
+              label: 'Applications',
             ),
-            label: 'Chats',
-          ),
-        ],
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.business_center_outlined, size: 23),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.business_center, size: 23, color: AppColors.primary),
+              ),
+              label: 'Site Jobs',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.bar_chart_rounded, size: 23),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.bar_chart_rounded, size: 23, color: AppColors.primary),
+              ),
+              label: 'Analytics',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.chat_outlined, size: 22),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 3),
+                child: Icon(Icons.chat, size: 22, color: AppColors.primary),
+              ),
+              label: 'Chats',
+            ),
+          ],
+        ),
       ),
       floatingActionButton: (_tabIndex == 1 || _tabIndex == 2)
           ? FloatingActionButton(
@@ -555,7 +651,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
             )
           : null,
       body: _tabIndex == 0
-          ? const FeedScreen()
+          ? const FeedScreen(isCompany: true)
           : SafeArea(
               child: RefreshIndicator(
                 color: AppColors.primary,

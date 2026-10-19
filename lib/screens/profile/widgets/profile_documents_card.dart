@@ -80,7 +80,7 @@ class ProfileDocumentsCard extends StatelessWidget {
                   const Text(
                     'Verification Documents',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: AppColors.dark,
                     ),
@@ -104,7 +104,7 @@ class ProfileDocumentsCard extends StatelessWidget {
                 child: Text(
                   '$verifiedCount/3 Uploaded',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: verifiedCount == 3
                         ? const Color(0xFF15803D)
@@ -118,7 +118,7 @@ class ProfileDocumentsCard extends StatelessWidget {
           const Text(
             'Upload documents to verify your profile and increase hiring chances.',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
             ),
@@ -161,7 +161,7 @@ class ProfileDocumentsCard extends StatelessWidget {
               child: Text(
                 'Uploading document for verification...',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   color: AppColors.primary,
                   fontWeight: FontWeight.w500,
                 ),
@@ -208,7 +208,7 @@ class ProfileDocumentsCard extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.dark,
                 ),
@@ -221,7 +221,7 @@ class ProfileDocumentsCard extends StatelessWidget {
                         : 'Document verified ✓')
                     : description,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: isUploaded
                       ? const Color(0xFF16A34A)
@@ -250,7 +250,7 @@ class ProfileDocumentsCard extends StatelessWidget {
             child: Text(
               isUploaded ? 'Replace' : 'Upload',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: isUploaded ? AppColors.dark : AppColors.primary,
               ),

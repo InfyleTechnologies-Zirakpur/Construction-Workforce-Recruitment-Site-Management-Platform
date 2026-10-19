@@ -152,7 +152,7 @@ class NotificationCard extends StatelessWidget {
                             child: Text(
                               category,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: color,
                               ),
@@ -192,7 +192,7 @@ class NotificationCard extends StatelessWidget {
                                 Text(
                                   timeStr,
                                   style: const TextStyle(
-                                    fontSize: 11.5,
+                                    fontSize: 13.5,
                                     color: AppColors.textMuted,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -221,7 +221,7 @@ class NotificationCard extends StatelessWidget {
                       Text(
                         notification.body,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 15,
                           color: AppColors.textSecondary,
                           height: 1.35,
                         ),

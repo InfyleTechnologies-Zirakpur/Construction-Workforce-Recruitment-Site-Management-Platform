@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/api/api_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
 import '../../../features/bloc/worker_blocs.dart';
@@ -29,31 +30,42 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(60);
 
-  Widget _buildFallbackAvatar() {
-    if (companyName != null && companyName!.trim().isNotEmpty) {
-      return Center(
-        child: Text(
-          companyName!.trim()[0].toUpperCase(),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primary,
-          ),
-        ),
-      );
+  String? _resolveImageUrl(String? url) {
+    if (url == null) return null;
+    final trimmed = url.trim();
+    if (trimmed.isEmpty || trimmed == 'null' || trimmed == 'undefined') {
+      return null;
     }
-    return const Icon(
-      Icons.account_circle_outlined,
-      color: AppColors.dark,
-      size: 24,
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    final uri = Uri.tryParse(ApiConfig.baseUrl);
+    if (uri != null) {
+      final origin = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+      return trimmed.startsWith('/') ? '$origin$trimmed' : '$origin/$trimmed';
+    }
+    return trimmed;
+  }
+
+  Widget _buildFallbackAvatar() {
+    final letter = (companyName != null && companyName!.trim().isNotEmpty)
+        ? companyName!.trim()[0].toUpperCase()
+        : 'I';
+    return Center(
+      child: Text(
+        letter,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: AppColors.primary,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasValidLogo = logoUrl != null &&
-        logoUrl!.trim().isNotEmpty &&
-        logoUrl!.trim().startsWith('http');
+    final resolvedLogoUrl = _resolveImageUrl(logoUrl);
 
     return AppBar(
       backgroundColor: AppColors.card,
@@ -100,7 +112,7 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
           const Text(
             'Workforce Recruitment',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
             ),
@@ -165,15 +177,19 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
                   height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.peachBackground,
-                    border: Border.all(color: AppColors.peachBorder, width: 1.2),
+                    color: const Color(0xFFFFFBEB),
+                    border: Border.all(color: AppColors.primary, width: 1.0),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: hasValidLogo
+                  child: resolvedLogoUrl != null
                       ? Image.network(
-                          logoUrl!.trim(),
+                          resolvedLogoUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _buildFallbackAvatar(),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return _buildFallbackAvatar();
+                          },
                         )
                       : _buildFallbackAvatar(),
                 ),

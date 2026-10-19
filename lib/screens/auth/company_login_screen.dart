@@ -132,7 +132,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                       const Text(
                         'Company Login',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1E2A38),
                         ),
@@ -176,7 +176,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                         Text(
                           'Sign in with your company email to manage jobs, applications and more.',
                           style: TextStyle(
-                            fontSize: context.sp(14),
+                            fontSize: context.sp(16),
                             color: const Color(0xFF6B7280),
                             height: 1.4,
                           ),
@@ -192,7 +192,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                               TextFormField(
                                 controller: _email,
                                 keyboardType: TextInputType.emailAddress,
-                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
                                 decoration: InputDecoration(
                                   hintText: 'Email',
                                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
@@ -214,7 +214,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                                   ),
                                 ),
                                 validator: (v) {
@@ -235,7 +235,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                               TextFormField(
                                 controller: _pass,
                                 obscureText: _obscurePass,
-                                style: const TextStyle(fontSize: 15, color: Color(0xFF1E2A38)),
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
                                 decoration: InputDecoration(
                                   hintText: 'Password',
                                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
@@ -265,7 +265,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFFA6400), width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                                   ),
                                 ),
                                 validator: (v) {
@@ -301,7 +301,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                           _error!,
                                           style: const TextStyle(
                                             color: AppColors.error,
-                                            fontSize: 13,
+                                            fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -336,7 +336,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                       const Text(
                                         'Remember me',
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 16,
                                           color: Color(0xFF374151),
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -359,8 +359,8 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                     child: const Text(
                                       'Forgot password?',
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFFFA6400),
+                                        fontSize: 16,
+                                        color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -398,7 +398,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                           _error!,
                                           style: const TextStyle(
                                             color: Color(0xFF991B1B),
-                                            fontSize: 13,
+                                            fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                             height: 1.3,
                                           ),
@@ -417,7 +417,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                 child: ElevatedButton(
                                   onPressed: _loading ? null : _login,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFA6400),
+                                    backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
@@ -437,7 +437,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                           'Sign In',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 16,
+                                            fontSize: 18,
                                             color: Colors.white,
                                           ),
                                         ),
@@ -458,13 +458,13 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                       text: "Don't have a company account? ",
                                       style: TextStyle(
                                         color: Color(0xFF6B7280),
-                                        fontSize: 14,
+                                        fontSize: 16,
                                       ),
                                       children: [
                                         TextSpan(
                                           text: 'Sign Up',
                                           style: TextStyle(
-                                            color: Color(0xFFFA6400),
+                                            color: AppColors.primary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -482,9 +482,9 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                   child: const Text(
                                     'Back to seeker login',
                                     style: TextStyle(
-                                      color: Color(0xFFFA6400),
+                                      color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 15,
+                                      fontSize: 17,
                                     ),
                                   ),
                                 ),

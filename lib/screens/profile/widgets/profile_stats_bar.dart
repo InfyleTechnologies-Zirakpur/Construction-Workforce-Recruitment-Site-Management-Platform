@@ -56,7 +56,7 @@ class ProfileStatsBar extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w800,
               color: AppColors.dark,
             ),
@@ -68,7 +68,7 @@ class ProfileStatsBar extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),

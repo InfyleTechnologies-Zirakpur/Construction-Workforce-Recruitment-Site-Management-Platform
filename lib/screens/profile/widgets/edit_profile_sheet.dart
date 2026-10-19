@@ -146,7 +146,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               const Text(
                 'Edit Professional Profile',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: AppColors.dark,
                   letterSpacing: -0.3,
@@ -156,7 +156,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               const Text(
                 'Update your information to help employers find and hire you',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 15,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w400,
                 ),
@@ -225,7 +225,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                           Text(
                             trade,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: AppColors.peachText,
                             ),
@@ -253,7 +253,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                   child: const Text(
                     'Save Changes',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 17,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -272,7 +272,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: AppColors.dark,
         ),
@@ -297,24 +297,24 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(fontSize: 14, color: AppColors.dark),
+        style: const TextStyle(fontSize: 16, color: AppColors.dark),
         decoration: InputDecoration(
           prefixIcon: Icon(prefixIcon, color: AppColors.textSecondary, size: 20),
           prefixText: prefixText,
           prefixStyle: const TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.dark,
           ),
           suffixText: suffixText,
           suffixStyle: const TextStyle(
-            fontSize: 13,
+            fontSize: 15,
             color: AppColors.textSecondary,
           ),
           hintText: hintText,
           hintStyle: const TextStyle(
             color: AppColors.textMuted,
-            fontSize: 14,
+            fontSize: 16,
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(

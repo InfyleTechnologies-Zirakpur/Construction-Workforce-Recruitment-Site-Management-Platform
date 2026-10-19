@@ -177,7 +177,9 @@ class FeedPost {
   factory FeedPost.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
     final authorObj = json['author'] is Map ? Map<String, dynamic>.from(json['author']) : null;
     final companyObj = json['company'] is Map ? Map<String, dynamic>.from(json['company']) : null;
-    final String title = json['title']?.toString() ?? json['taggedTitle']?.toString() ?? '';
+    final String rawTitle = json['title']?.toString() ?? json['taggedTitle']?.toString() ?? '';
+    final isDefaultSiteReport = rawTitle.trim().toLowerCase() == 'site report';
+    final String? title = (rawTitle.trim().isNotEmpty && !isDefaultSiteReport) ? rawTitle.trim() : null;
     final String description = json['description']?.toString() ?? json['content']?.toString() ?? '';
 
     final String? authorIdStr = json['authorId']?.toString() ??
@@ -230,7 +232,7 @@ class FeedPost {
       authorAvatarUrl: authorAvatar,
       content: description,
       location: json['location']?.toString(),
-      taggedTitle: title.isNotEmpty ? title : null,
+      taggedTitle: title,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),

@@ -66,7 +66,7 @@ class HomeJobCard extends StatelessWidget {
                       Text(
                         job.title,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: AppColors.dark,
                         ),
@@ -77,7 +77,7 @@ class HomeJobCard extends StatelessWidget {
                       Text(
                         job.company,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: FontWeight.w400,
                           color: AppColors.textSecondary,
                         ),
@@ -118,7 +118,7 @@ class HomeJobCard extends StatelessWidget {
                   child: Text(
                     job.location.isNotEmpty ? job.location : 'Site',
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 15,
                       color: AppColors.textSecondary,
                     ),
                     maxLines: 1,
@@ -131,7 +131,7 @@ class HomeJobCard extends StatelessWidget {
                     '|',
                     style: TextStyle(
                       color: AppColors.textMuted,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -144,7 +144,7 @@ class HomeJobCard extends StatelessWidget {
                 Text(
                   '₹$payStr/day',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppColors.dark,
                   ),
@@ -155,7 +155,7 @@ class HomeJobCard extends StatelessWidget {
                     '|',
                     style: TextStyle(
                       color: AppColors.textMuted,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -168,7 +168,7 @@ class HomeJobCard extends StatelessWidget {
                 Text(
                   workTypeStr,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 15,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -189,7 +189,7 @@ class HomeJobCard extends StatelessWidget {
                 skillTag,
                 style: const TextStyle(
                   color: AppColors.peachText,
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),

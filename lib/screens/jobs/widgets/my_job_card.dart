@@ -180,7 +180,7 @@ class MyJobCard extends StatelessWidget {
                             job.title,
                             style: textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
-                              fontSize: 15,
+                              fontSize: 17,
                               color: AppColors.dark,
                             ),
                             maxLines: 1,
@@ -191,7 +191,7 @@ class MyJobCard extends StatelessWidget {
                             job.company,
                             style: textTheme.bodySmall?.copyWith(
                               color: AppColors.textSecondary,
-                              fontSize: 13,
+                              fontSize: 15,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -223,7 +223,7 @@ class MyJobCard extends StatelessWidget {
                           style: TextStyle(
                             color: statusColor,
                             fontWeight: FontWeight.w700,
-                            fontSize: 11.5,
+                            fontSize: 13.5,
                           ),
                         ),
                       ),
@@ -243,7 +243,7 @@ class MyJobCard extends StatelessWidget {
                           constraints: const BoxConstraints(maxWidth: 180),
                           child: Text(
                             job.location,
-                            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                            style: const TextStyle(fontSize: 14.5, color: AppColors.textSecondary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -258,7 +258,7 @@ class MyJobCard extends StatelessWidget {
                         Text(
                           '₹${job.dailyPay}/day',
                           style: const TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 14.5,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
@@ -282,7 +282,7 @@ class MyJobCard extends StatelessWidget {
                         ),
                         child: Text(
                           skill,
-                          style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                          style: const TextStyle(fontSize: 13.5, color: AppColors.textSecondary),
                         ),
                       );
                     }).toList(),
@@ -300,7 +300,7 @@ class MyJobCard extends StatelessWidget {
                         child: Text(
                           statusDescription,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: statusColor,
                           ),
@@ -328,7 +328,7 @@ class MyJobCard extends StatelessWidget {
                               child: Text(
                                 'Withdraw',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.primary,
                                 ),
@@ -338,6 +338,49 @@ class MyJobCard extends StatelessWidget {
                         ),
                     ],
                   ),
+                  if (job.reviewRemarks != null && job.reviewRemarks!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8.5),
+                      decoration: BoxDecoration(
+                        color: AppColors.peachBackground,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.peachBorder, width: 0.9),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.comment_outlined, size: 15, color: AppColors.primary),
+                          const SizedBox(width: 7),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  const TextSpan(
+                                    text: 'Employer Note: ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.dark,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: job.reviewRemarks!.trim(),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.dark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ],
             ),

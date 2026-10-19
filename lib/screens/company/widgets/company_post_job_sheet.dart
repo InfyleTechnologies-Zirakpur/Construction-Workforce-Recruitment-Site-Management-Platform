@@ -128,7 +128,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
       hintText: hint,
       hintStyle: hintStyle ??
           const TextStyle(
-            fontSize: 13.5,
+            fontSize: 15.5,
             color: Color(0xFF98A2B3),
             fontWeight: FontWeight.normal,
           ),
@@ -331,7 +331,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                           Text(
                             'Find the right workers for your site',
                             style: TextStyle(
-                              fontSize: 13.5,
+                              fontSize: 15.5,
                               color: Color(0xFF667085),
                               fontWeight: FontWeight.w400,
                             ),
@@ -379,7 +379,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                           child: Text(
                             trade,
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 14.5,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                               color: isSelected ? AppColors.primary : const Color(0xFF475467),
                             ),
@@ -421,7 +421,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                     text: const TextSpan(
                                       text: 'Job Title ',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         color: Color(0xFF475467),
                                       ),
@@ -446,7 +446,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                       }
                                     },
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF101828),
                                     ),
@@ -481,7 +481,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                     text: const TextSpan(
                                       text: 'Location / Site ',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         color: Color(0xFF475467),
                                       ),
@@ -500,7 +500,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                   TextField(
                                     controller: _location,
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF101828),
                                     ),
@@ -564,7 +564,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                         const Text(
                                           'Daily Pay (₹)',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: Color(0xFF475467),
                                           ),
@@ -574,7 +574,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                           controller: _compensation,
                                           keyboardType: TextInputType.number,
                                           style: const TextStyle(
-                                            fontSize: 14,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w500,
                                             color: Color(0xFF101828),
                                           ),
@@ -610,7 +610,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                         const Text(
                                           'Workers Needed',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: Color(0xFF475467),
                                           ),
@@ -621,7 +621,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                             Text(
                                               '$_workersNeeded',
                                               style: const TextStyle(
-                                                fontSize: 15,
+                                                fontSize: 17,
                                                 fontWeight: FontWeight.w700,
                                                 color: Color(0xFF101828),
                                               ),
@@ -701,7 +701,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                   const Text(
                                     'Skills Required',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF475467),
                                     ),
@@ -713,7 +713,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                     textInputAction: TextInputAction.done,
                                     onSubmitted: (val) => _addSkill(val),
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF101828),
                                     ),
@@ -741,7 +741,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                         'Add',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 12,
+                                          fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -775,7 +775,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                   Text(
                                     skill,
                                     style: const TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFFF95724),
                                     ),
@@ -834,7 +834,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                   const Text(
                                     'Job Description & Site Requirements',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF475467),
                                     ),
@@ -845,7 +845,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                     maxLines: 3,
                                     maxLength: 500,
                                     style: const TextStyle(
-                                      fontSize: 13.5,
+                                      fontSize: 15.5,
                                       fontWeight: FontWeight.normal,
                                       color: Color(0xFF101828),
                                     ),
@@ -853,7 +853,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                       'Describe the job, work hours, site details, requirements, safety guidelines, etc.',
                                       counterText: '',
                                       hintStyle: const TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 15,
                                         color: Color(0xFF98A2B3),
                                         height: 1.3,
                                       ),
@@ -867,7 +867,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                         return Text(
                                           '${val.text.length}/500',
                                           style: const TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 13,
                                             color: Color(0xFF98A2B3),
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -908,7 +908,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                               : const Text(
                                   'Publish Requirement',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),

@@ -10,7 +10,7 @@ class CompanySiteJobsView extends StatefulWidget {
   final VoidCallback onNewJob;
   final Function(String jobId) onPublishJob;
   final Function(String jobId) onCloseJob;
-  final Function(String appId, String status, {String? remarks})? onUpdateStatus;
+  final void Function(String appId, String status, {String? remarks, Map<String, dynamic>? app})? onUpdateStatus;
   final VoidCallback? onViewApplicants;
 
   const CompanySiteJobsView({
@@ -149,7 +149,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.dark),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.dark),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, color: AppColors.textSecondary),
@@ -164,9 +164,9 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
             _detailRow(Icons.groups_outlined, 'Required Headcount', '$headcount Workers'),
             _detailRow(Icons.verified_outlined, 'Current Status', status),
             const SizedBox(height: 12),
-            const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.dark)),
+            const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.dark)),
             const SizedBox(height: 4),
-            Text(description, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            Text(description, style: const TextStyle(fontSize: 15, color: AppColors.textSecondary)),
             const SizedBox(height: 20),
           ],
         ),
@@ -194,13 +194,13 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
         children: [
           Icon(icon, size: 16, color: AppColors.textSecondary),
           const SizedBox(width: 8),
-          Text('$label: ', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text('$label: ', style: const TextStyle(fontSize: 15, color: AppColors.textSecondary)),
           Expanded(
             child: Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.dark),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.dark),
             ),
           ),
         ],
@@ -266,7 +266,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                         Text(
                           label,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                             color: isSelected ? Colors.white : const Color(0xFF344054),
                           ),
@@ -281,7 +281,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                           child: Text(
                             '$count',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: isSelected ? primaryColor : AppColors.textSecondary,
                             ),
@@ -321,7 +321,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                 const SizedBox(height: 14),
                 Text(
                   'No ${_activeFilter == 'all' ? '' : _activeFilter.capitalize()} Jobs Found',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.dark),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.dark),
                 ),
                 const SizedBox(height: 6),
                 const Text(
@@ -439,7 +439,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 16,
+                        fontSize: 18,
                         color: AppColors.dark,
                       ),
                     ),
@@ -454,7 +454,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 14.5,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -476,7 +476,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                 child: Text(
                   status.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: statusFg,
                     letterSpacing: 0.3,
@@ -523,7 +523,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                           child: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF344054)),
                         ),
                         const SizedBox(width: 10),
-                        const Text('View Requirement Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.dark)),
+                        const Text('View Requirement Details', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.dark)),
                       ],
                     ),
                   ),
@@ -543,7 +543,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                             child: const Icon(Icons.near_me_rounded, size: 16, color: AppColors.peachText),
                           ),
                           const SizedBox(width: 10),
-                          const Text('Publish Requirement', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.dark)),
+                          const Text('Publish Requirement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.dark)),
                         ],
                       ),
                     ),
@@ -563,7 +563,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                             child: const Icon(Icons.visibility_outlined, size: 16, color: AppColors.success),
                           ),
                           const SizedBox(width: 10),
-                          const Text('View Candidates', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.dark)),
+                          const Text('View Candidates', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.dark)),
                         ],
                       ),
                     ),
@@ -582,7 +582,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                             child: const Icon(Icons.cancel_outlined, size: 16, color: AppColors.error),
                           ),
                           const SizedBox(width: 10),
-                          const Text('Close Requirement', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.dark)),
+                          const Text('Close Requirement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.dark)),
                         ],
                       ),
                     ),
@@ -597,7 +597,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
           Text(
             '₹ $pay / day',
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: FontWeight.w700,
               color: AppColors.peachText,
             ),
@@ -618,7 +618,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                 child: Text(
                   s,
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF344054),
                   ),
@@ -646,7 +646,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                           dateText,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF344054)),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF344054)),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -656,7 +656,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                       const SizedBox(width: 4),
                       Text(
                         '$headcount Workers',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF344054)),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF344054)),
                       ),
                     ],
                   ],
@@ -683,7 +683,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                         Text(
                           'Publish Job',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppColors.peachText,
                           ),
@@ -712,7 +712,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                         Text(
                           'View Applicants',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppColors.success,
                           ),
@@ -741,7 +741,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                         Text(
                           'View Details',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF344054),
                           ),
@@ -778,7 +778,7 @@ extension on String {
 class _JobApplicantsSheetContent extends StatefulWidget {
   final Map<String, dynamic> job;
   final List<Map<String, dynamic>> initialApplications;
-  final Function(String appId, String status, {String? remarks})? onUpdateStatus;
+  final void Function(String appId, String status, {String? remarks, Map<String, dynamic>? app})? onUpdateStatus;
 
   const _JobApplicantsSheetContent({
     required this.job,
@@ -902,7 +902,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: AppColors.dark,
                         ),
@@ -915,7 +915,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                 ? 'Connecting to API...'
                                 : '${_apps.length} candidate(s) applied',
                             style: const TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 14.5,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -969,7 +969,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                               Text(
                                 'No Applicants for "$_title" Yet',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.dark),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.dark),
                               ),
                               const SizedBox(height: 6),
                               const Text(
@@ -1037,7 +1037,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                                   overflow: TextOverflow.ellipsis,
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
-                                                    fontSize: 15,
+                                                    fontSize: 17,
                                                     color: AppColors.dark,
                                                   ),
                                                 ),
@@ -1052,7 +1052,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                                 child: Text(
                                                   status,
                                                   style: TextStyle(
-                                                    fontSize: 10,
+                                                    fontSize: 12,
                                                     fontWeight: FontWeight.bold,
                                                     color: _getStatusFg(status),
                                                     letterSpacing: 0.3,
@@ -1068,7 +1068,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                               const SizedBox(width: 4),
                                               Text(
                                                 '$exp Yrs Exp',
-                                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                                               ),
                                               const SizedBox(width: 8),
                                               const Text('•', style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
@@ -1078,7 +1078,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                                   wage,
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                                                 ),
                                               ),
                                             ],
@@ -1093,12 +1093,14 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                           CompanyApplicantReviewSheet.show(
                                             context,
                                             app: app,
-                                            onUpdateStatus: (id, newStatus, {remarks}) {
+                                            onUpdateStatus: (id, newStatus, {remarks, app}) {
                                               setState(() {
-                                                app['status'] = newStatus;
-                                                if (remarks != null) app['reviewRemarks'] = remarks;
+                                                if (app != null) {
+                                                  app['status'] = newStatus;
+                                                  if (remarks != null) app['reviewRemarks'] = remarks;
+                                                }
                                               });
-                                              widget.onUpdateStatus!(id, newStatus, remarks: remarks);
+                                              widget.onUpdateStatus?.call(id, newStatus, remarks: remarks, app: app);
                                             },
                                           );
                                         }
@@ -1117,7 +1119,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                         child: const Text(
                                           'Review',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.peachText,
                                           ),

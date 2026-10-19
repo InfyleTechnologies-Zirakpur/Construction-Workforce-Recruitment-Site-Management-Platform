@@ -54,7 +54,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           const Text(
             'Skilled people. Real work.',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
             ),

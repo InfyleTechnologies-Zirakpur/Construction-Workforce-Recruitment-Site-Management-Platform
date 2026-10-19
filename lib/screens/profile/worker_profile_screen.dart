@@ -138,7 +138,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
-                  fontSize: 13.5,
+                  fontSize: 15.5,
                 ),
               ),
             ),
@@ -224,7 +224,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                   Text(
                     'Loading profile...',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
                     ),
@@ -263,7 +263,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                   const Text(
                     'Unable to load profile',
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 19,
                       fontWeight: FontWeight.w700,
                       color: AppColors.dark,
                     ),
@@ -273,7 +273,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                     state.message,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 15,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -358,7 +358,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                       label: const Text(
                         'Edit Profile Details',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -392,7 +392,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                         'Log Out',
                         style: TextStyle(
                           color: AppColors.primary,
-                          fontSize: 15,
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

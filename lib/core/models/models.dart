@@ -18,6 +18,7 @@ class Job {
     this.applied = false,
     this.applicationId,
     this.applicationStatus,
+    this.reviewRemarks,
     this.projectType = 'Full-time',
     this.experienceLevel = 'Any',
   });
@@ -29,6 +30,7 @@ class Job {
   final bool saved, applied;
   final String? applicationId;
   final String? applicationStatus;
+  final String? reviewRemarks;
   // e.g. 'Full-time', 'Contract', 'Daily Wage'
   final String projectType;
   // e.g. 'Fresher', 'Experienced', 'Any'
@@ -56,6 +58,7 @@ class Job {
       applied: j['applied'] == true,
       applicationId: j['applicationId']?.toString(),
       applicationStatus: j['applicationStatus']?.toString() ?? j['status']?.toString(),
+      reviewRemarks: j['reviewRemarks']?.toString() ?? j['remark']?.toString() ?? j['remarks']?.toString(),
       projectType: j['projectType']?.toString() ?? 'Full-time',
       experienceLevel: j['experienceLevel']?.toString() ?? 'Any',
     );
@@ -74,6 +77,7 @@ class Job {
     bool? applied,
     String? applicationId,
     String? applicationStatus,
+    String? reviewRemarks,
     String? projectType,
     String? experienceLevel,
   }) {
@@ -90,6 +94,7 @@ class Job {
       applied: applied ?? this.applied,
       applicationId: applicationId ?? this.applicationId,
       applicationStatus: applicationStatus ?? this.applicationStatus,
+      reviewRemarks: reviewRemarks ?? this.reviewRemarks,
       projectType: projectType ?? this.projectType,
       experienceLevel: experienceLevel ?? this.experienceLevel,
     );

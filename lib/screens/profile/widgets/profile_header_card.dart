@@ -111,7 +111,7 @@ class ProfileHeaderCard extends StatelessWidget {
                     Text(
                       profile.name.isNotEmpty ? profile.name : 'Worker',
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                         letterSpacing: -0.3,
@@ -139,7 +139,7 @@ class ProfileHeaderCard extends StatelessWidget {
                             child: Text(
                               primaryTrade,
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primary,
                               ),
@@ -182,7 +182,7 @@ class ProfileHeaderCard extends StatelessWidget {
                               Text(
                                 isKycVerified ? 'Verified' : 'Pending',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: isKycVerified
                                       ? const Color(0xFF4ADE80)
@@ -208,7 +208,7 @@ class ProfileHeaderCard extends StatelessWidget {
                             child: Text(
                               profile.city,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: Colors.white70,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -245,7 +245,7 @@ class ProfileHeaderCard extends StatelessWidget {
                         ? 'Uploading your profile photo...'
                         : 'Tap the camera button to upload or change your photo',
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       color: Colors.white70,
                       fontWeight: FontWeight.w400,
                     ),

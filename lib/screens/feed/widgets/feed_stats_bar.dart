@@ -27,18 +27,18 @@ class FeedStatsBar extends StatelessWidget {
           Text(
             count,
             style: TextStyle(
-              fontSize: 19,
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: color,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: Color(0xFF6B7280),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -52,18 +52,11 @@ class FeedStatsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFEAECF0), width: 1.0),
       ),
       child: Row(
         children: [
@@ -72,17 +65,17 @@ class FeedStatsBar extends StatelessWidget {
             label: 'Active Jobs',
             color: AppColors.primary,
           ),
-          Container(width: 1, height: 36, color: AppColors.border),
+          Container(width: 1, height: 36, color: const Color(0xFFEAECF0)),
           _buildStatColumn(
             count: '$newJobsToday',
             label: 'New Today',
             color: AppColors.dark,
           ),
-          Container(width: 1, height: 36, color: AppColors.border),
+          Container(width: 1, height: 36, color: const Color(0xFFEAECF0)),
           _buildStatColumn(
             count: '$totalPosts',
             label: 'Feed Posts',
-            color: AppColors.textSecondary,
+            color: AppColors.dark,
           ),
         ],
       ),

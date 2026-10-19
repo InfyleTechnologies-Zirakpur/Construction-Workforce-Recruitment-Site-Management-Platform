@@ -72,22 +72,23 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
     String? authorName,
     String? authorRole,
   }) async {
-    final title = (taggedTitle != null && taggedTitle.trim().isNotEmpty)
+    final effectiveTitle = (taggedTitle != null && taggedTitle.trim().isNotEmpty)
         ? taggedTitle.trim()
-        : 'Site Report';
+        : null;
 
     try {
       final newPost = await _repo.createPost(
-        title: title,
+        title: effectiveTitle ?? '',
         description: content.trim(),
         location: location?.trim(),
-        tags: taggedTitle != null ? [taggedTitle.trim()] : null,
+        tags: effectiveTitle != null ? [effectiveTitle] : null,
       );
       final enrichedPost = newPost.copyWith(
         authorName: (authorName != null && authorName.trim().isNotEmpty)
             ? authorName.trim()
             : (newPost.authorName.isNotEmpty ? newPost.authorName : 'Company'),
         authorRole: (authorRole != null && authorRole.trim().isNotEmpty) ? authorRole.trim() : newPost.authorRole,
+        taggedTitle: effectiveTitle,
         isMyPost: true,
       );
       _posts.insert(0, enrichedPost);

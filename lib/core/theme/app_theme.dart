@@ -13,7 +13,11 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.background,
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+      ),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,

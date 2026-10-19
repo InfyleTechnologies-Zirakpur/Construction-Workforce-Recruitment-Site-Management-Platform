@@ -42,7 +42,7 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
           color: AppColors.dark,
         ),
@@ -64,7 +64,7 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
             controller: nameController,
             textCapitalization: TextCapitalization.words,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               color: AppColors.dark,
               fontWeight: FontWeight.w600,
             ),
@@ -85,7 +85,7 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
             controller: cityController,
             textCapitalization: TextCapitalization.words,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               color: AppColors.dark,
               fontWeight: FontWeight.w600,
             ),
@@ -129,7 +129,7 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
                       Text(
                         city,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 13.5,
                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                           color: isSelected ? AppColors.primary : const Color(0xFF475569),
                         ),

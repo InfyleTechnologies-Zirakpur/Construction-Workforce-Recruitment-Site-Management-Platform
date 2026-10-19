@@ -329,8 +329,8 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                   child: _isVerifying
                       ? SizedBox(
-                          width: context.sp(20),
-                          height: context.sp(20),
+                          width: context.sp(22),
+                          height: context.sp(22),
                           child: const CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2.4,
@@ -430,7 +430,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         fontWeight: FontWeight.w700,
                       ) ??
                       const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: AppColors.dark,
                       ),
