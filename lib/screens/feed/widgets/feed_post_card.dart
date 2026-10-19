@@ -1,10 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
 import 'feed_post_options_sheet.dart';
 
-class FeedPostCard extends StatelessWidget {
+class FeedPostCard extends StatefulWidget {
   final FeedPost post;
   final String formattedTime;
   final VoidCallback onLikeToggle;
@@ -25,8 +26,33 @@ class FeedPostCard extends StatelessWidget {
   });
 
   @override
+  State<FeedPostCard> createState() => _FeedPostCardState();
+}
+
+class _FeedPostCardState extends State<FeedPostCard> {
+  bool _isExpanded = false;
+  late final TapGestureRecognizer _toggleRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _toggleRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        setState(() {
+          _isExpanded = !_isExpanded;
+        });
+      };
+  }
+
+  @override
+  void dispose() {
+    _toggleRecognizer.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final post = widget.post;
     final hasRole = post.taggedTitle != null &&
         post.taggedTitle!.trim().isNotEmpty &&
         post.taggedTitle!.trim().toLowerCase() != 'site report';
@@ -100,7 +126,7 @@ class FeedPostCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      formattedTime,
+                      widget.formattedTime,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
@@ -113,9 +139,9 @@ class FeedPostCard extends StatelessWidget {
                 onTap: () => FeedPostOptionsSheet.show(
                     context,
                     post: post,
-                    onEdit: onEditTap,
-                    onDelete: onDeleteTap,
-                    onShare: onShareTap,
+                    onEdit: widget.onEditTap,
+                    onDelete: widget.onDeleteTap,
+                    onShare: widget.onShareTap,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   child: const Padding(
@@ -130,13 +156,125 @@ class FeedPostCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            post.content,
-            style: const TextStyle(
-              fontSize: 14.5,
-              height: 1.4,
-              color: AppColors.dark,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const textStyle = TextStyle(
+                fontSize: 16.5,
+                height: 1.45,
+                color: AppColors.dark,
+              );
+
+              final textSpan = TextSpan(
+                text: post.content,
+                style: textStyle,
+              );
+
+              final textPainter = TextPainter(
+                text: textSpan,
+                textDirection: Directionality.of(context),
+                maxLines: 5,
+              )..layout(maxWidth: constraints.maxWidth);
+
+              final bool isLong = textPainter.didExceedMaxLines ||
+                  post.content.split('\n').length > 5;
+
+              if (!isLong) {
+                return Text(
+                  post.content,
+                  style: textStyle,
+                );
+              }
+
+              if (_isExpanded) {
+                return Text.rich(
+                  TextSpan(
+                    style: textStyle,
+                    children: [
+                      TextSpan(text: post.content),
+                      const TextSpan(text: '  '),
+                      TextSpan(
+                        text: 'View less',
+                        style: const TextStyle(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                        recognizer: _toggleRecognizer,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              const linkSpan = TextSpan(
+                text: ' ... View more',
+                style: TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              );
+
+              int low = 0;
+              int high = post.content.length;
+              int cutIndex = 0;
+
+              while (low <= high) {
+                final mid = (low + high) ~/ 2;
+                final cleanSub = post.content.substring(0, mid).replaceAll(RegExp(r'\n+$'), '');
+
+                final testSpan = TextSpan(
+                  style: textStyle,
+                  children: [
+                    TextSpan(text: cleanSub),
+                    linkSpan,
+                  ],
+                );
+                final tp = TextPainter(
+                  text: testSpan,
+                  textDirection: Directionality.of(context),
+                  maxLines: 5,
+                )..layout(maxWidth: constraints.maxWidth);
+
+                if (!tp.didExceedMaxLines) {
+                  cutIndex = mid;
+                  low = mid + 1;
+                } else {
+                  high = mid - 1;
+                }
+              }
+
+              String finalSub = post.content.substring(0, cutIndex).replaceAll(RegExp(r'\n+$'), '');
+              if (cutIndex < post.content.length) {
+                final lastSpace = finalSub.lastIndexOf(' ');
+                final lastNewline = finalSub.lastIndexOf('\n');
+                final boundary = lastSpace > lastNewline ? lastSpace : -1;
+                if (boundary != -1 && boundary > finalSub.length - 25) {
+                  finalSub = finalSub.substring(0, boundary);
+                }
+              }
+              finalSub = finalSub.trimRight();
+
+              return Text.rich(
+                TextSpan(
+                  style: textStyle,
+                  children: [
+                    TextSpan(text: finalSub),
+                    TextSpan(
+                      text: ' ... View more',
+                      style: const TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                      recognizer: _toggleRecognizer,
+                    ),
+                  ],
+                ),
+                maxLines: 5,
+                overflow: TextOverflow.clip,
+              );
+            },
           ),
           if (hasRole || hasLocation) ...[
             const SizedBox(height: 12),
@@ -208,7 +346,7 @@ class FeedPostCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               InkWell(
-                onTap: onLikeToggle,
+                onTap: widget.onLikeToggle,
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -233,7 +371,7 @@ class FeedPostCard extends StatelessWidget {
                 ),
               ),
               InkWell(
-                onTap: onCommentTap,
+                onTap: widget.onCommentTap,
                 borderRadius: BorderRadius.circular(8),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -250,7 +388,7 @@ class FeedPostCard extends StatelessWidget {
                 ),
               ),
               InkWell(
-                onTap: onShareTap,
+                onTap: widget.onShareTap,
                 borderRadius: BorderRadius.circular(8),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),

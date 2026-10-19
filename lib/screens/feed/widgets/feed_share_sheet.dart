@@ -153,7 +153,7 @@ class FeedShareSheet extends StatelessWidget {
               post.content,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.bodySmall?.copyWith(color: AppColors.dark),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.dark),
             ),
           ),
           const SizedBox(height: 20),
