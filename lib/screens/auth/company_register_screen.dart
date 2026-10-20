@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
@@ -110,7 +111,9 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+      data: AppTheme.companyTheme(context),
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -270,7 +273,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -321,7 +324,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -381,7 +384,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -440,7 +443,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -513,7 +516,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                 child: ElevatedButton(
                                   onPressed: _loading ? null : _register,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
+                                    backgroundColor: AppColors.companyPrimary,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
@@ -556,7 +559,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                         TextSpan(
                                           text: 'Sign In',
                                           style: TextStyle(
-                                            color: AppColors.primary,
+                                            color: AppColors.companyPrimary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -577,6 +580,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

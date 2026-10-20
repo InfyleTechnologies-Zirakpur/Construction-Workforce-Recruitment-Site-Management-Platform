@@ -30,14 +30,21 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
     final r = await _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
     return Map<String, dynamic>.from(r.data['data']);
   }
-  Future<List<Job>> fetchJobs({String? query}) async {
+  Future<List<Job>> fetchJobs({String? query, String? location}) async {
     final Map<String, Job> jobMap = {};
 
     // 1. Fetch main jobs list
     try {
+      final qParams = <String, dynamic>{};
+      if (query != null && query.trim().isNotEmpty) {
+        qParams['search'] = query.trim();
+      }
+      if (location != null && location.trim().isNotEmpty) {
+        qParams['location'] = location.trim();
+      }
       final response = await _client.dio.get(
         '/jobs',
-        queryParameters: query == null ? null : {'search': query},
+        queryParameters: qParams.isEmpty ? null : qParams,
       );
       final payload = response.data;
       final items = payload['data'] != null 

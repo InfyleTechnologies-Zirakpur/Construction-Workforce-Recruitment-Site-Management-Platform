@@ -163,7 +163,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
       SnackBar(
         content: Text('Site location set to: $target'),
         duration: const Duration(seconds: 2),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.companyPrimary,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -371,7 +371,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                           color: isSelected ? const Color(0xFFFFF4ED) : Colors.white,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: isSelected ? AppColors.primary : const Color(0xFFEAECF0),
+                            color: isSelected ? AppColors.companyPrimary : const Color(0xFFEAECF0),
                             width: isSelected ? 1.4 : 1.1,
                           ),
                         ),
@@ -381,7 +381,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                             style: TextStyle(
                               fontSize: 14.5,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? AppColors.primary : const Color(0xFF475467),
+                              color: isSelected ? AppColors.companyPrimary : const Color(0xFF475467),
                             ),
                           ),
                         ),
@@ -524,7 +524,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                 child: const Icon(
                                   Icons.my_location_rounded,
                                   size: 20,
-                                  color: AppColors.primary,
+                                  color: AppColors.companyPrimary,
                                 ),
                               ),
                             ),
@@ -658,7 +658,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                                 width: 26,
                                                 height: 26,
                                                 decoration: const BoxDecoration(
-                                                  color: AppColors.primary,
+                                                  color: AppColors.companyPrimary,
                                                   shape: BoxShape.circle,
                                                 ),
                                                 child: const Icon(
@@ -734,7 +734,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary,
+                                        color: AppColors.companyPrimary,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Text(
@@ -792,13 +792,13 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                                       width: 18,
                                       height: 18,
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(alpha: 0.15),
+                                        color: AppColors.companyPrimary.withValues(alpha: 0.15),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
                                         Icons.close_rounded,
                                         size: 12,
-                                        color: AppColors.primary,
+                                        color: AppColors.companyPrimary,
                                       ),
                                     ),
                                   ),
@@ -889,7 +889,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
                         height: 52,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: AppColors.companyPrimary,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),

@@ -26,6 +26,11 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isSending = false;
   bool _isCandidate = false;
 
+  bool get _isComp => widget.isCompany || !_isCandidate;
+  Color get _chatPrimary => _isComp ? AppColors.companyPrimary : AppColors.primary;
+  Color get _bannerBg => _isComp ? AppColors.companyTagBackground : AppColors.peachBackground;
+  Color get _bannerBorder => _isComp ? AppColors.companyTagBorder : AppColors.peachBorder;
+
   @override
   void initState() {
     super.initState();
@@ -209,13 +214,13 @@ class _ChatScreenState extends State<ChatScreen> {
               margin: const EdgeInsets.all(12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.peachBackground,
+                color: _bannerBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                border: Border.all(color: _bannerBorder, width: 0.8),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified_user_outlined, color: AppColors.primary),
+                  Icon(Icons.verified_user_outlined, color: _chatPrimary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -228,9 +233,9 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  ? Center(child: CircularProgressIndicator(color: _chatPrimary))
                   : RefreshIndicator(
-                      color: AppColors.primary,
+                      color: _chatPrimary,
                       onRefresh: () => _loadMessages(isPullToRefresh: true),
                       child: _messages.isEmpty
                           ? ListView(
@@ -273,7 +278,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 vertical: context.h(10),
                               ),
                               itemCount: _messages.length,
-                              itemBuilder: (context, index) => MessageBubble(message: _messages[index]),
+                              itemBuilder: (context, index) =>
+                                  MessageBubble(message: _messages[index], bubbleColor: _chatPrimary),
                             ),
                     ),
             ),
@@ -336,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(width: 8),
           CircleAvatar(
-            backgroundColor: AppColors.primary,
+            backgroundColor: _chatPrimary,
             child: IconButton(
               onPressed: _isSending ? null : _sendMessage,
               icon: const Icon(Icons.send, color: Colors.white),
@@ -349,8 +355,9 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message});
+  const MessageBubble({super.key, required this.message, this.bubbleColor});
   final ChatMessage message;
+  final Color? bubbleColor;
 
   @override
   Widget build(BuildContext context) {
@@ -362,7 +369,7 @@ class MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
         decoration: BoxDecoration(
-          color: message.isMine ? AppColors.primary : AppColors.card,
+          color: message.isMine ? (bubbleColor ?? AppColors.primary) : AppColors.card,
           borderRadius: BorderRadius.circular(14),
           border: message.isMine ? null : Border.all(color: AppColors.border),
         ),

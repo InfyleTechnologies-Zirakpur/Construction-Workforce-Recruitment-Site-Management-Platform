@@ -7,12 +7,14 @@ class NotificationDetailsSheet extends StatelessWidget {
   final WorkerNotification notification;
   final VoidCallback? onPrimaryAction;
   final String? primaryActionLabel;
+  final bool isCompany;
 
   const NotificationDetailsSheet({
     super.key,
     required this.notification,
     this.onPrimaryAction,
     this.primaryActionLabel,
+    this.isCompany = false,
   });
 
   String _formatFullDate(String raw) {
@@ -46,20 +48,22 @@ class NotificationDetailsSheet extends StatelessWidget {
   Color _iconColorFor(String type) {
     final t = type.toLowerCase();
     if (t.contains('application')) return const Color(0xFF2E7D32);
-    if (t.contains('job')) return AppColors.primary;
     if (t.contains('message') || t.contains('chat')) return const Color(0xFF1976D2);
     if (t.contains('attendance')) return const Color(0xFFE65100);
     if (t.contains('announcement')) return const Color(0xFF7B1FA2);
-    return AppColors.dark;
+    if (t.contains('job')) return isCompany ? AppColors.companyPrimary : AppColors.primary;
+    return isCompany ? AppColors.companyPrimary : AppColors.dark;
   }
 
   Color _iconBgColorFor(String type) {
     final t = type.toLowerCase();
     if (t.contains('application')) return const Color(0xFFE8F5E9);
-    if (t.contains('job')) return AppColors.peachBackground;
     if (t.contains('message') || t.contains('chat')) return const Color(0xFFE3F2FD);
     if (t.contains('attendance')) return const Color(0xFFFFF3E0);
     if (t.contains('announcement')) return const Color(0xFFF3E5F5);
+    if (t.contains('job')) {
+      return isCompany ? AppColors.companyTagBackground : AppColors.peachBackground;
+    }
     return const Color(0xFFF2F4F7);
   }
 
@@ -221,7 +225,7 @@ class NotificationDetailsSheet extends StatelessWidget {
                       icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                       label: Text(primaryActionLabel!),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: isCompany ? AppColors.companyPrimary : AppColors.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 14),

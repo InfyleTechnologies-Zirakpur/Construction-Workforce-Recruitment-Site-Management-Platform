@@ -10,9 +10,10 @@ import 'widgets/create_post_tags_card.dart';
 
 
 class CreateFeedScreen extends StatefulWidget {
-  const CreateFeedScreen({super.key, this.postToEdit});
+  const CreateFeedScreen({super.key, this.postToEdit, this.isCompany});
 
   final FeedPost? postToEdit;
+  final bool? isCompany;
 
   @override
   State<CreateFeedScreen> createState() => _CreateFeedScreenState();
@@ -29,9 +30,17 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
   bool _isCompany = false;
   String? _companyName;
 
+  Color get _themePrimary => _isCompany ? AppColors.companyPrimary : AppColors.primary;
+  Color get _chipBg => _isCompany ? AppColors.companyTagBackground : AppColors.peachBackground;
+  Color get _chipBorder => _isCompany ? AppColors.companyTagBorder : AppColors.peachBorder;
+  Color get _chipText => _isCompany ? AppColors.companyTagText : AppColors.peachText;
+
   @override
   void initState() {
     super.initState();
+    if (widget.isCompany != null) {
+      _isCompany = widget.isCompany!;
+    }
     if (widget.postToEdit != null) {
       _contentController.text = widget.postToEdit!.content;
       _titleController.text = widget.postToEdit!.taggedTitle ?? '';
@@ -163,7 +172,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
       labelText: label,
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
       labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-      prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 18, color: AppColors.primary) : null,
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 18, color: _themePrimary) : null,
       filled: true,
       fillColor: AppColors.background,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -177,7 +186,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        borderSide: BorderSide(color: _themePrimary, width: 1.5),
       ),
     );
   }
@@ -245,15 +254,20 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: AppColors.peachBackground,
+                          color: _isCompany ? AppColors.companyPrimary : _chipBg,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.peachBorder, width: 1),
+                          border: Border.all(
+                            color: _isCompany ? AppColors.companyPrimary : _chipBorder,
+                            width: 1,
+                          ),
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          authorName.isNotEmpty ? authorName[0].toUpperCase() : 'W',
-                          style: const TextStyle(
-                            color: AppColors.primary,
+                          authorName.isNotEmpty
+                              ? authorName[0].toUpperCase()
+                              : (_isCompany ? 'C' : 'W'),
+                          style: TextStyle(
+                            color: _isCompany ? Colors.white : _themePrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
                           ),
@@ -278,14 +292,14 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                               decoration: BoxDecoration(
-                                color: AppColors.peachBackground,
+                                color: _chipBg,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                                border: Border.all(color: _chipBorder, width: 0.8),
                               ),
                               child: Text(
                                 authorRole,
-                                style: const TextStyle(
-                                  color: AppColors.peachText,
+                                style: TextStyle(
+                                  color: _chipText,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -313,10 +327,10 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.edit_note_rounded, size: 20, color: AppColors.primary),
-                          SizedBox(width: 8),
+                          Icon(Icons.edit_note_rounded, size: 20, color: _themePrimary),
+                          const SizedBox(width: 8),
                           Text(
                             'Post Content',
                             style: TextStyle(
@@ -354,6 +368,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                   onToggleLocation: () => setState(() => _showLocationField = !_showLocationField),
                   titleController: _titleController,
                   locationController: _locationController,
+                  isCompany: _isCompany,
                 ),
               ],
             ),
@@ -392,7 +407,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
                       height: 48,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: _themePrimary,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),

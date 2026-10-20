@@ -73,9 +73,11 @@ class _FeedScreenState extends State<FeedScreen> {
 
 
 
+  Color get _themePrimary => _isCompany ? AppColors.companyPrimary : AppColors.primary;
+
   void _openCreatePost() {
     Navigator.of(context)
-        .push<bool>(MaterialPageRoute(builder: (_) => const CreateFeedScreen()))
+        .push<bool>(MaterialPageRoute(builder: (_) => CreateFeedScreen(isCompany: _isCompany)))
         .then((created) {
       if (created == true && mounted) {
         setState(() => _selectedFilter = 1);
@@ -93,7 +95,7 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   void _showCommentsModal(FeedPost post) {
-    FeedCommentsSheet.show(context, post);
+    FeedCommentsSheet.show(context, post, isCompany: _isCompany);
   }
 
   void _showShareModal(FeedPost post) {
@@ -120,7 +122,7 @@ class _FeedScreenState extends State<FeedScreen> {
   void _openEditPost(FeedPost post) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => CreateFeedScreen(postToEdit: post)),
+      MaterialPageRoute(builder: (_) => CreateFeedScreen(postToEdit: post, isCompany: _isCompany)),
     );
   }
 
@@ -133,6 +135,7 @@ class _FeedScreenState extends State<FeedScreen> {
       cancelLabel: 'Cancel',
       icon: Icons.delete_outline_rounded,
       isDestructive: false,
+      isCompany: _isCompany,
     );
 
     if (confirmed && mounted) {
@@ -149,16 +152,20 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _buildFilterChip(String label, int index) {
     final isSelected = _selectedFilter == index;
+    final activeBg = _isCompany ? AppColors.companyTagBackground : const Color(0xFFFFFBEB);
+    final activeBorder = _isCompany ? AppColors.companyTagBorder : const Color(0xFFFDE68A);
+    final activeText = _isCompany ? AppColors.companyPrimary : const Color(0xFFD97706);
+
     return InkWell(
       onTap: () => setState(() => _selectedFilter = index),
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFFBEB) : Colors.white,
+          color: isSelected ? activeBg : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFDE68A) : const Color(0xFFEAECF0),
+            color: isSelected ? activeBorder : const Color(0xFFEAECF0),
             width: 1.0,
           ),
         ),
@@ -167,7 +174,7 @@ class _FeedScreenState extends State<FeedScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? const Color(0xFFD97706) : const Color(0xFF6B7280),
+            color: isSelected ? activeText : const Color(0xFF6B7280),
           ),
         ),
       ),
@@ -182,7 +189,7 @@ class _FeedScreenState extends State<FeedScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.primary,
+          color: _themePrimary,
           onRefresh: () async {
             await _loadJobCounts();
             if (context.mounted) {
@@ -225,6 +232,7 @@ class _FeedScreenState extends State<FeedScreen> {
                     activeJobs: _activeJobs,
                     newJobsToday: _newJobsToday,
                     totalPosts: totalPosts,
+                    isCompany: _isCompany,
                   );
                 },
               ),
@@ -258,18 +266,18 @@ class _FeedScreenState extends State<FeedScreen> {
               BlocBuilder<FeedCubit, LoadState<List<FeedPost>>>(
                 builder: (context, state) {
                   if (state is Idle || state is Loading) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 60),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 60),
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             CircularProgressIndicator(
-                              color: AppColors.primary,
+                              color: _themePrimary,
                               strokeWidth: 3.5,
                             ),
-                            SizedBox(height: 16),
-                            Text(
+                            const SizedBox(height: 16),
+                            const Text(
                               'Loading posts...',
                               style: TextStyle(
                                 fontSize: 16,
@@ -292,7 +300,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           const SizedBox(height: 8),
                           ElevatedButton(
                             onPressed: () => context.read<FeedCubit>().load(),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                            style: ElevatedButton.styleFrom(backgroundColor: _themePrimary),
                             child: const Text('Retry', style: TextStyle(color: Colors.white)),
                           ),
                         ],
@@ -315,13 +323,13 @@ class _FeedScreenState extends State<FeedScreen> {
                             Container(
                               padding: const EdgeInsets.all(18),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
+                                color: _themePrimary.withValues(alpha: 0.08),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.feed_outlined,
                                 size: 44,
-                                color: AppColors.primary,
+                                color: _themePrimary,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -352,7 +360,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                 icon: const Icon(Icons.add, size: 18),
                                 label: const Text('Create Post'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
+                                  backgroundColor: _themePrimary,
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(
@@ -383,6 +391,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           onShareTap: () => _showShareModal(post),
                           onEditTap: post.isMyPost ? () => _openEditPost(post) : null,
                           onDeleteTap: post.isMyPost ? () => _confirmDeletePost(post) : null,
+                          isCompany: _isCompany,
                         ),
                       );
                     }).toList(),
@@ -397,7 +406,7 @@ class _FeedScreenState extends State<FeedScreen> {
       floatingActionButton: _isCompany
           ? FloatingActionButton.extended(
               onPressed: _openCreatePost,
-              backgroundColor: AppColors.primary,
+              backgroundColor: _themePrimary,
               elevation: 2,
               highlightElevation: 4,
               shape: RoundedRectangleBorder(

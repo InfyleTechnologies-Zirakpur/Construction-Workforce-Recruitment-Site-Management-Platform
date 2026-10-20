@@ -346,7 +346,7 @@ class CompanyAnalyticsView extends StatelessWidget {
                     value: '$effectiveTotalJobs',
                     subtext: 'Site jobs posted',
                     icon: Icons.business_center_rounded,
-                    color: AppColors.primary,
+                    color: AppColors.companyPrimary,
                     onTap: onNavigateToJobs,
                   ),
                 ),

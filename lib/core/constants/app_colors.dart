@@ -40,4 +40,16 @@ class AppColors {
   static const Color peachBackground = Color(0xFFFFFBEB);
   static const Color peachBorder = Color(0xFFFDE68A);
   static const Color peachText = Color(0xFFB45309);
+
+  /// Centralized Company Brand Blue Palette
+  static const Color companyPrimary = Color(0xFF1E75E8);
+  static const Color companyPrimaryDark = Color(0xFF1458B2);
+  static const Color companyPrimaryLight = Color(0xFFEBF3FE);
+  static const Color companySurface = Color(0xFFF0F7FE);
+  static const Color companyBorder = Color(0xFFD2E5FC);
+  static const Color companyWave = Color(0xFFA2D1FD);
+  static const Color companyButtonBg = Color(0xFFD8E9FE);
+  static const Color companyTagBackground = Color(0xFFEBF4FE);
+  static const Color companyTagBorder = Color(0xFFBFDBFE);
+  static const Color companyTagText = Color(0xFF1D4ED8);
 }

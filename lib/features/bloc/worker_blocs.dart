@@ -32,12 +32,12 @@ class JobsCubit extends Cubit<LoadState<List<Job>>> {
   JobsCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
   void reset() => emit(const Idle());
-  Future<void> load([String? query, bool silent = false]) async {
+  Future<void> load([String? query, bool silent = false, String? location]) async {
     if (!silent && state is! Loaded<List<Job>>) {
       emit(const Loading());
     }
     try {
-      emit(Loaded(await _repo.fetchJobs(query: query)));
+      emit(Loaded(await _repo.fetchJobs(query: query, location: location)));
     } catch (e) {
       if (state is! Loaded<List<Job>>) {
         emit(Failed(ApiErrorParser.extractMessage(
@@ -45,6 +45,19 @@ class JobsCubit extends Cubit<LoadState<List<Job>>> {
           fallback: 'Failed to load jobs. Please check your internet connection.',
         )));
       }
+    }
+  }
+
+  Future<void> search({String? query, String? location}) async {
+    emit(const Loading());
+    try {
+      final jobs = await _repo.fetchJobs(query: query, location: location);
+      emit(Loaded(jobs));
+    } catch (e) {
+      emit(Failed(ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Failed to search jobs. Please try again.',
+      )));
     }
   }
 

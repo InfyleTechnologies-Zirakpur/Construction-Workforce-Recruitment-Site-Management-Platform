@@ -9,6 +9,7 @@ import '../feed/feed_screen.dart';
 import '../jobs/my_jobs_screen.dart';
 import '../messages/messages_screen.dart';
 import '../profile/worker_profile_screen.dart';
+import '../search/search_screen.dart';
 import 'widgets/home_app_bar.dart';
 import 'widgets/home_job_card.dart';
 import 'widgets/home_search_bar.dart';
@@ -138,6 +139,16 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             HomeSearchBar(
               controller: _searchController,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SearchScreen(
+                      initialQuery: _searchController.text,
+                    ),
+                  ),
+                );
+              },
               onChanged: (val) => setState(() => _searchQuery = val),
               onClear: () {
                 _searchController.clear();

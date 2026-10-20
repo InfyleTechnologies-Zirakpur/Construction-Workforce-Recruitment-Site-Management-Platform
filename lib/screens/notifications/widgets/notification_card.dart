@@ -6,11 +6,13 @@ import '../../../core/models/models.dart';
 class NotificationCard extends StatelessWidget {
   final WorkerNotification notification;
   final VoidCallback onTap;
+  final bool isCompany;
 
   const NotificationCard({
     super.key,
     required this.notification,
     required this.onTap,
+    this.isCompany = false,
   });
 
   IconData _iconFor(String type) {
@@ -26,30 +28,34 @@ class NotificationCard extends StatelessWidget {
   Color _iconColorFor(String type) {
     final t = type.toLowerCase();
     if (t.contains('application')) return const Color(0xFF2E7D32);
-    if (t.contains('job')) return AppColors.primary;
     if (t.contains('message') || t.contains('chat')) return const Color(0xFF1976D2);
     if (t.contains('attendance')) return const Color(0xFFE65100);
     if (t.contains('announcement')) return const Color(0xFF7B1FA2);
-    return AppColors.dark;
+    if (t.contains('job')) return isCompany ? AppColors.companyPrimary : AppColors.primary;
+    return isCompany ? AppColors.companyPrimary : AppColors.dark;
   }
 
   Color _iconBgColorFor(String type) {
     final t = type.toLowerCase();
     if (t.contains('application')) return const Color(0xFFE8F5E9);
-    if (t.contains('job')) return AppColors.peachBackground;
     if (t.contains('message') || t.contains('chat')) return const Color(0xFFE3F2FD);
     if (t.contains('attendance')) return const Color(0xFFFFF3E0);
     if (t.contains('announcement')) return const Color(0xFFF3E5F5);
+    if (t.contains('job')) {
+      return isCompany ? AppColors.companyTagBackground : AppColors.peachBackground;
+    }
     return const Color(0xFFF2F4F7);
   }
 
   Color _borderColorFor(String type) {
     final t = type.toLowerCase();
     if (t.contains('application')) return const Color(0xFFC8E6C9);
-    if (t.contains('job')) return AppColors.peachBorder;
     if (t.contains('message') || t.contains('chat')) return const Color(0xFFBBDEFB);
     if (t.contains('attendance')) return const Color(0xFFFFE0B2);
     if (t.contains('announcement')) return const Color(0xFFE1BEE7);
+    if (t.contains('job')) {
+      return isCompany ? AppColors.companyTagBorder : AppColors.peachBorder;
+    }
     return AppColors.border;
   }
 
@@ -95,12 +101,18 @@ class NotificationCard extends StatelessWidget {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isUnread ? AppColors.peachBorder : AppColors.border,
+          color: isUnread
+              ? (isCompany ? AppColors.companyTagBorder : AppColors.peachBorder)
+              : AppColors.border,
           width: isUnread ? 1.4 : 1.1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isUnread ? AppColors.primary.withValues(alpha: 0.05) : const Color(0x06000000),
+            color: isUnread
+                ? (isCompany
+                    ? AppColors.companyPrimary.withValues(alpha: 0.06)
+                    : AppColors.primary.withValues(alpha: 0.05))
+                : const Color(0x06000000),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -163,16 +175,19 @@ class NotificationCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                               decoration: BoxDecoration(
-                                color: AppColors.peachBackground,
+                                color: isCompany ? AppColors.companyTagBackground : AppColors.peachBackground,
                                 borderRadius: BorderRadius.circular(5),
-                                border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                                border: Border.all(
+                                  color: isCompany ? AppColors.companyTagBorder : AppColors.peachBorder,
+                                  width: 0.8,
+                                ),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'NEW',
                                 style: TextStyle(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.peachText,
+                                  color: isCompany ? AppColors.companyPrimary : AppColors.peachText,
                                   letterSpacing: 0.2,
                                 ),
                               ),

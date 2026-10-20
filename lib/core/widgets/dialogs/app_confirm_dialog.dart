@@ -10,6 +10,8 @@ class AppConfirmDialog extends StatelessWidget {
   final String cancelLabel;
   final IconData icon;
   final bool isDestructive;
+  final bool? isCompany;
+  final Color? confirmColor;
 
   const AppConfirmDialog({
     super.key,
@@ -19,6 +21,8 @@ class AppConfirmDialog extends StatelessWidget {
     this.cancelLabel = 'Cancel',
     this.icon = Icons.info_outline_rounded,
     this.isDestructive = false,
+    this.isCompany,
+    this.confirmColor,
   });
 
   static Future<bool> show(
@@ -29,17 +33,28 @@ class AppConfirmDialog extends StatelessWidget {
     String cancelLabel = 'Cancel',
     IconData icon = Icons.info_outline_rounded,
     bool isDestructive = false,
+    bool? isCompany,
+    Color? confirmColor,
   }) async {
+    final callerTheme = Theme.of(context);
+    final isCompanyTheme = isCompany ??
+        (callerTheme.primaryColor.toARGB32() == AppColors.companyPrimary.toARGB32());
+
     final result = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (_) => AppConfirmDialog(
-        title: title,
-        message: message,
-        confirmLabel: confirmLabel,
-        cancelLabel: cancelLabel,
-        icon: icon,
-        isDestructive: isDestructive,
+      builder: (_) => Theme(
+        data: callerTheme,
+        child: AppConfirmDialog(
+          title: title,
+          message: message,
+          confirmLabel: confirmLabel,
+          cancelLabel: cancelLabel,
+          icon: icon,
+          isDestructive: isDestructive,
+          isCompany: isCompanyTheme,
+          confirmColor: confirmColor,
+        ),
       ),
     );
     return result ?? false;
@@ -49,6 +64,22 @@ class AppConfirmDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final dialogWidth = math.min(screenWidth - 48, 380.0);
+
+    final themePrimary = Theme.of(context).primaryColor;
+    final isComp = isCompany ?? (themePrimary.toARGB32() == AppColors.companyPrimary.toARGB32());
+
+    final primaryColor = confirmColor ?? (isComp ? AppColors.companyPrimary : AppColors.primary);
+    final bgTagColor = isComp ? AppColors.companyTagBackground : AppColors.peachBackground;
+
+    final activeIconBg = isComp
+        ? AppColors.companyTagBackground
+        : (isDestructive ? AppColors.error.withValues(alpha: 0.12) : bgTagColor);
+    final activeIconColor = isComp
+        ? AppColors.companyPrimary
+        : (isDestructive ? AppColors.error : primaryColor);
+    final activeConfirmBtnBg = isComp
+        ? AppColors.companyPrimary
+        : (isDestructive ? AppColors.error : primaryColor);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -63,7 +94,7 @@ class AppConfirmDialog extends StatelessWidget {
           border: Border.all(color: AppColors.border, width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+               color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 28,
               offset: const Offset(0, 10),
             ),
@@ -76,14 +107,12 @@ class AppConfirmDialog extends StatelessWidget {
               width: 58,
               height: 58,
               decoration: BoxDecoration(
-                color: isDestructive
-                    ? AppColors.error.withValues(alpha: 0.12)
-                    : AppColors.peachBackground,
+                color: activeIconBg,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                color: isDestructive ? AppColors.error : AppColors.primary,
+                color: activeIconColor,
                 size: 28,
               ),
             ),
@@ -145,7 +174,7 @@ class AppConfirmDialog extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDestructive ? AppColors.error : AppColors.primary,
+                        backgroundColor: activeConfirmBtnBg,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

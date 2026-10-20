@@ -11,8 +11,7 @@ import 'widgets/apply_job_documents_card.dart';
 import 'widgets/apply_job_experience_card.dart';
 import 'widgets/apply_job_header_card.dart';
 
-/// Application screen matching the Jobs Screen aesthetic:
-/// clean white cards, highlights row, peach badges, and sticky bottom action bar.
+
 class ApplyJobScreen extends StatefulWidget {
   const ApplyJobScreen({super.key, required this.job});
   final Job job;

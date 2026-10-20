@@ -21,6 +21,8 @@ class Job {
     this.reviewRemarks,
     this.projectType = 'Full-time',
     this.experienceLevel = 'Any',
+    this.createdAt,
+    this.workforceRequired,
   });
   final String id, title, company, location;
   final int dailyPay;
@@ -35,6 +37,8 @@ class Job {
   final String projectType;
   // e.g. 'Fresher', 'Experienced', 'Any'
   final String experienceLevel;
+  final String? createdAt;
+  final int? workforceRequired;
   factory Job.fromJson(Map<String, dynamic> j) {
     int parsePay(dynamic v) {
       if (v == null) return 0;
@@ -44,6 +48,14 @@ class Job {
     }
 
     final pay = parsePay(j['dailyPay']) != 0 ? parsePay(j['dailyPay']) : parsePay(j['compensation']);
+
+    int? parseHeadcount(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
 
     return Job(
       id: j['id']?.toString() ?? '',
@@ -61,6 +73,8 @@ class Job {
       reviewRemarks: j['reviewRemarks']?.toString() ?? j['remark']?.toString() ?? j['remarks']?.toString(),
       projectType: j['projectType']?.toString() ?? 'Full-time',
       experienceLevel: j['experienceLevel']?.toString() ?? 'Any',
+      createdAt: j['createdAt']?.toString() ?? j['postedAt']?.toString() ?? j['created_at']?.toString() ?? j['date']?.toString(),
+      workforceRequired: parseHeadcount(j['workforceRequired'] ?? j['workersRequired'] ?? j['headcount'] ?? j['vacancies'] ?? j['openings']),
     );
   }
 
@@ -80,6 +94,8 @@ class Job {
     String? reviewRemarks,
     String? projectType,
     String? experienceLevel,
+    String? createdAt,
+    int? workforceRequired,
   }) {
     return Job(
       id: id ?? this.id,
@@ -97,6 +113,8 @@ class Job {
       reviewRemarks: reviewRemarks ?? this.reviewRemarks,
       projectType: projectType ?? this.projectType,
       experienceLevel: experienceLevel ?? this.experienceLevel,
+      createdAt: createdAt ?? this.createdAt,
+      workforceRequired: workforceRequired ?? this.workforceRequired,
     );
   }
 }

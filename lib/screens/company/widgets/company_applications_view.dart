@@ -206,7 +206,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.peachBackground : Colors.transparent,
+          color: isSelected ? AppColors.companyTagBackground : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -343,7 +343,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                   width: 56,
                   height: 56,
                   decoration: const BoxDecoration(
-                    color: AppColors.peachBackground,
+                    color: AppColors.companyTagBackground,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.people_outline_rounded, color: primaryColor, size: 28),
@@ -417,8 +417,8 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
         break;
       case 'pending':
       default:
-        statusBg = AppColors.peachBackground;
-        statusFg = AppColors.peachText;
+        statusBg = AppColors.companyTagBackground;
+        statusFg = AppColors.companyTagText;
         break;
     }
 
@@ -577,7 +577,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 15,
-                                    color: AppColors.peachText,
+                                    color: AppColors.companyTagText,
                                   ),
                                 ),
                               ],
@@ -641,10 +641,10 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                       width: 30,
                                       height: 30,
                                       decoration: BoxDecoration(
-                                        color: AppColors.peachBackground,
+                                        color: AppColors.companyTagBackground,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Icon(Icons.visibility_outlined, size: 16, color: AppColors.primary),
+                                      child: const Icon(Icons.visibility_outlined, size: 16, color: AppColors.companyPrimary),
                                     ),
                                     const SizedBox(width: 10),
                                     const Text(
@@ -667,7 +667,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                       width: 30,
                                       height: 30,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFFFFBEB),
+                                        color: AppColors.companyTagBackground,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Icon(Icons.bookmark_outline, size: 16, color: Color(0xFFD97706)),
@@ -911,7 +911,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
                               decoration: BoxDecoration(
-                                color: AppColors.peachBackground,
+                                color: AppColors.companyTagBackground,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Row(
@@ -920,7 +920,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                   Text(
                                     'View Profile',
                                     style: TextStyle(
-                                      color: AppColors.peachText,
+                                      color: AppColors.companyTagText,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -928,7 +928,7 @@ class _CompanyApplicationsViewState extends State<CompanyApplicationsView> {
                                   SizedBox(width: 4),
                                   Icon(
                                     Icons.arrow_forward_rounded,
-                                    color: AppColors.peachText,
+                                    color: AppColors.companyTagText,
                                     size: 14,
                                   ),
                                 ],

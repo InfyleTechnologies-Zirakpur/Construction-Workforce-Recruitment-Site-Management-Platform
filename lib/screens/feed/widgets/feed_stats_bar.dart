@@ -7,12 +7,14 @@ class FeedStatsBar extends StatelessWidget {
   final int activeJobs;
   final int newJobsToday;
   final int totalPosts;
+  final bool isCompany;
 
   const FeedStatsBar({
     super.key,
     required this.activeJobs,
     required this.newJobsToday,
     required this.totalPosts,
+    this.isCompany = false,
   });
 
   Widget _buildStatColumn({
@@ -63,7 +65,7 @@ class FeedStatsBar extends StatelessWidget {
           _buildStatColumn(
             count: '$activeJobs',
             label: 'Active Jobs',
-            color: AppColors.primary,
+            color: isCompany ? AppColors.companyPrimary : AppColors.primary,
           ),
           Container(width: 1, height: 36, color: const Color(0xFFEAECF0)),
           _buildStatColumn(

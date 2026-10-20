@@ -129,7 +129,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                 children: [
                   const CircleAvatar(
                     radius: 24,
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.companyPrimary,
                     child: Icon(Icons.person, color: Colors.white),
                   ),
                   const SizedBox(width: 12),
@@ -138,7 +138,7 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(user['fullName'] ?? user['name'] ?? 'Worker Candidate', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.dark)),
-                        Text('Applied for: ${job['title'] ?? 'Site Job'}', style: const TextStyle(color: AppColors.primary, fontSize: 15, fontWeight: FontWeight.w600)),
+                        Text('Applied for: ${job['title'] ?? 'Site Job'}', style: const TextStyle(color: AppColors.companyPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),

@@ -19,7 +19,13 @@ class CreatePostTagsCard extends StatelessWidget {
     required this.onToggleLocation,
     required this.titleController,
     required this.locationController,
+    this.isCompany = false,
   });
+
+  final bool isCompany;
+
+  Color get _primary => isCompany ? AppColors.companyPrimary : AppColors.primary;
+  Color get _chipBg => isCompany ? AppColors.companyTagBackground : AppColors.peachBackground;
 
   InputDecoration _inputDeco({required String hint, String? label, IconData? prefixIcon}) {
     return InputDecoration(
@@ -27,7 +33,7 @@ class CreatePostTagsCard extends StatelessWidget {
       labelText: label,
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
       labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-      prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 18, color: AppColors.primary) : null,
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 18, color: _primary) : null,
       filled: true,
       fillColor: AppColors.background,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -41,7 +47,7 @@ class CreatePostTagsCard extends StatelessWidget {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        borderSide: BorderSide(color: _primary, width: 1.5),
       ),
     );
   }
@@ -58,10 +64,10 @@ class CreatePostTagsCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.peachBackground : AppColors.background,
+          color: isSelected ? _chipBg : AppColors.background,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? _primary : AppColors.border,
             width: isSelected ? 1.2 : 1,
           ),
         ),
@@ -71,7 +77,7 @@ class CreatePostTagsCard extends StatelessWidget {
             Icon(
               isSelected ? Icons.check_circle_rounded : icon,
               size: 16,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              color: isSelected ? _primary : AppColors.textSecondary,
             ),
             const SizedBox(width: 6),
             Text(
@@ -79,7 +85,7 @@ class CreatePostTagsCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected ? _primary : AppColors.textSecondary,
               ),
             ),
           ],
@@ -103,11 +109,11 @@ class CreatePostTagsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.sell_outlined, size: 18, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text(
+              Icon(Icons.sell_outlined, size: 18, color: _primary),
+              const SizedBox(width: 8),
+              const Text(
                 'Optional Tags & Location',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.dark),
               ),

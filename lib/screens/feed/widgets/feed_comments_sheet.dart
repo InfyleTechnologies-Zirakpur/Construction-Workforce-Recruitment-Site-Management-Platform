@@ -8,15 +8,16 @@ import '../../../features/bloc/worker_blocs.dart';
 
 class FeedCommentsSheet extends StatefulWidget {
   final FeedPost post;
+  final bool isCompany;
 
-  const FeedCommentsSheet({super.key, required this.post});
+  const FeedCommentsSheet({super.key, required this.post, this.isCompany = false});
 
-  static void show(BuildContext context, FeedPost post) {
+  static void show(BuildContext context, FeedPost post, {bool isCompany = false}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => FeedCommentsSheet(post: post),
+      builder: (_) => FeedCommentsSheet(post: post, isCompany: isCompany),
     );
   }
 
@@ -30,6 +31,10 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
   bool _isLoadingComments = true;
   String _myAuthorName = '';
   String _myAuthorRole = 'Hiring Employer';
+  bool _userIsCompany = false;
+
+  bool get _isCompany => widget.isCompany || _userIsCompany;
+  Color get _themePrimary => _isCompany ? AppColors.companyPrimary : AppColors.primary;
 
   @override
   void initState() {
@@ -58,6 +63,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
             _myAuthorName = resolvedName;
           }
           if (role == 'company') {
+            _userIsCompany = true;
             _myAuthorRole = 'Hiring Employer';
           }
         });
@@ -193,7 +199,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                       child: _isLoadingComments &&
                               (_liveComments == null || _liveComments!.isEmpty) &&
                               post.comments.isEmpty
-                          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                          ? Center(child: CircularProgressIndicator(color: _themePrimary))
                           : (commentsList.isEmpty
                               ? Center(
                                   child: Column(
@@ -269,9 +275,9 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
                           const SizedBox(width: 8),
                           IconButton(
                             onPressed: () => _sendComment(myName, myRole),
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.send_rounded,
-                              color: AppColors.primary,
+                              color: _themePrimary,
                             ),
                           ),
                         ],
@@ -298,7 +304,12 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: AppColors.primary,
+                backgroundColor: (_isCompany ||
+                        comment.authorRole.toLowerCase().contains('employer') ||
+                        comment.authorRole.toLowerCase().contains('company') ||
+                        comment.authorRole.toLowerCase().contains('hiring'))
+                    ? AppColors.companyPrimary
+                    : AppColors.primary,
                 child: Text(
                   comment.authorName.isNotEmpty
                       ? comment.authorName[0].toUpperCase()

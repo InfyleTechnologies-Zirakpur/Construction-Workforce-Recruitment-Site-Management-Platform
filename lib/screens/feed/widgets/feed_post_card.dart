@@ -13,6 +13,7 @@ class FeedPostCard extends StatefulWidget {
   final VoidCallback onShareTap;
   final VoidCallback? onEditTap;
   final VoidCallback? onDeleteTap;
+  final bool? isCompany;
 
   const FeedPostCard({
     super.key,
@@ -23,6 +24,7 @@ class FeedPostCard extends StatefulWidget {
     required this.onShareTap,
     this.onEditTap,
     this.onDeleteTap,
+    this.isCompany,
   });
 
   @override
@@ -53,6 +55,15 @@ class _FeedPostCardState extends State<FeedPostCard> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
+    final isAuthorCompany = post.authorRole.toLowerCase().contains('company') ||
+        post.authorRole.toLowerCase().contains('employer') ||
+        post.authorRole.toLowerCase().contains('contractor');
+    final isCompanyFlow = widget.isCompany == true ||
+        Theme.of(context).primaryColor.toARGB32() == AppColors.companyPrimary.toARGB32();
+    final isBlueAvatar = isCompanyFlow || isAuthorCompany;
+    final avatarBg = isBlueAvatar ? AppColors.companyPrimary : AppColors.primary;
+    final avatarTextColor = isBlueAvatar ? Colors.white : AppColors.dark;
+
     final hasRole = post.taggedTitle != null &&
         post.taggedTitle!.trim().isNotEmpty &&
         post.taggedTitle!.trim().toLowerCase() != 'site report';
@@ -79,7 +90,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: AppColors.primary,
+                backgroundColor: avatarBg,
                 backgroundImage: (post.authorAvatarUrl != null &&
                         post.authorAvatarUrl!.trim().isNotEmpty &&
                         post.authorAvatarUrl != 'null' &&
@@ -101,9 +112,9 @@ class _FeedPostCardState extends State<FeedPostCard> {
                                   .toUpperCase()
                             : (post.authorName.isNotEmpty
                                   ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
-                                  : 'U'),
-                        style: const TextStyle(
-                          color: AppColors.dark,
+                                  : (isBlueAvatar ? 'C' : 'U')),
+                        style: TextStyle(
+                          color: avatarTextColor,
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
                         ),
@@ -194,10 +205,10 @@ class _FeedPostCardState extends State<FeedPostCard> {
                       const TextSpan(text: '  '),
                       TextSpan(
                         text: 'View less',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16.5,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                          color: Theme.of(context).primaryColor,
                         ),
                         recognizer: _toggleRecognizer,
                       ),
@@ -206,12 +217,12 @@ class _FeedPostCardState extends State<FeedPostCard> {
                 );
               }
 
-              const linkSpan = TextSpan(
+              final linkSpan = TextSpan(
                 text: ' ... View more',
                 style: TextStyle(
                   fontSize: 16.5,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                  color: Theme.of(context).primaryColor,
                 ),
               );
 
@@ -262,10 +273,10 @@ class _FeedPostCardState extends State<FeedPostCard> {
                     TextSpan(text: finalSub),
                     TextSpan(
                       text: ' ... View more',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16.5,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: Theme.of(context).primaryColor,
                       ),
                       recognizer: _toggleRecognizer,
                     ),
@@ -355,7 +366,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
                       Icon(
                         post.isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_alt_outlined,
                         size: 19,
-                        color: post.isLiked ? AppColors.primary : AppColors.dark,
+                        color: post.isLiked ? Theme.of(context).primaryColor : AppColors.dark,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -363,7 +374,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
                         style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: post.isLiked ? FontWeight.bold : FontWeight.w600,
-                          color: post.isLiked ? AppColors.primary : AppColors.dark,
+                          color: post.isLiked ? Theme.of(context).primaryColor : AppColors.dark,
                         ),
                       ),
                     ],

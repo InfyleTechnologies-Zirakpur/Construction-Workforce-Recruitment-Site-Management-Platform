@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
 import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
@@ -23,12 +24,14 @@ class NotificationsScreen extends StatefulWidget {
   final String? targetNotificationId;
   final String? targetReferenceId;
   final WorkerNotification? initialNotification;
+  final bool? isCompany;
 
   const NotificationsScreen({
     super.key,
     this.targetNotificationId,
     this.targetReferenceId,
     this.initialNotification,
+    this.isCompany,
   });
 
   @override
@@ -38,10 +41,29 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   NotificationFilter _selectedFilter = NotificationFilter.all;
   bool _hasHandledTarget = false;
+  bool _isCompany = false;
+
+  bool get _effectiveIsCompany {
+    if (widget.isCompany == true) return true;
+    if (_isCompany) return true;
+    final theme = Theme.of(context);
+    if (theme.primaryColor == AppColors.companyPrimary ||
+        theme.colorScheme.primary == AppColors.companyPrimary) {
+      return true;
+    }
+    return false;
+  }
+
+  Color get _themePrimary => _effectiveIsCompany ? AppColors.companyPrimary : AppColors.primary;
+  Color get _chipSelectedBg => _effectiveIsCompany ? AppColors.companyTagBackground : AppColors.peachBackground;
+  Color get _chipSelectedBorder => _effectiveIsCompany ? AppColors.companyPrimary : AppColors.primary;
+  Color get _chipSelectedText => _effectiveIsCompany ? AppColors.companyPrimary : AppColors.primary;
 
   @override
   void initState() {
     super.initState();
+    _isCompany = widget.isCompany ?? false;
+    _checkRole();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<NotificationsCubit>().load();
@@ -54,6 +76,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         }
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant NotificationsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isCompany != null && widget.isCompany != _isCompany) {
+      setState(() => _isCompany = widget.isCompany!);
+    }
+  }
+
+  Future<void> _checkRole() async {
+    if (widget.isCompany == true) {
+      if (!_isCompany && mounted) setState(() => _isCompany = true);
+      return;
+    }
+    try {
+      const storage1 = FlutterSecureStorage();
+      final role1 = await storage1.read(key: 'role');
+      if (role1 == 'company') {
+        if (mounted && !_isCompany) setState(() => _isCompany = true);
+        return;
+      }
+      const storage2 = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      final role2 = await storage2.read(key: 'role');
+      if (role2 == 'company') {
+        if (mounted && !_isCompany) setState(() => _isCompany = true);
+        return;
+      }
+    } catch (_) {}
   }
 
   List<WorkerNotification> _filterNotifications(List<WorkerNotification> all) {
@@ -80,7 +133,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
     final role = await storage.read(key: 'role');
     if (!mounted) return;
-    final isCompany = role == 'company';
+    final isCompany = widget.isCompany ?? (role == 'company');
 
     if (t.contains('message') || t.contains('chat')) {
       // 1. CHAT / MESSAGE: Redirect to that particular conversation!
@@ -285,6 +338,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       builder: (_) => NotificationDetailsSheet(
         notification: notification,
         primaryActionLabel: actionLabel,
+        isCompany: _effectiveIsCompany,
         onPrimaryAction: actionLabel != null ? () => _handlePrimaryAction(notification) : null,
       ),
     );
@@ -320,10 +374,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7.5),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.peachBackground : AppColors.card,
+          color: isSelected ? _chipSelectedBg : AppColors.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? _chipSelectedBorder : AppColors.border,
             width: isSelected ? 1.2 : 1,
           ),
         ),
@@ -335,14 +389,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected ? _chipSelectedText : AppColors.textSecondary,
               ),
             ),
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.border,
+                color: isSelected ? _themePrimary : AppColors.border,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -370,13 +424,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
+                color: _themePrimary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_none_rounded,
                 size: 44,
-                color: AppColors.primary,
+                color: _themePrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -391,7 +445,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'When companies update applications or post matching jobs, they will appear here.',
+              _effectiveIsCompany
+                  ? 'When candidates apply to your jobs or send messages, alerts will appear here.'
+                  : 'When companies update applications or post matching jobs, they will appear here.',
               style: textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
                 fontSize: 15,
@@ -404,16 +460,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 if (Navigator.canPop(context)) {
                   Navigator.pop(context);
                 } else {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomePage()),
-                  );
+                  if (_effectiveIsCompany) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CompanyHomeScreen()),
+                    );
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HomePage()),
+                    );
+                  }
                 }
               },
-              icon: const Icon(Icons.explore_outlined, size: 18),
-              label: const Text('Explore Jobs'),
+              icon: Icon(_effectiveIsCompany ? Icons.business_center_outlined : Icons.explore_outlined, size: 18),
+              label: Text(_effectiveIsCompany ? 'Manage Jobs' : 'Explore Jobs'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: _themePrimary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(
@@ -435,7 +498,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         toolbarHeight: 60,
@@ -470,7 +533,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               return Tooltip(
                 message: 'Mark all as read',
                 child: IconButton(
-                  icon: const Icon(Icons.done_all_rounded, size: 22, color: AppColors.primary),
+                  icon: Icon(Icons.done_all_rounded, size: 22, color: _themePrimary),
                   onPressed: () async {
                     await context.read<NotificationsCubit>().markAllRead();
                     if (context.mounted) {
@@ -541,7 +604,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         icon: const Icon(Icons.refresh_rounded, size: 18),
                         label: const Text('Try Again'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: _themePrimary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -589,7 +652,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 .length;
 
             return RefreshIndicator(
-              color: AppColors.primary,
+              color: _themePrimary,
               onRefresh: () async => context.read<NotificationsCubit>().load(),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -642,6 +705,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ...filteredNotifications.map((notification) {
                       return NotificationCard(
                         notification: notification,
+                        isCompany: _effectiveIsCompany,
                         onTap: () => _onTapNotification(notification),
                       );
                     }),
@@ -654,5 +718,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
       ),
     );
+
+    if (_effectiveIsCompany) {
+      return Theme(
+        data: AppTheme.companyTheme(context),
+        child: scaffold,
+      );
+    }
+    return scaffold;
   }
 }

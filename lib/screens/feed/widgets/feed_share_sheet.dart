@@ -163,7 +163,7 @@ class FeedShareSheet extends StatelessWidget {
               _shareOption(
                 icon: Icons.share_rounded,
                 label: 'All Apps',
-                color: AppColors.primary,
+                color: Theme.of(context).primaryColor,
                 onTap: () {
                   Navigator.pop(context);
                   context.read<FeedCubit>().incrementShare(post.id);
@@ -185,7 +185,7 @@ class FeedShareSheet extends StatelessWidget {
               _shareOption(
                 icon: Icons.sms_outlined,
                 label: 'SMS',
-                color: AppColors.primary,
+                color: Theme.of(context).primaryColor,
                 onTap: () => _shareSMS(context),
               ),
             ],

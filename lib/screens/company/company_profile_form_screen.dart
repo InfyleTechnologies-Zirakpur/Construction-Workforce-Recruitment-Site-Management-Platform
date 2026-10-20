@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../features/repositories/company_repository.dart';
@@ -240,7 +241,9 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
           _handleBack();
         }
       },
-      child: Scaffold(
+      child: Theme(
+        data: AppTheme.companyTheme(context),
+        child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: CompanyAppBar(
           showBackButton: true,
@@ -417,7 +420,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                   isExpanded: true,
                   icon: const Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.primary,
+                    color: AppColors.companyPrimary,
                     size: 22,
                   ),
                   dropdownColor: Colors.white,
@@ -442,7 +445,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                           Icon(
                             Icons.business_outlined,
                             size: 18,
-                            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                            color: isSelected ? AppColors.companyPrimary : AppColors.textSecondary,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -451,7 +454,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? AppColors.primary : AppColors.dark,
+                                color: isSelected ? AppColors.companyPrimary : AppColors.dark,
                               ),
                             ),
                           ),
@@ -459,7 +462,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                             const Icon(
                               Icons.check_rounded,
                               size: 18,
-                              color: AppColors.primary,
+                              color: AppColors.companyPrimary,
                             ),
                         ],
                       ),
@@ -484,7 +487,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                         isExpanded: true,
                         icon: const Icon(
                           Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.primary,
+                          color: AppColors.companyPrimary,
                           size: 22,
                         ),
                         dropdownColor: Colors.white,
@@ -509,7 +512,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                                 Icon(
                                   Icons.groups_outlined,
                                   size: 18,
-                                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                                  color: isSelected ? AppColors.companyPrimary : AppColors.textSecondary,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -518,7 +521,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                      color: isSelected ? AppColors.primary : AppColors.dark,
+                                      color: isSelected ? AppColors.companyPrimary : AppColors.dark,
                                     ),
                                   ),
                                 ),
@@ -526,7 +529,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                                   const Icon(
                                     Icons.check_rounded,
                                     size: 18,
-                                    color: AppColors.primary,
+                                    color: AppColors.companyPrimary,
                                   ),
                               ],
                             ),
@@ -570,7 +573,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                   child: ElevatedButton(
                     onPressed: _saving ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.companyPrimary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -601,6 +604,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
     ),
   ),
 ),
+    ),
     );
   }
 
@@ -610,10 +614,10 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
         Container(
           padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: AppColors.peachBackground,
+            color: AppColors.companyTagBackground,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 18),
+          child: Icon(icon, color: AppColors.companyPrimary, size: 18),
         ),
         const SizedBox(width: 10),
         Text(

@@ -313,7 +313,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                   width: 56,
                   height: 56,
                   decoration: const BoxDecoration(
-                    color: AppColors.peachBackground,
+                    color: AppColors.companyTagBackground,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.work_outline_rounded, color: primaryColor, size: 28),
@@ -371,8 +371,8 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
         break;
       case 'draft':
       default:
-        statusBg = AppColors.peachBackground;
-        statusFg = AppColors.peachText;
+        statusBg = AppColors.companyTagBackground;
+        statusFg = AppColors.companyTagText;
         break;
     }
 
@@ -537,10 +537,10 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                             width: 30,
                             height: 30,
                             decoration: BoxDecoration(
-                              color: AppColors.peachBackground,
+                              color: AppColors.companyTagBackground,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.near_me_rounded, size: 16, color: AppColors.peachText),
+                            child: const Icon(Icons.near_me_rounded, size: 16, color: AppColors.companyTagText),
                           ),
                           const SizedBox(width: 10),
                           const Text('Publish Requirement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.dark)),
@@ -599,7 +599,7 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
             style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
-              color: AppColors.peachText,
+              color: AppColors.companyTagText,
             ),
           ),
           const SizedBox(height: 10),
@@ -672,24 +672,24 @@ class _CompanySiteJobsViewState extends State<CompanySiteJobsView> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.peachBackground,
+                      color: AppColors.companyTagBackground,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.near_me_rounded, size: 15, color: AppColors.peachText),
+                        Icon(Icons.near_me_rounded, size: 15, color: AppColors.companyTagText),
                         SizedBox(width: 6),
                         Text(
                           'Publish Job',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.peachText,
+                            color: AppColors.companyTagText,
                           ),
                         ),
                         SizedBox(width: 3),
-                        Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.peachText),
+                        Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.companyTagText),
                       ],
                     ),
                   ),
@@ -860,7 +860,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
         return const Color(0xFF175CD3);
       case 'pending':
       default:
-        return AppColors.peachText;
+        return AppColors.companyTagText;
     }
   }
 
@@ -924,7 +924,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                             const SizedBox(
                               width: 12,
                               height: 12,
-                              child: CircularProgressIndicator(strokeWidth: 1.8, color: AppColors.primary),
+                              child: CircularProgressIndicator(strokeWidth: 1.8, color: AppColors.companyPrimary),
                             ),
                           ],
                         ],
@@ -945,7 +945,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularProgressIndicator(color: AppColors.primary),
+                          CircularProgressIndicator(color: AppColors.companyPrimary),
                           SizedBox(height: 12),
                           Text('Fetching applicants from server...', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                         ],
@@ -982,7 +982,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                         )
                       : RefreshIndicator(
                           onRefresh: _fetchLiveFromApi,
-                          color: AppColors.primary,
+                          color: AppColors.companyPrimary,
                           child: ListView.builder(
                             controller: scrollController,
                             physics: const AlwaysScrollableScrollPhysics(),
@@ -1109,10 +1109,10 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                         decoration: BoxDecoration(
-                                          color: AppColors.peachBackground,
+                                          color: AppColors.companyTagBackground,
                                           borderRadius: BorderRadius.circular(8),
                                           border: Border.all(
-                                            color: AppColors.peachBorder.withValues(alpha: 0.6),
+                                            color: AppColors.companyTagBorder.withValues(alpha: 0.6),
                                             width: 1,
                                           ),
                                         ),
@@ -1121,7 +1121,7 @@ class _JobApplicantsSheetContentState extends State<_JobApplicantsSheetContent> 
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.peachText,
+                                            color: AppColors.companyTagText,
                                           ),
                                         ),
                                       ),

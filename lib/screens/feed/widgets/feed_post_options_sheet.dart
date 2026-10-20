@@ -43,6 +43,14 @@ class FeedPostOptionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themePrimary = Theme.of(context).primaryColor;
+    final isComp = themePrimary.toARGB32() == AppColors.companyPrimary.toARGB32();
+    final activeChipBg = isComp ? AppColors.companyTagBackground : AppColors.peachBackground;
+    final activeChipBorder = isComp ? AppColors.companyTagBorder : AppColors.peachBorder;
+    final activeChipText = isComp ? AppColors.companyTagText : AppColors.peachText;
+    final activeIconBg = activeChipBg;
+    final activeIconColor = themePrimary;
+
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.card,
@@ -100,19 +108,19 @@ class FeedPostOptionsSheet extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.peachBackground,
+                        color: activeChipBg,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: AppColors.peachBorder,
+                          color: activeChipBorder,
                           width: 0.8,
                         ),
                       ),
                       child: Text(
                         post.taggedTitle!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.peachText,
+                          color: activeChipText,
                         ),
                       ),
                     )
@@ -123,19 +131,19 @@ class FeedPostOptionsSheet extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.peachBackground,
+                        color: activeChipBg,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: AppColors.peachBorder,
+                          color: activeChipBorder,
                           width: 0.8,
                         ),
                       ),
                       child: Text(
                         post.tags.first,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.peachText,
+                          color: activeChipText,
                         ),
                       ),
                     ),
@@ -147,8 +155,8 @@ class FeedPostOptionsSheet extends StatelessWidget {
               if (onEdit != null) ...[
                 _buildOptionTile(
                   icon: Icons.edit_outlined,
-                  iconColor: AppColors.primary,
-                  iconBgColor: AppColors.peachBackground,
+                  iconColor: activeIconColor,
+                  iconBgColor: activeIconBg,
                   title: 'Edit Post',
                   subtitle: 'Update your post message or photos',
                   onTap: () {
@@ -161,11 +169,11 @@ class FeedPostOptionsSheet extends StatelessWidget {
               if (onDelete != null) ...[
                 _buildOptionTile(
                   icon: Icons.delete_outline_rounded,
-                  iconColor: AppColors.primary,
-                  iconBgColor: AppColors.peachBackground,
+                  iconColor: isComp ? AppColors.companyPrimary : AppColors.error,
+                  iconBgColor: isComp ? AppColors.companyTagBackground : AppColors.error.withValues(alpha: 0.12),
                   title: 'Delete Post',
                   subtitle: 'Permanently remove this post from the feed',
-                  isDestructive: false,
+                  isDestructive: !isComp,
                   onTap: () {
                     Navigator.of(context).pop();
                     onDelete!();
@@ -176,8 +184,8 @@ class FeedPostOptionsSheet extends StatelessWidget {
               if (onShare != null) ...[
                 _buildOptionTile(
                   icon: Icons.share_outlined,
-                  iconColor: AppColors.primary,
-                  iconBgColor: AppColors.peachBackground,
+                  iconColor: activeIconColor,
+                  iconBgColor: activeIconBg,
                   title: 'Share Post',
                   subtitle: 'Share with friends or other workers',
                   onTap: () {
@@ -190,8 +198,8 @@ class FeedPostOptionsSheet extends StatelessWidget {
               if (!post.isMyPost && onReport != null) ...[
                 _buildOptionTile(
                   icon: Icons.flag_outlined,
-                  iconColor: AppColors.primary,
-                  iconBgColor: AppColors.peachBackground,
+                  iconColor: activeIconColor,
+                  iconBgColor: activeIconBg,
                   title: 'Report Post',
                   subtitle: 'Flag abusive, fake, or unsafe content',
                   isDestructive: false,

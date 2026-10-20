@@ -44,10 +44,10 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7.5),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.peachBackground : AppColors.card,
+          color: isSelected ? AppColors.companyTagBackground : AppColors.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? AppColors.companyPrimary : AppColors.border,
             width: isSelected ? 1.2 : 1,
           ),
         ),
@@ -59,14 +59,14 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected ? AppColors.companyPrimary : AppColors.textSecondary,
               ),
             ),
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.border,
+                color: isSelected ? AppColors.companyPrimary : AppColors.border,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -124,7 +124,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, color: AppColors.primary, size: 20),
+          Icon(icon, color: AppColors.companyPrimary, size: 20),
           const SizedBox(height: 5),
           Text(
             value,
@@ -168,13 +168,13 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
+              color: AppColors.companyPrimary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.chat_bubble_outline_rounded,
               size: 44,
-              color: AppColors.primary,
+              color: AppColors.companyPrimary,
             ),
           ),
           const SizedBox(height: 16),
@@ -217,7 +217,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasUnread ? AppColors.primary : AppColors.border,
+          color: hasUnread ? AppColors.companyPrimary : AppColors.border,
           width: hasUnread ? 1.4 : 1.2,
         ),
         boxShadow: const [
@@ -248,9 +248,9 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                   height: 46,
                   width: 46,
                   decoration: BoxDecoration(
-                    color: AppColors.peachBackground,
+                    color: AppColors.companyTagBackground,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.peachBorder, width: 1),
+                    border: Border.all(color: AppColors.companyTagBorder, width: 1),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: avatarUrl != null && avatarUrl.startsWith('http')
@@ -287,7 +287,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
-                                color: hasUnread ? AppColors.primary : AppColors.textSecondary,
+                                color: hasUnread ? AppColors.companyPrimary : AppColors.textSecondary,
                               ),
                             ),
                         ],
@@ -297,7 +297,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.peachBackground,
+                            color: AppColors.companyTagBackground,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -305,7 +305,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                             style: const TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.peachText,
+                              color: AppColors.companyTagText,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -331,7 +331,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                     margin: const EdgeInsets.only(left: 8, top: 12),
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AppColors.companyPrimary,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -358,7 +358,7 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
         style: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w800,
-          color: AppColors.primary,
+          color: AppColors.companyPrimary,
         ),
       ),
     );
@@ -412,16 +412,16 @@ class _CompanyChatsViewState extends State<CompanyChatsView> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.peachBackground,
+                    color: AppColors.companyTagBackground,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                    border: Border.all(color: AppColors.companyTagBorder, width: 0.8),
                   ),
                   child: Text(
                     '$displayCount ${_selectedFilter == 1 ? 'unread' : 'chats'}',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.peachText,
+                      color: AppColors.companyTagText,
                     ),
                   ),
                 ),

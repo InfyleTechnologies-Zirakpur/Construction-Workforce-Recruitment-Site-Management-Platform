@@ -5,14 +5,17 @@ import '../../../core/models/models.dart';
 
 class NotificationsStatsBar extends StatelessWidget {
   final List<WorkerNotification> notifications;
+  final bool isCompany;
 
   const NotificationsStatsBar({
     super.key,
     required this.notifications,
+    this.isCompany = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final themePrimary = isCompany ? AppColors.companyPrimary : AppColors.primary;
     final total = notifications.length;
     final unread = notifications.where((n) => !n.isRead).length;
     final updates = notifications.where((n) {
@@ -41,21 +44,21 @@ class NotificationsStatsBar extends StatelessWidget {
             'Total Alerts',
             '$total',
             Icons.notifications_active_outlined,
-            AppColors.primary,
+            themePrimary,
           ),
           _buildDivider(),
           _buildStatColumn(
             'Unread',
             '$unread',
             unread > 0 ? Icons.mark_email_unread_outlined : Icons.drafts_outlined,
-            unread > 0 ? AppColors.primary : AppColors.textSecondary,
+            unread > 0 ? themePrimary : AppColors.textSecondary,
           ),
           _buildDivider(),
           _buildStatColumn(
             'Jobs & Apps',
             '$updates',
             Icons.work_outline_rounded,
-            AppColors.primary,
+            themePrimary,
           ),
         ],
       ),

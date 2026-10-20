@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
 import '../../../features/bloc/worker_blocs.dart';
 import '../../notifications/notifications_screen.dart';
+import '../../search/search_screen.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int navIndex;
@@ -62,6 +63,27 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const SearchScreen(),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(24),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(
+                Icons.search_rounded,
+                color: AppColors.dark,
+                size: 26,
+              ),
+            ),
+          ),
+        ),
         BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
           builder: (context, state) {
             final hasUnread = state is Loaded<List<WorkerNotification>> &&

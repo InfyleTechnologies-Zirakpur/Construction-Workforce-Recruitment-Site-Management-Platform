@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../core/widgets/skeleton/smart_skeleton.dart';
@@ -139,12 +140,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   Future<void> _logout() async {
     final confirm = await AppConfirmDialog.show(
       context,
-      title: 'Logout Company?',
+      title: 'Log Out Company?',
       message: 'Are you sure you want to log out of your employer portal?',
       confirmLabel: 'Log Out',
       cancelLabel: 'Cancel',
       icon: Icons.logout_rounded,
       isDestructive: false,
+      isCompany: true,
     );
 
     if (confirm && mounted) {
@@ -200,7 +202,8 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       confirmLabel: 'Close Job',
       cancelLabel: 'Cancel',
       icon: Icons.work_off_rounded,
-      isDestructive: true,
+      isDestructive: false,
+      isCompany: true,
     );
 
     if (confirm && mounted) {
@@ -377,7 +380,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         ? (_myProfile?['verificationStatus'] ?? 'pending').toString().toUpperCase()
         : 'REQUIRED';
     final statusColor = !hasProfile
-        ? AppColors.primary
+        ? AppColors.companyPrimary
         : (status == 'VERIFIED'
             ? AppColors.success
             : (status == 'REJECTED' ? AppColors.error : const Color(0xFFF59E0B)));
@@ -459,12 +462,12 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: !hasProfile ? AppColors.peachBackground : AppColors.primary,
+                        color: !hasProfile ? AppColors.companyTagBackground : AppColors.companyPrimary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         !hasProfile ? Icons.domain_add_rounded : Icons.apartment_rounded,
-                        color: !hasProfile ? AppColors.primary : Colors.white,
+                        color: !hasProfile ? AppColors.companyPrimary : Colors.white,
                         size: 26,
                       ),
                     ),
@@ -541,7 +544,9 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
+    return Theme(
+      data: AppTheme.companyTheme(context),
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: CompanyAppBar(
         logoUrl: _myProfile?['logoUrl']?.toString() ??
@@ -572,7 +577,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         child: BottomNavigationBar(
           currentIndex: _tabIndex,
           onTap: (idx) => setState(() => _tabIndex = idx),
-          selectedItemColor: AppColors.primary,
+          selectedItemColor: AppColors.companyPrimary,
           unselectedItemColor: const Color(0xFF6B7280),
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
@@ -587,7 +592,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.home, size: 23, color: AppColors.primary),
+                child: Icon(Icons.home, size: 23, color: AppColors.companyPrimary),
               ),
               label: 'Feed',
             ),
@@ -598,7 +603,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.group, size: 23, color: AppColors.primary),
+                child: Icon(Icons.group, size: 23, color: AppColors.companyPrimary),
               ),
               label: 'Applications',
             ),
@@ -609,7 +614,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.business_center, size: 23, color: AppColors.primary),
+                child: Icon(Icons.business_center, size: 23, color: AppColors.companyPrimary),
               ),
               label: 'Site Jobs',
             ),
@@ -620,7 +625,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.bar_chart_rounded, size: 23, color: AppColors.primary),
+                child: Icon(Icons.bar_chart_rounded, size: 23, color: AppColors.companyPrimary),
               ),
               label: 'Analytics',
             ),
@@ -631,7 +636,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.chat, size: 22, color: AppColors.primary),
+                child: Icon(Icons.chat, size: 22, color: AppColors.companyPrimary),
               ),
               label: 'Chats',
             ),
@@ -645,7 +650,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                 myProfile: _myProfile,
                 onJobPosted: _loadCompanyData,
               ),
-              backgroundColor: AppColors.primary,
+              backgroundColor: AppColors.companyPrimary,
               tooltip: 'Post Job',
               child: const Icon(Icons.add, color: Colors.white, size: 28),
             )
@@ -654,7 +659,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
           ? const FeedScreen(isCompany: true)
           : SafeArea(
               child: RefreshIndicator(
-                color: AppColors.primary,
+                color: AppColors.companyPrimary,
                 onRefresh: _loadCompanyData,
                 child: _isLoading
                     ? const Padding(padding: EdgeInsets.all(20), child: SmartSkeleton.list(itemCount: 4))
@@ -717,6 +722,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                       ),
               ),
             ),
+      ),
     );
   }
 }

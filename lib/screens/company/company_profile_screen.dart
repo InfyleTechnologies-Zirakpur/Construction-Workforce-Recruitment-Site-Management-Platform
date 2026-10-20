@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/dialogs/app_confirm_dialog.dart';
@@ -118,6 +119,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
       cancelLabel: 'Cancel',
       icon: Icons.logout_rounded,
       isDestructive: false,
+      isCompany: true,
     );
 
     if (confirm && mounted) {
@@ -161,7 +163,9 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
+    return Theme(
+      data: AppTheme.companyTheme(context),
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CompanyAppBar(
         showBackButton: true,
@@ -170,7 +174,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.primary,
+          color: AppColors.companyPrimary,
           onRefresh: _loadProfile,
           child: _isLoading
               ? const Padding(
@@ -180,7 +184,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CircularProgressIndicator(
-                          color: AppColors.primary,
+                          color: AppColors.companyPrimary,
                           strokeWidth: 3.5,
                         ),
                         SizedBox(height: 16),
@@ -206,13 +210,13 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                             Container(
                               padding: const EdgeInsets.all(18),
                               decoration: const BoxDecoration(
-                                color: AppColors.peachBackground,
+                                color: AppColors.companyTagBackground,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.error_outline_rounded,
                                 size: 40,
-                                color: AppColors.primary,
+                                color: AppColors.companyPrimary,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -237,7 +241,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                             ElevatedButton(
                               onPressed: _loadProfile,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: AppColors.companyPrimary,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -254,6 +258,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                       ? _emptyProfileView(context, textTheme)
                       : _profileDetailView(context, textTheme, _profile!),
         ),
+      ),
       ),
     );
   }
@@ -284,10 +289,10 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: AppColors.companyPrimary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.domain_add, color: AppColors.primary, size: 48),
+                    child: const Icon(Icons.domain_add, color: AppColors.companyPrimary, size: 48),
                   ),
                   SizedBox(height: context.h(16)),
                   Text(
@@ -322,7 +327,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                         if (created == true) _loadProfile();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: AppColors.companyPrimary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -343,21 +348,21 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _logout,
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: AppColors.peachBackground,
-                        foregroundColor: AppColors.primary,
+                        backgroundColor: AppColors.companyTagBackground,
+                        foregroundColor: AppColors.companyPrimary,
                         side: const BorderSide(
-                          color: AppColors.peachBorder,
+                          color: AppColors.companyTagBorder,
                           width: 1.2,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon: const Icon(Icons.logout_rounded, color: AppColors.primary, size: 18),
+                      icon: const Icon(Icons.logout_rounded, color: AppColors.companyPrimary, size: 18),
                       label: const Text(
                         'Log Out Company',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: AppColors.companyPrimary,
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
@@ -432,7 +437,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.4),
+                                color: AppColors.companyPrimary.withValues(alpha: 0.4),
                                 width: 2.5,
                               ),
                             ),
@@ -449,7 +454,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                         style: const TextStyle(
                                           fontSize: 26,
                                           fontWeight: FontWeight.w800,
-                                          color: AppColors.primary,
+                                          color: AppColors.companyPrimary,
                                         ),
                                       ),
                                     )
@@ -467,7 +472,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary,
+                                    color: AppColors.companyPrimary,
                                     shape: BoxShape.circle,
                                     border: Border.all(color: AppColors.dark, width: 2),
                                   ),
@@ -514,10 +519,10 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.2),
+                                      color: AppColors.companyPrimary.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
-                                        color: AppColors.primary.withValues(alpha: 0.4),
+                                        color: AppColors.companyPrimary.withValues(alpha: 0.4),
                                         width: 0.8,
                                       ),
                                     ),
@@ -526,7 +531,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.primary,
+                                        color: AppColors.companyPrimary,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -734,10 +739,10 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isVerified ? const Color(0xFFDCFCE7) : AppColors.peachBackground,
+                  color: isVerified ? const Color(0xFFDCFCE7) : AppColors.companyTagBackground,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isVerified ? const Color(0xFF86EFAC) : AppColors.peachBorder,
+                    color: isVerified ? const Color(0xFF86EFAC) : AppColors.companyTagBorder,
                     width: 0.8,
                   ),
                 ),
@@ -746,7 +751,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: isVerified ? const Color(0xFF15803D) : AppColors.peachText,
+                    color: isVerified ? const Color(0xFF15803D) : AppColors.companyTagText,
                   ),
                 ),
               ),
@@ -805,16 +810,16 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: AppColors.peachBackground,
+                              color: AppColors.companyTagBackground,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.peachBorder, width: 0.8),
+                              border: Border.all(color: AppColors.companyTagBorder, width: 0.8),
                             ),
                             child: Text(
                               s,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.peachText,
+                                color: AppColors.companyTagText,
                               ),
                             ),
                           );
@@ -870,7 +875,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => _editProfile(p),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.companyPrimary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -896,10 +901,10 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               child: OutlinedButton.icon(
                 onPressed: _logout,
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: AppColors.peachBackground,
-                  foregroundColor: AppColors.primary,
+                  backgroundColor: AppColors.companyTagBackground,
+                  foregroundColor: AppColors.companyPrimary,
                   side: const BorderSide(
-                    color: AppColors.peachBorder,
+                    color: AppColors.companyTagBorder,
                     width: 1.2,
                   ),
                   shape: RoundedRectangleBorder(
@@ -908,13 +913,13 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 ),
                 icon: const Icon(
                   Icons.logout_rounded,
-                  color: AppColors.primary,
+                  color: AppColors.companyPrimary,
                   size: 18,
                 ),
                 label: const Text(
                   'Log Out Company',
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: AppColors.companyPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
@@ -959,12 +964,12 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.peachBackground,
+                      color: AppColors.companyTagBackground,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       icon,
-                      color: AppColors.primary,
+                      color: AppColors.companyPrimary,
                       size: 20,
                     ),
                   ),
@@ -990,7 +995,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                         Icon(
                           Icons.edit_outlined,
                           size: 15,
-                          color: AppColors.primary,
+                          color: AppColors.companyPrimary,
                         ),
                         SizedBox(width: 4),
                         Text(
@@ -998,7 +1003,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
+                            color: AppColors.companyPrimary,
                           ),
                         ),
                       ],
@@ -1031,13 +1036,13 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.peachBackground,
+              color: AppColors.companyTagBackground,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 18,
-              color: AppColors.primary,
+              color: AppColors.companyPrimary,
             ),
           ),
           const SizedBox(width: 12),
@@ -1074,7 +1079,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, color: AppColors.primary, size: 20),
+          Icon(icon, color: AppColors.companyPrimary, size: 20),
           const SizedBox(height: 5),
           Text(
             value,
