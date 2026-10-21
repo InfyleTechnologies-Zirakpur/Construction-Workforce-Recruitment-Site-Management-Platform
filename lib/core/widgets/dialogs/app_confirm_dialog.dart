@@ -81,6 +81,9 @@ class AppConfirmDialog extends StatelessWidget {
         ? AppColors.companyPrimary
         : (isDestructive ? AppColors.error : primaryColor);
 
+    final cardBgColor = isComp ? AppColors.companyTagBackground : AppColors.peachBackground;
+    final cardBorderColor = isComp ? AppColors.companyTagBorder : AppColors.peachBorder;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -89,12 +92,12 @@ class AppConfirmDialog extends StatelessWidget {
         width: dialogWidth,
         padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
         decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.border, width: 1.2),
+          color: cardBgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: cardBorderColor, width: 1.2),
           boxShadow: [
             BoxShadow(
-               color: Colors.black.withValues(alpha: 0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 28,
               offset: const Offset(0, 10),
             ),
@@ -107,8 +110,12 @@ class AppConfirmDialog extends StatelessWidget {
               width: 58,
               height: 58,
               decoration: BoxDecoration(
-                color: activeIconBg,
+                color: Colors.white,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: cardBorderColor,
+                  width: 1.2,
+                ),
               ),
               child: Icon(
                 icon,
@@ -131,11 +138,11 @@ class AppConfirmDialog extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13.5,
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.dark.withValues(alpha: 0.75),
                 height: 1.45,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 22),
@@ -148,9 +155,10 @@ class AppConfirmDialog extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(false),
                         style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
                           foregroundColor: AppColors.dark,
-                          side: const BorderSide(
-                            color: AppColors.border,
+                          side: BorderSide(
+                            color: cardBorderColor,
                             width: 1.2,
                           ),
                           shape: RoundedRectangleBorder(
