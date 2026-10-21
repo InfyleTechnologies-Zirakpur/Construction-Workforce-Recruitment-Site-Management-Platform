@@ -7,7 +7,7 @@ class AppConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
   final String confirmLabel;
-  final String cancelLabel;
+  final String? cancelLabel;
   final IconData icon;
   final bool isDestructive;
   final bool? isCompany;
@@ -30,7 +30,7 @@ class AppConfirmDialog extends StatelessWidget {
     required String title,
     required String message,
     String confirmLabel = 'Confirm',
-    String cancelLabel = 'Cancel',
+    String? cancelLabel = 'Cancel',
     IconData icon = Icons.info_outline_rounded,
     bool isDestructive = false,
     bool? isCompany,
@@ -139,61 +139,86 @@ class AppConfirmDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 22),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 46,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.dark,
-                        side: const BorderSide(
-                          color: AppColors.border,
-                          width: 1.2,
+            if (cancelLabel != null && cancelLabel!.isNotEmpty)
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.dark,
+                          side: const BorderSide(
+                            color: AppColors.border,
+                            width: 1.2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        cancelLabel,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.dark,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 46,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: activeConfirmBtnBg,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        confirmLabel,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                        child: Text(
+                          cancelLabel!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.dark,
+                          ),
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: activeConfirmBtnBg,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          confirmLabel,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: activeConfirmBtnBg,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    confirmLabel,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              ),
           ],
         ),
       ),

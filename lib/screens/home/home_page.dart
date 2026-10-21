@@ -8,6 +8,7 @@ import '../../features/bloc/worker_blocs.dart';
 import '../feed/feed_screen.dart';
 import '../jobs/my_jobs_screen.dart';
 import '../messages/messages_screen.dart';
+import '../profile/complete_profile_screen.dart';
 import '../profile/worker_profile_screen.dart';
 import '../search/search_screen.dart';
 import 'widgets/home_app_bar.dart';
@@ -162,6 +163,118 @@ class _HomePageState extends State<HomePage> {
                   setState(() => _selectedTrade = trade),
             ),
             const JobsStatsBar(),
+            BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
+              builder: (context, profileState) {
+                if (profileState is! Loaded<WorkerProfile>) return const SizedBox.shrink();
+                final profile = profileState.data;
+                final isKycVerified = profile.documents.any((d) {
+                  final t = (d['type'] ?? '').toString().trim().toLowerCase();
+                  return t.startsWith('skill');
+                });
+                if (isKycVerified) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CompleteProfileScreen(
+                            phoneNumber: profile.phone,
+                          ),
+                        ),
+                      ).then((_) {
+                        if (context.mounted) {
+                          context.read<ProfileCubit>().load();
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.peachBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.peachBorder,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.assignment_ind_outlined,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Complete Your Profile',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.dark,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Upload your skill certificate to unlock job applications.',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Complete',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(width: 2),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
             _buildJobsHeader(context),
             BlocBuilder<JobsCubit, LoadState<List<Job>>>(
               builder: (context, state) {

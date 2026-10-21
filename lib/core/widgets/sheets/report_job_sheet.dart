@@ -53,7 +53,6 @@ class _ReportJobSheetState extends State<ReportJobSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drag handle
               Center(
                 child: Container(
                   width: 44,
@@ -66,7 +65,6 @@ class _ReportJobSheetState extends State<ReportJobSheet> {
                 ),
               ),
 
-              // Title Row
               Row(
                 children: [
                   Container(

@@ -41,7 +41,7 @@ class ProfileStatsBar extends StatelessWidget {
           _buildDivider(),
           _buildStatColumn('Trade Skills', '$skillsCount', Icons.construction_outlined),
           _buildDivider(),
-          _buildStatColumn('Documents', '$verifiedDocsCount/3', Icons.verified_outlined),
+          _buildStatColumn('Documents', '$verifiedDocsCount/2', Icons.verified_outlined),
         ],
       ),
     );

@@ -1,3 +1,5 @@
+import 'worker_model.dart';
+
 export 'job_model.dart';
 export 'application_model.dart';
 export 'company_model.dart';
@@ -143,24 +145,47 @@ class WorkerProfile {
     required this.city,
     required this.skills,
     required this.salaryExpectation,
+    this.email,
+    this.experience = const [],
+    this.education = const [],
     this.profilePhotoUrl,
     this.documents = const [],
   });
   final String name, phone, city, salaryExpectation;
+  final String? email;
   final List<String> skills;
+  final List<WorkerExperience> experience;
+  final List<dynamic> education;
   final String? profilePhotoUrl;
   final List<Map<String, dynamic>> documents;
-  factory WorkerProfile.fromJson(Map<String, dynamic> j) => WorkerProfile(
-    name: j['fullName']?.toString() ?? j['name']?.toString() ?? 'Worker',
-    phone: j['phone']?.toString() ?? j['contactPhone']?.toString() ?? '',
-    city: j['city']?.toString() ?? j['location']?.toString() ?? '',
-    skills: List<String>.from((j['skills'] as List?)?.map((e) => e.toString()) ?? const []),
-    salaryExpectation: j['salaryExpectation']?.toString() ?? '',
-    profilePhotoUrl: j['profilePhotoUrl']?.toString() ?? j['profilePhoto']?.toString() ?? j['photoUrl']?.toString(),
-    documents: List<Map<String, dynamic>>.from(
-      (j['documents'] as List?)?.whereType<Map<String, dynamic>>() ?? const [],
-    ),
-  );
+
+  factory WorkerProfile.fromJson(Map<String, dynamic> j) {
+    final List<WorkerExperience> parsedExp = [];
+    if (j['experience'] is List) {
+      for (final item in j['experience'] as List) {
+        if (item is Map) {
+          parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
+        } else if (item is String) {
+          parsedExp.add(WorkerExperience(company: '', role: item));
+        }
+      }
+    }
+
+    return WorkerProfile(
+      name: j['fullName']?.toString() ?? j['name']?.toString() ?? 'Worker',
+      phone: j['phone']?.toString() ?? j['contactPhone']?.toString() ?? '',
+      city: j['city']?.toString() ?? j['location']?.toString() ?? '',
+      skills: List<String>.from((j['skills'] as List?)?.map((e) => e.toString()) ?? const []),
+      salaryExpectation: j['salaryExpectation']?.toString() ?? '',
+      email: j['email']?.toString(),
+      experience: parsedExp,
+      education: (j['education'] as List?) ?? const [],
+      profilePhotoUrl: j['profilePhotoUrl']?.toString() ?? j['profilePhoto']?.toString() ?? j['photoUrl']?.toString(),
+      documents: List<Map<String, dynamic>>.from(
+        (j['documents'] as List?)?.whereType<Map<String, dynamic>>() ?? const [],
+      ),
+    );
+  }
 }
 
 class Conversation {

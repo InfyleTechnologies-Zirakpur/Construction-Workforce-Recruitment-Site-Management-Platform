@@ -36,7 +36,7 @@ class CompleteProfileStatsBar extends StatelessWidget {
           _buildDivider(),
           _buildStatColumn('Selected Trade', selectedTrade, Icons.construction_outlined),
           _buildDivider(),
-          _buildStatColumn('Verification', '$uploadedDocsCount/3 Uploaded', Icons.verified_user_outlined),
+          _buildStatColumn('Verification', '$uploadedDocsCount/2 Uploaded', Icons.verified_user_outlined),
         ],
       ),
     );

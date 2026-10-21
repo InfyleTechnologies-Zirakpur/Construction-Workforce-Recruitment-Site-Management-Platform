@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:construction_workforce_recruitment_site_management_platform/core/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -7,6 +8,7 @@ import '../../core/services/notification_service.dart';
 import '../auth/choose_role_screen.dart';
 import '../company/company_home_screen.dart';
 import '../home/home_page.dart';
+import '../profile/complete_profile_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -51,13 +53,29 @@ class _SplashScreenState extends State<SplashScreen>
 
     bool isLoggedIn = false;
     bool isCompany = false;
+    bool profileCompleted = false;
+    String? phone;
 
     try {
-      final token = await storage.read(key: 'accessToken');
-      final role = await storage.read(key: 'role');
+      String? token = await storage.read(key: 'accessToken');
+      String? role = await storage.read(key: 'role');
+      phone = await storage.read(key: 'phone');
+      profileCompleted = (await storage.read(key: 'profileCompleted')) == 'true';
+
+      if (token == null || token.isEmpty) {
+        const encryptedStorage = FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        );
+        token = await encryptedStorage.read(key: 'accessToken');
+        role ??= await encryptedStorage.read(key: 'role');
+        phone ??= await encryptedStorage.read(key: 'phone');
+        profileCompleted = profileCompleted ||
+            (await encryptedStorage.read(key: 'profileCompleted')) == 'true';
+      }
       isLoggedIn = token != null && token.isNotEmpty;
       isCompany = role == 'company';
       if (isLoggedIn) {
+        ApiClient.accessToken = token;
         NotificationService.instance.syncDeviceToken();
       }
     } catch (_) {
@@ -77,7 +95,9 @@ class _SplashScreenState extends State<SplashScreen>
     final Widget targetScreen = isLoggedIn
         ? (isCompany
             ? const CompanyHomeScreen()
-            : const HomePage(initialNavIndex: 0))
+            : (profileCompleted
+                ? const HomePage(initialNavIndex: 0)
+                : CompleteProfileScreen(phoneNumber: phone ?? '')))
         : const ChooseRoleScreen();
 
     Navigator.of(context).pushReplacement(

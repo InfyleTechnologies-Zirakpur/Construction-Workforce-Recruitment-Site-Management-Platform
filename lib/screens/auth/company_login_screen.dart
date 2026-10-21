@@ -1,3 +1,4 @@
+import 'package:construction_workforce_recruitment_site_management_platform/core/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
@@ -43,7 +44,12 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
       final repo = CompanyRepository();
       final data = await repo.loginCompany(email: _email.text.trim(), password: _pass.text);
       const storage = FlutterSecureStorage();
-      if (data['accessToken'] != null) await storage.write(key: 'accessToken', value: data['accessToken'].toString());
+      if (data['accessToken'] != null) {
+        final token = data['accessToken'].toString();
+        ApiClient.accessToken = token;
+        ApiClient.instance.dio.options.headers['Authorization'] = 'Bearer $token';
+        await storage.write(key: 'accessToken', value: token);
+      }
       if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       await storage.write(key: 'role', value: 'company');
 

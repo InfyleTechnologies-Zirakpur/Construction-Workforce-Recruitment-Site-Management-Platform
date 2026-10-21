@@ -32,13 +32,17 @@ class CompleteProfileHeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.dark,
+        color: AppColors.peachBackground,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.peachBorder,
+          width: 1.2,
+        ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -54,13 +58,13 @@ class CompleteProfileHeroCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.4),
+                      color: AppColors.peachBorder,
                       width: 2.5,
                     ),
                   ),
                   child: CircleAvatar(
                     radius: 34,
-                    backgroundColor: const Color(0xFF1F2937),
+                    backgroundColor: Colors.white,
                     backgroundImage: photoBytes != null ? MemoryImage(photoBytes!) : null,
                     child: photoBytes == null
                         ? Center(
@@ -84,7 +88,7 @@ class CompleteProfileHeroCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.dark, width: 2),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: isUploadingPhoto
                         ? const SizedBox(
@@ -109,7 +113,7 @@ class CompleteProfileHeroCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: AppColors.dark,
                     letterSpacing: -0.3,
                   ),
                   maxLines: 1,
@@ -118,16 +122,15 @@ class CompleteProfileHeroCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                 
                     Flexible(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.2),
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                            width: 0.8,
+                            color: AppColors.peachBorder,
+                            width: 0.9,
                           ),
                         ),
                         child: Text(
@@ -135,7 +138,7 @@ class CompleteProfileHeroCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
+                            color: AppColors.peachText,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -147,10 +150,10 @@ class CompleteProfileHeroCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4ADE80).withValues(alpha: 0.2),
+                        color: const Color(0xFFDCFCE7),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: const Color(0xFF4ADE80).withValues(alpha: 0.5),
+                          color: const Color(0xFF86EFAC),
                           width: 0.8,
                         ),
                       ),
@@ -160,15 +163,15 @@ class CompleteProfileHeroCard extends StatelessWidget {
                           const Icon(
                             Icons.verified_rounded,
                             size: 12,
-                            color: Color(0xFF4ADE80),
+                            color: Color(0xFF16A34A),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '+91 $phoneNumber',
+                            phoneNumber.startsWith('+') ? phoneNumber : '+91 $phoneNumber',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF4ADE80),
+                              color: Color(0xFF15803D),
                             ),
                           ),
                         ],
@@ -181,8 +184,8 @@ class CompleteProfileHeroCard extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.location_on_outlined,
-                      size: 13,
-                      color: Colors.white70,
+                      size: 14,
+                      color: AppColors.textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -190,8 +193,8 @@ class CompleteProfileHeroCard extends StatelessWidget {
                         location,
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w400,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

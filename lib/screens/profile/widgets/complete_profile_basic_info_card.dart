@@ -4,15 +4,15 @@ import '../../../core/constants/app_colors.dart';
 import 'complete_profile_section_card.dart';
 
 class CompleteProfileBasicInfoCard extends StatelessWidget {
-  final TextEditingController nameController;
   final TextEditingController cityController;
+  final TextEditingController? emailController;
   final List<String> citySuggestions;
   final ValueChanged<String> onSelectCity;
 
   const CompleteProfileBasicInfoCard({
     super.key,
-    required this.nameController,
     required this.cityController,
+    this.emailController,
     required this.citySuggestions,
     required this.onSelectCity,
   });
@@ -53,33 +53,12 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CompleteProfileSectionCard(
-      title: 'Basic Information',
-      subtitle: 'How contractors identify and locate you on site',
-      icon: Icons.person_rounded,
+      title: 'Location & Contact',
+      subtitle: 'Set your preferred working location and contact details',
+      icon: Icons.location_on_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInputLabel('Full Name *'),
-          TextFormField(
-            controller: nameController,
-            textCapitalization: TextCapitalization.words,
-            style: const TextStyle(
-              fontSize: 17,
-              color: AppColors.dark,
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: _buildInputDecoration(
-              hintText: 'e.g. Ramesh Kumar',
-              prefixIcon: Icons.person_outline_rounded,
-            ),
-            validator: (v) {
-              final val = (v ?? '').trim();
-              if (val.isEmpty) return 'Please enter your full name';
-              if (val.length < 3) return 'Name must be at least 3 characters';
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
           _buildInputLabel('Preferred Working City *'),
           TextFormField(
             controller: cityController,
@@ -120,7 +99,7 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                       Icon(
                         Icons.near_me_rounded,
                         size: 11,
                         color: isSelected ? AppColors.primary : const Color(0xFF64748B),
@@ -140,6 +119,30 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
               );
             }).toList(),
           ),
+          if (emailController != null) ...[
+            const SizedBox(height: 16),
+            _buildInputLabel('Email Address (Optional)'),
+            TextFormField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              style: const TextStyle(
+                fontSize: 17,
+                color: AppColors.dark,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: _buildInputDecoration(
+                hintText: 'e.g. rahul@gmail.com',
+                prefixIcon: Icons.email_outlined,
+              ),
+              validator: (v) {
+                final val = (v ?? '').trim();
+                if (val.isNotEmpty && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(val)) {
+                  return 'Please enter a valid email format';
+                }
+                return null;
+              },
+            ),
+          ],
         ],
       ),
     );

@@ -228,6 +228,51 @@ class DashboardCubit extends Cubit<LoadState<Map<String, dynamic>>> {
 class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
   AuthCubit(this._repo) : super(const Idle());
   final WorkerRepository _repo;
+  Future<Map<String, dynamic>> signupSendOtp({
+    required String firstName,
+    required String lastName,
+    required String contact,
+    required List<String> skills,
+  }) async {
+    emit(const Loading());
+    try {
+      final res = await _repo.signupSendOtp(
+        firstName: firstName,
+        lastName: lastName,
+        contact: contact,
+        skills: skills,
+      );
+      emit(Loaded(<String, dynamic>{'otpSent': true, ...res}));
+      return res;
+    } catch (e) {
+      final msg = ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Failed to send OTP. Please check your details.',
+      );
+      emit(Failed(msg));
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> signupVerifyOtp({
+    required String contact,
+    required String otp,
+  }) async {
+    emit(const Loading());
+    try {
+      final res = await _repo.signupVerifyOtp(contact: contact, otp: otp);
+      emit(Loaded(res));
+      return res;
+    } catch (e) {
+      final msg = ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Invalid OTP code. Please enter the correct code.',
+      );
+      emit(Failed(msg));
+      rethrow;
+    }
+  }
+
   Future<void> requestOtp(String phone) async {
     emit(const Loading());
     try {

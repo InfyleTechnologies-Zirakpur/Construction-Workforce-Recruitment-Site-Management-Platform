@@ -26,13 +26,17 @@ class ProfileHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.dark,
+        color: AppColors.peachBackground,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.peachBorder,
+          width: 1.2,
+        ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -47,13 +51,13 @@ class ProfileHeaderCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.4),
+                        color: AppColors.peachBorder,
                         width: 2.5,
                       ),
                     ),
                     child: CircleAvatar(
                       radius: 34,
-                      backgroundColor: const Color(0xFF1F2937),
+                      backgroundColor: Colors.white,
                       backgroundImage: profile.profilePhotoUrl != null &&
                               profile.profilePhotoUrl!.isNotEmpty
                           ? NetworkImage(profile.profilePhotoUrl!)
@@ -63,7 +67,7 @@ class ProfileHeaderCard extends StatelessWidget {
                           ? const Icon(
                               Icons.person_rounded,
                               size: 40,
-                              color: Colors.white70,
+                              color: AppColors.primary,
                             )
                           : null,
                     ),
@@ -81,7 +85,7 @@ class ProfileHeaderCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.dark, width: 2),
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
                           child: isUploadingPhoto
                               ? const SizedBox(
@@ -113,7 +117,7 @@ class ProfileHeaderCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: AppColors.dark,
                         letterSpacing: -0.3,
                       ),
                       maxLines: 1,
@@ -129,11 +133,11 @@ class ProfileHeaderCard extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.2),
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.4),
-                                width: 0.8,
+                                color: AppColors.peachBorder,
+                                width: 0.9,
                               ),
                             ),
                             child: Text(
@@ -141,7 +145,7 @@ class ProfileHeaderCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
+                                color: AppColors.peachText,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -156,13 +160,13 @@ class ProfileHeaderCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isKycVerified
-                                ? Colors.green.withValues(alpha: 0.2)
-                                : Colors.amber.withValues(alpha: 0.2),
+                                ? const Color(0xFFDCFCE7)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
                               color: isKycVerified
-                                  ? Colors.green.withValues(alpha: 0.5)
-                                  : Colors.amber.withValues(alpha: 0.5),
+                                  ? const Color(0xFF86EFAC)
+                                  : AppColors.peachBorder,
                               width: 0.8,
                             ),
                           ),
@@ -175,8 +179,8 @@ class ProfileHeaderCard extends StatelessWidget {
                                     : Icons.schedule_rounded,
                                 size: 12,
                                 color: isKycVerified
-                                    ? const Color(0xFF4ADE80)
-                                    : const Color(0xFFFBBF24),
+                                    ? const Color(0xFF16A34A)
+                                    : AppColors.peachText,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -185,8 +189,8 @@ class ProfileHeaderCard extends StatelessWidget {
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: isKycVerified
-                                      ? const Color(0xFF4ADE80)
-                                      : const Color(0xFFFBBF24),
+                                      ? const Color(0xFF15803D)
+                                      : AppColors.peachText,
                                 ),
                               ),
                             ],
@@ -200,8 +204,8 @@ class ProfileHeaderCard extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.location_on_outlined,
-                            size: 13,
-                            color: Colors.white70,
+                            size: 14,
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -209,8 +213,8 @@ class ProfileHeaderCard extends StatelessWidget {
                               profile.city,
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w400,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -228,15 +232,19 @@ class ProfileHeaderCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.peachBorder,
+                width: 0.8,
+              ),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.info_outline_rounded,
                   size: 14,
-                  color: Colors.white60,
+                  color: AppColors.peachText,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -246,8 +254,8 @@ class ProfileHeaderCard extends StatelessWidget {
                         : 'Tap the camera button to upload or change your photo',
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),

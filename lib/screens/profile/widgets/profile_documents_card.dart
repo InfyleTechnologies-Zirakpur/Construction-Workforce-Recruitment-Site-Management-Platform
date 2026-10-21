@@ -16,7 +16,6 @@ class ProfileDocumentsCard extends StatelessWidget {
 
   static String _subtypeOf(String t) {
     final v = t.trim().toLowerCase();
-    if (v == 'aadhaar') return 'aadhaar';
     if (v.startsWith('experience')) return 'experience';
     if (v.startsWith('skill')) return 'skill';
     return v;
@@ -34,11 +33,10 @@ class ProfileDocumentsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final aadhaarDoc = _findDoc('aadhaar');
     final experienceDoc = _findDoc('experience_certificate');
     final skillDoc = _findDoc('skill_certificate');
 
-    final int verifiedCount = [aadhaarDoc, experienceDoc, skillDoc]
+    final int verifiedCount = [experienceDoc, skillDoc]
         .where((d) => d != null)
         .length;
 
@@ -90,23 +88,23 @@ class ProfileDocumentsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: verifiedCount == 3
+                  color: verifiedCount == 2
                       ? const Color(0xFFDCFCE7)
                       : AppColors.peachBackground,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: verifiedCount == 3
+                    color: verifiedCount == 2
                         ? const Color(0xFF86EFAC)
                         : AppColors.peachBorder,
                     width: 0.8,
                   ),
                 ),
                 child: Text(
-                  '$verifiedCount/3 Uploaded',
+                  '$verifiedCount/2 Uploaded',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: verifiedCount == 3
+                    color: verifiedCount == 2
                         ? const Color(0xFF15803D)
                         : AppColors.peachText,
                   ),
@@ -116,7 +114,7 @@ class ProfileDocumentsCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Upload documents to verify your profile and increase hiring chances.',
+            'Upload your mandatory skill certificate and optional experience proof to verify your profile.',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -127,24 +125,19 @@ class ProfileDocumentsCard extends StatelessWidget {
           const Divider(height: 1, color: AppColors.border),
           const SizedBox(height: 10),
           _buildDocumentItem(
-            title: 'Aadhaar Card',
-            type: 'aadhaar',
-            description: 'Identity & address verification',
-            doc: aadhaarDoc,
+            title: 'Skill Certificate',
+            type: 'skill_certificate',
+            description: 'Trade diploma, ITI certificate or license',
+            doc: skillDoc,
+            isMandatory: true,
           ),
           const Divider(height: 16, color: AppColors.border),
           _buildDocumentItem(
             title: 'Experience Certificate',
             type: 'experience_certificate',
-            description: 'Work history & past site proof',
+            description: 'Work history & site proof (optional)',
             doc: experienceDoc,
-          ),
-          const Divider(height: 16, color: AppColors.border),
-          _buildDocumentItem(
-            title: 'Skill Certificate',
-            type: 'skill_certificate',
-            description: 'Trade diploma or ITI certificate',
-            doc: skillDoc,
+            isMandatory: false,
           ),
           if (isUploadingDocument) ...[
             const SizedBox(height: 12),
@@ -178,6 +171,7 @@ class ProfileDocumentsCard extends StatelessWidget {
     required String type,
     required String description,
     required Map<String, dynamic>? doc,
+    bool isMandatory = false,
   }) {
     final bool isUploaded = doc != null;
     final uploadedName =
@@ -191,12 +185,16 @@ class ProfileDocumentsCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: isUploaded
                 ? const Color(0xFFDCFCE7)
-                : AppColors.peachBackground,
+                : (isMandatory ? const Color(0xFFFEF2F2) : AppColors.peachBackground),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
-            isUploaded ? Icons.verified_rounded : Icons.description_outlined,
-            color: isUploaded ? const Color(0xFF16A34A) : AppColors.primary,
+            isUploaded
+                ? Icons.verified_rounded
+                : (isMandatory ? Icons.workspace_premium_outlined : Icons.description_outlined),
+            color: isUploaded
+                ? const Color(0xFF16A34A)
+                : (isMandatory ? const Color(0xFFDC2626) : AppColors.primary),
             size: 20,
           ),
         ),
@@ -205,13 +203,47 @@ class ProfileDocumentsCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.dark,
-                ),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.dark,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: isUploaded
+                          ? const Color(0xFFDCFCE7)
+                          : (isMandatory ? const Color(0xFFFEF2F2) : const Color(0xFFF1F5F9)),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: isUploaded
+                            ? const Color(0xFF86EFAC)
+                            : (isMandatory ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0)),
+                        width: 0.6,
+                      ),
+                    ),
+                    child: Text(
+                      isUploaded ? 'Verified ✓' : (isMandatory ? 'Mandatory' : 'Optional'),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: isUploaded
+                            ? const Color(0xFF15803D)
+                            : (isMandatory ? const Color(0xFFDC2626) : AppColors.textSecondary),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 2),
               Text(

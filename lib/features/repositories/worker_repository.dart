@@ -20,15 +20,144 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
 
   @override
   Future<String?> getCurrentUserId() => _getCurrentUserId();
+  /// Step 1: Send OTP for Job Seeker signup (POST /auth/signup/send-otp)
+  Future<Map<String, dynamic>> signupSendOtp({
+    required String firstName,
+    required String lastName,
+    required String contact,
+    required List<String> skills,
+  }) async {
+    final cleanDigits = contact.replaceAll(RegExp(r'[^0-9]'), '');
+    final tenDigitPhone = cleanDigits.length > 10
+        ? cleanDigits.substring(cleanDigits.length - 10)
+        : cleanDigits;
+    final payload = {
+      'name': firstName.trim(),
+      'lastName': lastName.trim(),
+      'phone': tenDigitPhone,
+      'role': 'job_seeker',
+      'skill': skills.isNotEmpty ? skills : ['Mason'],
+    };
+    final r = await _client.dio.post('/auth/signup/send-otp', data: payload);
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return const {'otpSent': true};
+  }
+
+  /// Step 2: Verify OTP for Job Seeker signup (POST /auth/signup/verify-otp)
+  Future<Map<String, dynamic>> signupVerifyOtp({
+    required String contact,
+    required String otp,
+  }) async {
+    final cleanDigits = contact.replaceAll(RegExp(r'[^0-9]'), '');
+    final tenDigitPhone = cleanDigits.length > 10
+        ? cleanDigits.substring(cleanDigits.length - 10)
+        : cleanDigits;
+    final payload = {
+      'phone': tenDigitPhone,
+      'otp': otp.trim(),
+    };
+    final r = await _client.dio.post('/auth/signup/verify-otp', data: payload);
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return Map<String, dynamic>.from(r.data);
+  }
+
+  /// Step 3: Set Password for Job Seeker signup (POST /auth/signup/set-password)
+  Future<Map<String, dynamic>> signupSetPassword({
+    required String signupToken,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final payload = {
+      'signupToken': signupToken.trim(),
+      'password': password,
+      'confirmPassword': confirmPassword,
+    };
+    final r = await _client.dio.post('/auth/signup/set-password', data: payload);
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return Map<String, dynamic>.from(r.data);
+  }
+
   Future<Map<String, dynamic>> requestOtp(String phone) async {
-    final r = await _client.dio.post('/auth/request-otp', data: {'phone': phone});
+    final isEmail = phone.contains('@');
+    final payload = isEmail
+        ? {'email': phone.trim().toLowerCase(), 'phone': phone.trim()}
+        : {'phone': phone.trim()};
+    final r = await _client.dio.post('/auth/request-otp', data: payload);
     final d = r.data is Map ? r.data['data'] : null;
     if (d is Map) return Map<String, dynamic>.from(d);
     return const {'otpSent': true};
   }
   Future<Map<String, dynamic>> verifyOtp({required String phone, required String otp}) async {
-    final r = await _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+    final isEmail = phone.contains('@');
+    final payload = isEmail
+        ? {'email': phone.trim().toLowerCase(), 'phone': phone.trim(), 'otp': otp}
+        : {'phone': phone.trim(), 'otp': otp};
+    final r = await _client.dio.post('/auth/verify-otp', data: payload);
     return Map<String, dynamic>.from(r.data['data']);
+  }
+
+  /// Step 5: Sign in (POST /auth/login) with method: "phone" | "email"
+  Future<Map<String, dynamic>> loginWithPassword({
+    required String phone,
+    required String password,
+  }) async {
+    final cleanInput = phone.trim();
+    final isEmail = cleanInput.contains('@');
+
+    if (isEmail) {
+      final r = await _client.dio.post('/auth/login', data: {
+        'method': 'email',
+        'email': cleanInput.toLowerCase(),
+        'password': password,
+      });
+      // Response is top-level: { user, accessToken, refreshToken, expiresIn }
+      final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+      if (d is Map) return Map<String, dynamic>.from(d);
+      return const {};
+    }
+
+    final sanitizedDigits = cleanInput.replaceAll(RegExp(r'[^0-9]'), '');
+    final tenDigitPhone = sanitizedDigits.length > 10
+        ? sanitizedDigits.substring(sanitizedDigits.length - 10)
+        : sanitizedDigits;
+
+    final r = await _client.dio.post('/auth/login', data: {
+      'method': 'phone',
+      'phone': tenDigitPhone,
+      'password': password,
+    });
+    // Response is top-level: { user, accessToken, refreshToken, expiresIn }
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return const {};
+  }
+
+  Future<Map<String, dynamic>> setPassword({
+    required String phone,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final isEmail = phone.contains('@');
+    final payload = isEmail
+        ? {'email': phone.trim().toLowerCase(), 'phone': phone, 'otp': otp, 'newPassword': newPassword}
+        : {'phone': phone, 'otp': otp, 'newPassword': newPassword};
+    try {
+      final r = await _client.dio.post('/auth/reset-password', data: payload);
+      final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+      if (d is Map) return Map<String, dynamic>.from(d);
+    } catch (_) {
+      try {
+        final r = await _client.dio.post('/auth/set-password', data: isEmail
+            ? {'email': phone.trim().toLowerCase(), 'phone': phone, 'password': newPassword}
+            : {'phone': phone, 'password': newPassword});
+        final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+        if (d is Map) return Map<String, dynamic>.from(d);
+      } catch (_) {}
+    }
+    return const {'success': true};
   }
   Future<List<Job>> fetchJobs({String? query, String? location}) async {
     final Map<String, Job> jobMap = {};

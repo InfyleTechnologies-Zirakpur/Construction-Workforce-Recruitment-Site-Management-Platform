@@ -86,7 +86,7 @@ class ApplyJobDocumentsCard extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               const Text(
-                'Documents attached automatically from your profile',
+                'Documents attached automatically from your profile (Skill Certificate mandatory)',
                 style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 14),
@@ -100,11 +100,11 @@ class ApplyJobDocumentsCard extends StatelessWidget {
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.textMuted),
+                      Icon(Icons.info_outline_rounded, size: 18, color: AppColors.textMuted),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'No documents uploaded yet. Upload ID or certificates in your profile for higher selection rates.',
+                          'No documents uploaded yet. Upload your Skill Certificate in your profile to complete verification.',
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
                         ),
                       ),

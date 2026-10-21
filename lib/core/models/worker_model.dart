@@ -21,7 +21,7 @@ class WorkerExperience {
 
     return WorkerExperience(
       company: json['company']?.toString() ?? '',
-      role: json['role']?.toString() ?? '',
+      role: json['title']?.toString() ?? json['role']?.toString() ?? '',
       years: parseYears(json['years'] ?? json['experienceYears']),
       summary: json['summary']?.toString(),
     );
@@ -29,9 +29,9 @@ class WorkerExperience {
 
   Map<String, dynamic> toJson() {
     return {
+      'title': role,
       'company': company,
-      'role': role,
-      'years': years,
+      'years': years.toString(),
       if (summary != null) 'summary': summary,
     };
   }
@@ -46,6 +46,8 @@ class WorkerProfileModel {
   final List<String> skills;
   final String salaryExpectation;
   final List<WorkerExperience> experience;
+  final String? email;
+  final List<dynamic> education;
   final String? profilePhoto;
   final int? experienceYears;
   final String? availabilityStatus;
@@ -62,6 +64,8 @@ class WorkerProfileModel {
     this.skills = const [],
     this.salaryExpectation = '',
     this.experience = const [],
+    this.email,
+    this.education = const [],
     this.profilePhoto,
     this.experienceYears,
     this.availabilityStatus,
@@ -94,7 +98,7 @@ class WorkerProfileModel {
         if (item is Map) {
           parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
         } else if (item is String) {
-          parsedExp.add(WorkerExperience(company: '', role: '', summary: item));
+          parsedExp.add(WorkerExperience(company: '', role: item));
         }
       }
     }
@@ -110,6 +114,8 @@ class WorkerProfileModel {
       ),
       salaryExpectation: json['salaryExpectation']?.toString() ?? '',
       experience: parsedExp,
+      email: json['email']?.toString(),
+      education: (json['education'] as List?) ?? const [],
       profilePhoto: rawPhoto,
       experienceYears: parseYears(json['experienceYears'] ?? json['totalExperienceYears']),
       availabilityStatus: json['availabilityStatus']?.toString(),
@@ -135,6 +141,8 @@ class WorkerProfileModel {
       'skills': skills,
       'salaryExpectation': salaryExpectation,
       'experience': experience.map((e) => e.toJson()).toList(),
+      if (email != null) 'email': email,
+      'education': education,
       if (profilePhoto != null) 'profilePhoto': profilePhoto,
       if (experienceYears != null) 'experienceYears': experienceYears,
       if (availabilityStatus != null) 'availabilityStatus': availabilityStatus,
@@ -151,8 +159,9 @@ class WorkerProfileModel {
       'skills': skills,
       'salaryExpectation': salaryExpectation,
       'experience': experience.map((e) => e.toJson()).toList(),
+      if (email != null && email!.isNotEmpty) 'email': email,
+      'education': education,
       if (fullName.isNotEmpty) 'name': fullName,
-      if (fullName.isNotEmpty) 'fullName': fullName,
     };
   }
 }

@@ -93,7 +93,9 @@ class ProfileDetailsCard extends StatelessWidget {
           _buildDetailRow(
             icon: Icons.phone_outlined,
             label: 'Mobile Number',
-            value: profile.phone.isNotEmpty ? '+91 ${profile.phone}' : 'Not set',
+            value: profile.phone.isNotEmpty
+                ? (profile.phone.startsWith('+') ? profile.phone : '+91 ${profile.phone}')
+                : 'Not set',
           ),
           const Divider(height: 16, color: AppColors.border),
           _buildDetailRow(
@@ -185,6 +187,75 @@ class ProfileDetailsCard extends StatelessWidget {
               ],
             ),
           ),
+          if (profile.email != null && profile.email!.isNotEmpty) ...[
+            const Divider(height: 16, color: AppColors.border),
+            _buildDetailRow(
+              icon: Icons.email_outlined,
+              label: 'Email Address',
+              value: profile.email!,
+            ),
+          ],
+          if (profile.experience.isNotEmpty) ...[
+            const Divider(height: 16, color: AppColors.border),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.peachBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.work_history_outlined,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Work Experience',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        ...profile.experience.map((WorkerExperience exp) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.circle, size: 6, color: AppColors.primary),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${exp.role.isNotEmpty ? exp.role : 'Worker'} at ${exp.company.isNotEmpty ? exp.company : 'Site'} (${exp.years} ${exp.years == 1 ? 'yr' : 'yrs'})',
+                                    style: const TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.dark,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

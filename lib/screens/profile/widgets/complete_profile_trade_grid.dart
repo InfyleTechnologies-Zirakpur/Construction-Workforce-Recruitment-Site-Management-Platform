@@ -5,12 +5,14 @@ import '../../../core/constants/app_colors.dart';
 class CompleteProfileTradeGrid extends StatelessWidget {
   final List<Map<String, dynamic>> tradeOptions;
   final String selectedTrade;
+  final List<String>? selectedTrades;
   final ValueChanged<String> onTradeSelected;
 
   const CompleteProfileTradeGrid({
     super.key,
     required this.tradeOptions,
     required this.selectedTrade,
+    this.selectedTrades,
     required this.onTradeSelected,
   });
 
@@ -31,7 +33,9 @@ class CompleteProfileTradeGrid extends StatelessWidget {
         final name = (trade['name'] ?? '').toString();
         final specialty = (trade['specialty'] ?? '').toString();
         final icon = trade['icon'] as IconData? ?? Icons.handyman_rounded;
-        final isSelected = selectedTrade == name;
+        final isSelected = selectedTrades != null
+            ? selectedTrades!.contains(name)
+            : selectedTrade == name;
 
         return Material(
           color: Colors.transparent,

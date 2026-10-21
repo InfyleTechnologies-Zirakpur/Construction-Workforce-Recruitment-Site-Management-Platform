@@ -12,7 +12,8 @@ import '../profile/complete_profile_screen.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phoneNumber;
-  const OtpScreen({super.key, required this.phoneNumber});
+  final String countryCode;
+  const OtpScreen({super.key, required this.phoneNumber, this.countryCode = '+91'});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -276,7 +277,9 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               SizedBox(height: context.h(4)),
               Text(
-                '+91 ${widget.phoneNumber}',
+                widget.phoneNumber.startsWith('+')
+                    ? widget.phoneNumber
+                    : '${widget.countryCode} ${widget.phoneNumber}',
                 style: textTheme.titleSmall?.copyWith(color: AppColors.dark),
               ),
               SizedBox(height: context.h(28)),

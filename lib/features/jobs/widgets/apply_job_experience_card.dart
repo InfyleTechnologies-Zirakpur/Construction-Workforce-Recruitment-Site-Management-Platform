@@ -106,20 +106,18 @@ class ApplyJobExperienceCard extends StatelessWidget {
       children: [
         TextFormField(
           controller: companyController,
-          validator: (value) =>
-              (value == null || value.trim().isEmpty) ? 'Please enter your previous company' : null,
-          decoration: _inputDeco(hint: 'e.g. L&T Construction', label: 'Previous Company Name'),
+          decoration: _inputDeco(hint: 'e.g. L&T Construction', label: 'Previous Company Name (Optional)'),
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: roleController,
-          decoration: _inputDeco(hint: 'e.g. Site Electrician / Supervisor', label: 'Trade / Role'),
+          decoration: _inputDeco(hint: 'e.g. Site Electrician / Supervisor', label: 'Trade / Role (Optional)'),
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: yearsController,
           keyboardType: TextInputType.number,
-          decoration: _inputDeco(hint: 'e.g. 3', label: 'Years of Experience'),
+          decoration: _inputDeco(hint: 'e.g. 3', label: 'Years of Experience (Optional)'),
         ),
       ],
     );
@@ -142,7 +140,7 @@ class ApplyJobExperienceCard extends StatelessWidget {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'No previous experience required for this role. You can list any training, courses, or certificates below.',
+                  'Previous experience is completely optional. You may list any training or past work below.',
                   style: TextStyle(fontSize: 12.5, color: AppColors.dark, height: 1.35),
                 ),
               ),
@@ -154,8 +152,8 @@ class ApplyJobExperienceCard extends StatelessWidget {
           controller: trainingController,
           maxLines: 3,
           decoration: _inputDeco(
-            hint: 'e.g. ITI Electrician certificate, 3-month site safety workshop',
-            label: 'Training / Certifications (optional)',
+            hint: 'e.g. ITI certificate, vocational training, workshop',
+            label: 'Training / Certifications (Optional)',
           ),
         ),
       ],

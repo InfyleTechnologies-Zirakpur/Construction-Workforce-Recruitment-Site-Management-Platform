@@ -9,6 +9,7 @@ import '../../core/services/notification_service.dart';
 import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../features/bloc/worker_blocs.dart';
 import '../auth/login_screen.dart';
+import 'complete_profile_screen.dart';
 import 'widgets/edit_profile_sheet.dart';
 import 'widgets/profile_details_card.dart';
 import 'widgets/profile_documents_card.dart';
@@ -34,7 +35,6 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
 
   static String _subtypeOf(String t) {
     final v = t.trim().toLowerCase();
-    if (v == 'aadhaar') return 'aadhaar';
     if (v.startsWith('experience')) return 'experience';
     if (v.startsWith('skill')) return 'skill';
     return v;
@@ -44,15 +44,13 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     final types = docs
         .map((d) => _subtypeOf((d['type'] ?? '').toString()))
         .toSet();
-    return ['aadhaar', 'experience', 'skill']
+    return ['experience', 'skill']
         .where((t) => types.contains(t))
         .length;
   }
 
   bool _isKycVerified(List<Map<String, dynamic>> docs) {
-    return docs.any(
-      (d) => _subtypeOf((d['type'] ?? '').toString()) == 'aadhaar',
-    );
+    return docs.any((d) => _subtypeOf((d['type'] ?? '').toString()) == 'skill');
   }
 
   Future<void> _uploadPhoto() async {
@@ -318,6 +316,108 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                     isKycVerified: isKycVerified,
                   ),
                   const SizedBox(height: 16),
+
+                  // Complete Your Profile Reminder Banner (Matching Logout Banner Theme)
+                  if (!isKycVerified) ...[
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CompleteProfileScreen(
+                              phoneNumber: profile.phone,
+                            ),
+                          ),
+                        ).then((_) {
+                          if (mounted) {
+                            context.read<ProfileCubit>().load();
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.peachBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.peachBorder,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.assignment_ind_outlined,
+                                color: AppColors.primary,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Complete Your Profile',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.dark,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Upload your skill certificate to unlock job applications.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Complete',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(width: 2),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Summary Stats Bar (Expected Wages, Trade Skills, Documents)
                   ProfileStatsBar(
