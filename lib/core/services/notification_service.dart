@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/models.dart';
 import '../../features/repositories/worker_repository.dart';
 import '../../main.dart';
 import '../../screens/notifications/notifications_screen.dart';
@@ -137,14 +138,18 @@ class NotificationService {
 
   /// Displays incoming FCM message as a system heads-up popup banner
   Future<void> _showForegroundNotification(RemoteMessage message) async {
-    final title = message.notification?.title ?? message.data['title'] ?? 'BuildHire Notification';
+    final title = message.notification?.title ?? message.data['title'] ?? 'FlowHire Notification';
     final body = message.notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';
+
+    final payloadMap = Map<String, dynamic>.from(message.data);
+    if (!payloadMap.containsKey('title')) payloadMap['title'] = title;
+    if (!payloadMap.containsKey('body')) payloadMap['body'] = body;
 
     await showLocalNotification(
       id: message.hashCode,
       title: title,
       body: body,
-      payload: message.data.isNotEmpty ? jsonEncode(message.data) : null,
+      payload: jsonEncode(payloadMap),
     );
   }
 
@@ -192,12 +197,48 @@ class NotificationService {
       // ignore: avoid_print
       print('🔔 [Notification] Tapped payload: $payload');
     }
-    // Navigate to Notifications Screen
-    if (navigatorKey.currentState != null) {
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-      );
+    if (navigatorKey.currentState == null) return;
+
+    String? notifId;
+    String? refId;
+    WorkerNotification? notif;
+
+    if (payload != null && payload.trim().isNotEmpty) {
+      try {
+        final dynamic decoded = jsonDecode(payload);
+        if (decoded is Map) {
+          final data = Map<String, dynamic>.from(decoded);
+          notifId = (data['notificationId'] ?? data['id'] ?? data['_id'])?.toString();
+          refId = (data['referenceId'] ?? data['jobId'] ?? data['applicationId'] ?? data['conversationId'])?.toString();
+          final title = (data['title'] ?? 'Notification').toString();
+          final body = (data['body'] ?? data['message'] ?? '').toString();
+          final type = (data['type'] ?? data['event'] ?? 'general').toString();
+          final time = (data['createdAt'] ?? data['time'] ?? DateTime.now().toIso8601String()).toString();
+
+          notif = WorkerNotification(
+            id: notifId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            title: title,
+            body: body,
+            type: type,
+            time: time,
+            isRead: false,
+            referenceId: refId,
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) print('⚠️ [Notification] Error decoding tap payload: $e');
+      }
     }
+
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) => NotificationsScreen(
+          targetNotificationId: notifId,
+          targetReferenceId: refId,
+          initialNotification: notif,
+        ),
+      ),
+    );
   }
 
   /// Register or update device token with the backend API

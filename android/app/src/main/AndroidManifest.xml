@@ -6,7 +6,7 @@
     <!-- Required for push notifications on Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
-        android:label="Build Hire"
+        android:label="Flow Hire"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

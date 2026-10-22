@@ -1,3 +1,11 @@
+import 'worker_model.dart';
+
+export 'job_model.dart';
+export 'application_model.dart';
+export 'company_model.dart';
+export 'worker_model.dart';
+export 'feed_post_model.dart';
+
 class Job {
   const Job({
     required this.id,
@@ -12,8 +20,11 @@ class Job {
     this.applied = false,
     this.applicationId,
     this.applicationStatus,
+    this.reviewRemarks,
     this.projectType = 'Full-time',
     this.experienceLevel = 'Any',
+    this.createdAt,
+    this.workforceRequired,
   });
   final String id, title, company, location;
   final int dailyPay;
@@ -23,10 +34,13 @@ class Job {
   final bool saved, applied;
   final String? applicationId;
   final String? applicationStatus;
+  final String? reviewRemarks;
   // e.g. 'Full-time', 'Contract', 'Daily Wage'
   final String projectType;
   // e.g. 'Fresher', 'Experienced', 'Any'
   final String experienceLevel;
+  final String? createdAt;
+  final int? workforceRequired;
   factory Job.fromJson(Map<String, dynamic> j) {
     int parsePay(dynamic v) {
       if (v == null) return 0;
@@ -36,6 +50,14 @@ class Job {
     }
 
     final pay = parsePay(j['dailyPay']) != 0 ? parsePay(j['dailyPay']) : parsePay(j['compensation']);
+
+    int? parseHeadcount(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
 
     return Job(
       id: j['id']?.toString() ?? '',
@@ -50,8 +72,51 @@ class Job {
       applied: j['applied'] == true,
       applicationId: j['applicationId']?.toString(),
       applicationStatus: j['applicationStatus']?.toString() ?? j['status']?.toString(),
+      reviewRemarks: j['reviewRemarks']?.toString() ?? j['remark']?.toString() ?? j['remarks']?.toString(),
       projectType: j['projectType']?.toString() ?? 'Full-time',
       experienceLevel: j['experienceLevel']?.toString() ?? 'Any',
+      createdAt: j['createdAt']?.toString() ?? j['postedAt']?.toString() ?? j['created_at']?.toString() ?? j['date']?.toString(),
+      workforceRequired: parseHeadcount(j['workforceRequired'] ?? j['workersRequired'] ?? j['headcount'] ?? j['vacancies'] ?? j['openings']),
+    );
+  }
+
+  Job copyWith({
+    String? id,
+    String? title,
+    String? company,
+    String? location,
+    int? dailyPay,
+    List<String>? skills,
+    String? description,
+    List<String>? requirements,
+    bool? saved,
+    bool? applied,
+    String? applicationId,
+    String? applicationStatus,
+    String? reviewRemarks,
+    String? projectType,
+    String? experienceLevel,
+    String? createdAt,
+    int? workforceRequired,
+  }) {
+    return Job(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      company: company ?? this.company,
+      location: location ?? this.location,
+      dailyPay: dailyPay ?? this.dailyPay,
+      skills: skills ?? this.skills,
+      description: description ?? this.description,
+      requirements: requirements ?? this.requirements,
+      saved: saved ?? this.saved,
+      applied: applied ?? this.applied,
+      applicationId: applicationId ?? this.applicationId,
+      applicationStatus: applicationStatus ?? this.applicationStatus,
+      reviewRemarks: reviewRemarks ?? this.reviewRemarks,
+      projectType: projectType ?? this.projectType,
+      experienceLevel: experienceLevel ?? this.experienceLevel,
+      createdAt: createdAt ?? this.createdAt,
+      workforceRequired: workforceRequired ?? this.workforceRequired,
     );
   }
 }
@@ -80,22 +145,47 @@ class WorkerProfile {
     required this.city,
     required this.skills,
     required this.salaryExpectation,
+    this.email,
+    this.experience = const [],
+    this.education = const [],
     this.profilePhotoUrl,
     this.documents = const [],
   });
   final String name, phone, city, salaryExpectation;
+  final String? email;
   final List<String> skills;
+  final List<WorkerExperience> experience;
+  final List<dynamic> education;
   final String? profilePhotoUrl;
   final List<Map<String, dynamic>> documents;
-  factory WorkerProfile.fromJson(Map<String, dynamic> j) => WorkerProfile(
-    name: j['name'],
-    phone: j['phone'],
-    city: j['city'],
-    skills: List<String>.from(j['skills'] ?? []),
-    salaryExpectation: j['salaryExpectation'],
-    profilePhotoUrl: j['profilePhotoUrl'],
-    documents: List<Map<String, dynamic>>.from(j['documents'] ?? const []),
-  );
+
+  factory WorkerProfile.fromJson(Map<String, dynamic> j) {
+    final List<WorkerExperience> parsedExp = [];
+    if (j['experience'] is List) {
+      for (final item in j['experience'] as List) {
+        if (item is Map) {
+          parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
+        } else if (item is String) {
+          parsedExp.add(WorkerExperience(company: '', role: item));
+        }
+      }
+    }
+
+    return WorkerProfile(
+      name: j['fullName']?.toString() ?? j['name']?.toString() ?? 'Worker',
+      phone: j['phone']?.toString() ?? j['contactPhone']?.toString() ?? '',
+      city: j['city']?.toString() ?? j['location']?.toString() ?? '',
+      skills: List<String>.from((j['skills'] as List?)?.map((e) => e.toString()) ?? const []),
+      salaryExpectation: j['salaryExpectation']?.toString() ?? '',
+      email: j['email']?.toString(),
+      experience: parsedExp,
+      education: (j['education'] as List?) ?? const [],
+      profilePhotoUrl: j['profilePhotoUrl']?.toString() ?? j['profilePhoto']?.toString() ?? j['photoUrl']?.toString(),
+      documents: List<Map<String, dynamic>>.from(
+        (j['documents'] as List?)?.whereType<Map<String, dynamic>>() ?? const [],
+      ),
+    );
+  }
 }
 
 class Conversation {
@@ -122,7 +212,36 @@ class Conversation {
   final String? seekerAvatarUrl;
   final String? companyAvatarUrl;
 
-  /// Parse a conversation from the real backend API response.
+  Conversation copyWith({
+    String? id,
+    String? company,
+    String? jobTitle,
+    String? lastMessage,
+    String? lastMessageAt,
+    int? unreadCount,
+    List<ChatMessage>? messages,
+    String? applicationId,
+    String? jobId,
+    String? seekerName,
+    String? seekerAvatarUrl,
+    String? companyAvatarUrl,
+  }) {
+    return Conversation(
+      id: id ?? this.id,
+      company: company ?? this.company,
+      jobTitle: jobTitle ?? this.jobTitle,
+      lastMessage: lastMessage ?? this.lastMessage,
+      lastMessageAt: lastMessageAt ?? this.lastMessageAt,
+      unreadCount: unreadCount ?? this.unreadCount,
+      messages: messages ?? this.messages,
+      applicationId: applicationId ?? this.applicationId,
+      jobId: jobId ?? this.jobId,
+      seekerName: seekerName ?? this.seekerName,
+      seekerAvatarUrl: seekerAvatarUrl ?? this.seekerAvatarUrl,
+      companyAvatarUrl: companyAvatarUrl ?? this.companyAvatarUrl,
+    );
+  }
+
   /// The backend returns seeker/company/job objects nested in the conversation.
   /// [currentUserId] is used to determine the display name: if the current user
   /// is the company, show the seeker name, and vice versa.
@@ -302,271 +421,3 @@ class WorkerNotification {
         isPushed: json['isPushed'] as bool? ?? false,
       );
 }
-
-class PostComment {
-  const PostComment({
-    required this.id,
-    required this.authorName,
-    required this.authorRole,
-    this.authorAvatarUrl,
-    required this.text,
-    required this.createdAt,
-    this.isMine = false,
-    this.replies = const [],
-  });
-
-  final String id;
-  final String authorName;
-  final String authorRole;
-  final String? authorAvatarUrl;
-  final String text;
-  final DateTime createdAt;
-  final bool isMine;
-  final List<PostComment> replies;
-
-  PostComment copyWith({
-    String? id,
-    String? authorName,
-    String? authorRole,
-    String? authorAvatarUrl,
-    String? text,
-    DateTime? createdAt,
-    bool? isMine,
-    List<PostComment>? replies,
-  }) {
-    return PostComment(
-      id: id ?? this.id,
-      authorName: authorName ?? this.authorName,
-      authorRole: authorRole ?? this.authorRole,
-      authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
-      text: text ?? this.text,
-      createdAt: createdAt ?? this.createdAt,
-      isMine: isMine ?? this.isMine,
-      replies: replies ?? this.replies,
-    );
-  }
-
-  factory PostComment.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
-    final authorObj = json['author'] is Map ? Map<String, dynamic>.from(json['author']) : null;
-    final companyObj = json['company'] is Map ? Map<String, dynamic>.from(json['company']) : null;
-    final userObj = json['user'] is Map ? Map<String, dynamic>.from(json['user']) : null;
-
-    final authorId = authorObj?['id']?.toString() ??
-        companyObj?['id']?.toString() ??
-        userObj?['id']?.toString() ??
-        json['authorId']?.toString();
-
-    final bool isMine = json['isMine'] == true ||
-        (currentUserId != null &&
-            currentUserId.isNotEmpty &&
-            authorId != null &&
-            authorId.toLowerCase() == currentUserId.toLowerCase());
-
-    final rawAuthorName = authorObj?['companyName']?.toString() ??
-        authorObj?['name']?.toString() ??
-        authorObj?['fullName']?.toString() ??
-        authorObj?['businessName']?.toString() ??
-        companyObj?['companyName']?.toString() ??
-        companyObj?['name']?.toString() ??
-        userObj?['companyName']?.toString() ??
-        userObj?['name']?.toString() ??
-        userObj?['fullName']?.toString() ??
-        json['companyName']?.toString() ??
-        json['authorName']?.toString() ??
-        '';
-
-    final authorName = rawAuthorName.isNotEmpty ? rawAuthorName : (isMine ? '' : 'Verified User');
-
-    final authorRole = authorObj?['role']?.toString() ??
-        companyObj?['role']?.toString() ??
-        userObj?['role']?.toString() ??
-        json['authorRole']?.toString() ??
-        'Community Member';
-
-    final authorAvatar = authorObj?['avatarUrl']?.toString() ??
-        companyObj?['avatarUrl']?.toString() ??
-        userObj?['avatarUrl']?.toString() ??
-        json['authorAvatarUrl']?.toString();
-
-    final rawDate = json['createdAt']?.toString();
-    final parsedDate = rawDate != null ? DateTime.tryParse(rawDate) ?? DateTime.now() : DateTime.now();
-
-    return PostComment(
-      id: json['id']?.toString() ?? '',
-      authorName: authorName,
-      authorRole: authorRole,
-      authorAvatarUrl: authorAvatar,
-      text: (json['content'] ?? json['text'])?.toString() ?? '',
-      createdAt: parsedDate,
-      isMine: isMine,
-      replies: const [],
-    );
-  }
-}
-
-class FeedPost {
-  const FeedPost({
-    required this.id,
-    required this.authorName,
-    required this.authorRole,
-    this.authorAvatarUrl,
-    required this.content,
-    this.location,
-    this.taggedTitle,
-    required this.createdAt,
-    this.isMyPost = false,
-    this.likesCount = 0,
-    this.commentsCount = 0,
-    this.sharesCount = 0,
-    this.isLiked = false,
-    this.comments = const [],
-    this.photos = const [],
-    this.tags = const [],
-  });
-
-  final String id;
-  final String authorName;
-  final String authorRole;
-  final String? authorAvatarUrl;
-  final String content;
-  final String? location;
-  final String? taggedTitle;
-  final DateTime createdAt;
-  final bool isMyPost;
-  final int likesCount;
-  final int commentsCount;
-  final int sharesCount;
-  final bool isLiked;
-  final List<PostComment> comments;
-  final List<String> photos;
-  final List<String> tags;
-
-  FeedPost copyWith({
-    String? id,
-    String? authorName,
-    String? authorRole,
-    String? authorAvatarUrl,
-    String? content,
-    String? location,
-    String? taggedTitle,
-    DateTime? createdAt,
-    bool? isMyPost,
-    int? likesCount,
-    int? commentsCount,
-    int? sharesCount,
-    bool? isLiked,
-    List<PostComment>? comments,
-    List<String>? photos,
-    List<String>? tags,
-  }) {
-    return FeedPost(
-      id: id ?? this.id,
-      authorName: authorName ?? this.authorName,
-      authorRole: authorRole ?? this.authorRole,
-      authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
-      content: content ?? this.content,
-      location: location ?? this.location,
-      taggedTitle: taggedTitle ?? this.taggedTitle,
-      createdAt: createdAt ?? this.createdAt,
-      isMyPost: isMyPost ?? this.isMyPost,
-      likesCount: likesCount ?? this.likesCount,
-      commentsCount: commentsCount ?? this.commentsCount,
-      sharesCount: sharesCount ?? this.sharesCount,
-      isLiked: isLiked ?? this.isLiked,
-      comments: comments ?? this.comments,
-      photos: photos ?? this.photos,
-      tags: tags ?? this.tags,
-    );
-  }
-
-  factory FeedPost.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
-    final authorObj = json['author'] is Map ? Map<String, dynamic>.from(json['author']) : null;
-    final companyObj = json['company'] is Map ? Map<String, dynamic>.from(json['company']) : null;
-    final String title = json['title']?.toString() ?? json['taggedTitle']?.toString() ?? '';
-    final String description = json['description']?.toString() ?? json['content']?.toString() ?? '';
-
-    final String? authorIdStr = json['authorId']?.toString() ??
-        json['userId']?.toString() ??
-        authorObj?['id']?.toString() ??
-        companyObj?['id']?.toString();
-
-    final bool matchUserId = (currentUserId != null &&
-        currentUserId.isNotEmpty &&
-        authorIdStr != null &&
-        authorIdStr.isNotEmpty &&
-        authorIdStr.toLowerCase() == currentUserId.toLowerCase());
-
-    final bool isMyPost = matchUserId ||
-        ((json['isMine'] == true || json['isMyPost'] == true) &&
-            (authorIdStr == null || authorIdStr.isEmpty || matchUserId));
-
-    // Extract company/author name from all possible keys
-    final rawAuthorName = authorObj?['companyName']?.toString() ??
-        authorObj?['name']?.toString() ??
-        authorObj?['fullName']?.toString() ??
-        authorObj?['businessName']?.toString() ??
-        authorObj?['displayName']?.toString() ??
-        companyObj?['companyName']?.toString() ??
-        companyObj?['name']?.toString() ??
-        companyObj?['businessName']?.toString() ??
-        json['companyName']?.toString() ??
-        json['authorName']?.toString() ??
-        json['userName']?.toString() ??
-        (json['user'] is Map ? json['user']['name']?.toString() ?? json['user']['companyName']?.toString() ?? json['user']['fullName']?.toString() : null) ??
-        '';
-
-    // Never fall back to post title for authorName
-    final authorName = rawAuthorName.isNotEmpty ? rawAuthorName : '';
-
-    final authorRole = authorObj?['role']?.toString() ??
-        companyObj?['role']?.toString() ??
-        json['authorRole']?.toString() ??
-        (json['location']?.toString().isNotEmpty == true ? json['location'].toString() : 'Verified Feed');
-
-    final authorAvatar = authorObj?['avatarUrl']?.toString() ??
-        companyObj?['avatarUrl']?.toString() ??
-        json['authorAvatarUrl']?.toString();
-
-    final photosList = (json['photos'] as List?)?.map((e) => e.toString()).toList() ?? const [];
-    final tagsList = (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [];
-
-    return FeedPost(
-      id: json['id']?.toString() ?? '',
-      authorName: authorName,
-      authorRole: authorRole,
-      authorAvatarUrl: authorAvatar,
-      content: description,
-      location: json['location']?.toString(),
-      taggedTitle: title.isNotEmpty ? title : null,
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      isMyPost: isMyPost,
-      likesCount: (json['likesCount'] as num?)?.toInt() ?? 0,
-      commentsCount: (json['commentsCount'] as num?)?.toInt() ?? 0,
-      sharesCount: (json['sharesCount'] as num?)?.toInt() ?? 0,
-      isLiked: json['isLiked'] == true,
-      comments: const [],
-      photos: photosList,
-      tags: tagsList,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': taggedTitle,
-        'description': content,
-        'location': location,
-        'createdAt': createdAt.toIso8601String(),
-        'isMine': isMyPost,
-        'likesCount': likesCount,
-        'commentsCount': commentsCount,
-        'sharesCount': sharesCount,
-        'isLiked': isLiked,
-        'photos': photos,
-        'tags': tags,
-      };
-}
-
-
-

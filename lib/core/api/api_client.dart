@@ -22,15 +22,29 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          const storage = FlutterSecureStorage(
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
-          );
-          try {
-            final token = await storage.read(key: 'accessToken');
+          if (!options.headers.containsKey('Authorization') ||
+              options.headers['Authorization'] == null ||
+              options.headers['Authorization'].toString().isEmpty) {
+            String? token = ApiClient.accessToken;
+            if (token == null || token.isEmpty) {
+              try {
+                const storage = FlutterSecureStorage(
+                  aOptions: AndroidOptions(encryptedSharedPreferences: true),
+                );
+                token = await storage.read(key: 'accessToken');
+              } catch (_) {}
+            }
+            if (token == null || token.isEmpty) {
+              try {
+                const plainStorage = FlutterSecureStorage();
+                token = await plainStorage.read(key: 'accessToken');
+              } catch (_) {}
+            }
             if (token != null && token.isNotEmpty) {
+              ApiClient.accessToken = token;
               options.headers['Authorization'] = 'Bearer $token';
             }
-          } catch (_) {}
+          }
           // ignore: avoid_print
           print('🌐 [API REQ] ${options.method} ${options.baseUrl}${options.path}');
           if (options.data != null) {
@@ -52,24 +66,30 @@ class ApiClient {
           // ignore: avoid_print
           print('   Error Data: ${e.response?.data ?? e.message}');
           if (e.response?.statusCode == 401) {
-            const storage = FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
-            final msg = e.response?.data?['message']?.toString() ?? '';
-            if (msg.contains('Session expired') || msg.contains('Unauthorized') || msg.contains('blocked')) {
-              await storage.deleteAll();
-              final navState = navigatorKey.currentState;
-              if (navState != null && navState.mounted) {
-                ScaffoldMessenger.of(navState.context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Session expired. Please log in again.'),
-                    backgroundColor: Colors.red,
-                  ),
+            final path = e.requestOptions.path;
+            // Only redirect to login if it's an established session expiring, not during auth/signup/profile setup
+            if (!path.startsWith('/auth/')) {
+              final msg = e.response?.data?['message']?.toString() ?? '';
+              if (msg.contains('Session expired') || msg.contains('jwt expired') || msg.contains('token expired')) {
+                const storage = FlutterSecureStorage(
+                  aOptions: AndroidOptions(encryptedSharedPreferences: true),
                 );
-                navState.pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
+                await storage.deleteAll();
+                await const FlutterSecureStorage().deleteAll();
+                ApiClient.accessToken = null;
+                final navState = navigatorKey.currentState;
+                if (navState != null && navState.mounted) {
+                  ScaffoldMessenger.of(navState.context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Session expired. Please log in again.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  navState.pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
               }
             }
           }

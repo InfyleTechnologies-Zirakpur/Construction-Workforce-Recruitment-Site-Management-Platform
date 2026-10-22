@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/repositories/company_repository.dart';
 import '../company/company_profile_form_screen.dart';
@@ -51,9 +53,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
         password: _pass.text,
       );
 
-      const storage = FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
-      );
+      const storage = FlutterSecureStorage();
 
       if (data['accessToken'] != null) {
         await storage.write(key: 'accessToken', value: data['accessToken'].toString());
@@ -62,6 +62,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
         await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
       }
       await storage.write(key: 'role', value: 'company');
+
       // Persist userId & companyName from registration response
       final user = data['user'] ?? data['company'] ?? data;
       if (user is Map) {
@@ -74,7 +75,6 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
           await storage.write(key: 'companyName', value: compName);
         }
       } else {
-        // Fallback: save the entered name as companyName
         if (_fullName.text.trim().isNotEmpty) {
           await storage.write(key: 'companyName', value: _fullName.text.trim());
         }
@@ -100,7 +100,10 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = ApiErrorParser.extractMessage(
+        e,
+        fallback: 'Unable to register company account. Please check your details.',
+      ));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -108,153 +111,476 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    return Theme(
+      data: AppTheme.companyTheme(context),
+      child: Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Background building/crane graphic extending behind logo & titles
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: context.h(290),
+            child: ShaderMask(
+              shaderCallback: (rect) {
+                return const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.black, Colors.black, Colors.transparent],
+                  stops: [0.0, 0.75, 1.0],
+                ).createShader(rect);
+              },
+              blendMode: BlendMode.dstIn,
+              child: Opacity(
+                opacity: 0.85,
+                child: Image.asset(
+                  'assets/company_bg.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topRight,
+                ),
+              ),
+            ),
+          ),
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Company Sign Up'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(context.w(24)),
-          child: Form(
-            key: _formKey,
+          SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: context.w(56),
-                  height: context.w(56),
-                  decoration: BoxDecoration(
-                    color: AppColors.dark,
-                    borderRadius: BorderRadius.circular(16),
+                // Top Navigation Bar
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.w(16),
+                    vertical: context.h(8),
                   ),
-                  child: const Icon(Icons.business_center, color: AppColors.primary, size: 28),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => Navigator.pop(context),
+                        child: const Padding(
+                          padding: EdgeInsets.all(6.0),
+                          child: Icon(Icons.arrow_back, color: Color(0xFF1E2A38), size: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Company Sign Up',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E2A38),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                SizedBox(height: context.h(20)),
-                Text(
-                  'Create Employer Account',
-                  style: textTheme.headlineSmall?.copyWith(color: AppColors.dark, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: context.h(6)),
-                Text(
-                  'Register your company to post site requirements and hire verified skilled workers.',
-                  style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-                ),
-                SizedBox(height: context.h(24)),
 
-                if (_error != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.error),
-                    ),
-                    child: Row(
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: context.w(24)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.error),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13))),
-                      ],
-                    ),
-                  ),
-                ],
+                        SizedBox(height: context.h(16)),
 
-                TextFormField(
-                  controller: _fullName,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name / Contact Representative *',
-                    prefixIcon: Icon(Icons.person_outline),
-                    hintText: 'e.g. Rajesh Kumar',
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter representative name' : null,
-                ),
-                SizedBox(height: context.h(14)),
+                        // Company Brand Logo
+                        Image.asset(
+                          'assets/logo_company.png',
+                          width: context.w(62),
+                          height: context.w(62),
+                          fit: BoxFit.contain,
+                        ),
+                        SizedBox(height: context.h(22)),
 
-                TextFormField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Official Company Email *',
-                    prefixIcon: Icon(Icons.email_outlined),
-                    hintText: 'hr@buildcraft.in',
-                  ),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email address' : null,
-                ),
-                SizedBox(height: context.h(14)),
+                        // Title: Create Employer Account
+                        Text(
+                          'Create Employer Account',
+                          style: TextStyle(
+                            fontSize: context.sp(28),
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF111827),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        SizedBox(height: context.h(8)),
 
-                TextFormField(
-                  controller: _pass,
-                  obscureText: _obscurePass,
-                  decoration: InputDecoration(
-                    labelText: 'Password *',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePass ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscurePass = !_obscurePass),
-                    ),
-                    hintText: 'Minimum 8 characters',
-                  ),
-                  validator: (v) => (v == null || v.length < 8) ? 'Minimum 8 characters' : null,
-                ),
-                SizedBox(height: context.h(14)),
+                        // Subtitle
+                        Text(
+                          'Register your company to post site requirements and hire verified skilled workers.',
+                          style: TextStyle(
+                            fontSize: context.sp(16),
+                            color: const Color(0xFF6B7280),
+                            height: 1.4,
+                          ),
+                        ),
+                        SizedBox(height: context.h(24)),
 
-                TextFormField(
-                  controller: _confirmPass,
-                  obscureText: _obscureConfirm,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password *',
-                    prefixIcon: const Icon(Icons.lock_clock_outlined),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                    ),
-                  ),
-                  validator: (v) {
-                    if (v != _pass.text) return 'Passwords do not match';
-                    return null;
-                  },
-                ),
-                SizedBox(height: context.h(28)),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _register,
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: context.h(16)),
-                    ),
-                    child: _loading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Create Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                ),
-                SizedBox(height: context.h(16)),
-
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text.rich(
-                      TextSpan(
-                        text: 'Already registered? ',
-                        style: TextStyle(color: AppColors.textSecondary),
-                        children: [
-                          TextSpan(
-                            text: 'Sign In',
-                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                        if (_error != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.error),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _error!,
+                                    style: const TextStyle(color: AppColors.error, fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
-                      ),
+
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Full Name / Contact Representative *
+                              TextFormField(
+                                controller: _fullName,
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
+                                decoration: InputDecoration(
+                                  hintText: 'Full Name / Contact Representative *',
+                                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                                  prefixIcon: const Icon(
+                                    Icons.person_outline_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
+                                ),
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) {
+                                    return 'Representative full name is required';
+                                  }
+                                  if (v.trim().length < 3) {
+                                    return 'Please enter a valid full name (minimum 3 characters)';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: context.h(14)),
+
+                              // Official Company Email *
+                              TextFormField(
+                                controller: _email,
+                                keyboardType: TextInputType.emailAddress,
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
+                                decoration: InputDecoration(
+                                  hintText: 'Official Company Email *',
+                                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                                  prefixIcon: const Icon(
+                                    Icons.mail_outline_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
+                                ),
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) {
+                                    return 'Official company email is required';
+                                  }
+                                  final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                                  if (!emailRegex.hasMatch(v.trim())) {
+                                    return 'Please enter a valid email address (e.g. name@company.com)';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: context.h(14)),
+
+                              // Password *
+                              TextFormField(
+                                controller: _pass,
+                                obscureText: _obscurePass,
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
+                                decoration: InputDecoration(
+                                  hintText: 'Password *',
+                                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                                  prefixIcon: const Icon(
+                                    Icons.lock_outline_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                      color: const Color(0xFF6B7280),
+                                      size: 20,
+                                    ),
+                                    onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
+                                ),
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) {
+                                    return 'Password is required';
+                                  }
+                                  if (v.length < 6) {
+                                    return 'Password must be at least 6 characters long';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: context.h(14)),
+
+                              // Confirm Password *
+                              TextFormField(
+                                controller: _confirmPass,
+                                obscureText: _obscureConfirm,
+                                style: const TextStyle(fontSize: 17, color: Color(0xFF1E2A38)),
+                                decoration: InputDecoration(
+                                  hintText: 'Confirm Password *',
+                                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                                  prefixIcon: const Icon(
+                                    Icons.lock_outline_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                      color: const Color(0xFF6B7280),
+                                      size: 20,
+                                    ),
+                                    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.5),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                                  ),
+                                  errorMaxLines: 2,
+                                  errorStyle: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
+                                ),
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) {
+                                    return 'Please confirm your password';
+                                  }
+                                  if (v != _pass.text) {
+                                    return 'Passwords do not match. Please verify your password.';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: context.h(20)),
+
+                              if (_error != null) ...[
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.4)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        _error!.toLowerCase().contains('internet') ||
+                                                _error!.toLowerCase().contains('connection') ||
+                                                _error!.toLowerCase().contains('server') ||
+                                                _error!.toLowerCase().contains('network') ||
+                                                _error!.toLowerCase().contains('timed out')
+                                            ? Icons.wifi_off_rounded
+                                            : Icons.error_outline_rounded,
+                                        color: const Color(0xFFDC2626),
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _error!,
+                                          style: const TextStyle(
+                                            color: Color(0xFF991B1B),
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: context.h(16)),
+                              ],
+
+                              // Create Account Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: context.h(52),
+                                child: ElevatedButton(
+                                  onPressed: _loading ? null : _register,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.companyPrimary,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: _loading
+                                      ? const SizedBox(
+                                          height: 22,
+                                          width: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Create Account',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              SizedBox(height: context.h(18)),
+
+                              // Already registered? Sign In Link
+                              Center(
+                                child: TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text.rich(
+                                    TextSpan(
+                                      text: 'Already registered? ',
+                                      style: TextStyle(
+                                        color: Color(0xFF6B7280),
+                                        fontSize: 16,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Sign In',
+                                          style: TextStyle(
+                                            color: AppColors.companyPrimary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: context.h(24)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+        ],
+      ),
       ),
     );
   }

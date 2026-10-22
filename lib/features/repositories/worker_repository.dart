@@ -1,33 +1,179 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/models.dart';
+import 'worker_chat_repository.dart';
+import 'worker_feed_repository.dart';
 
-class WorkerRepository {
+export 'worker_chat_repository.dart';
+export 'worker_feed_repository.dart';
+
+class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin {
   WorkerRepository({ApiClient? client})
     : _client = client ?? ApiClient.instance;
   final ApiClient _client;
+
+  @override
+  ApiClient get client => _client;
+
+  @override
+  Future<String?> getCurrentUserId() => _getCurrentUserId();
+  /// Step 1: Send OTP for Job Seeker signup (POST /auth/signup/send-otp)
+  Future<Map<String, dynamic>> signupSendOtp({
+    required String firstName,
+    required String lastName,
+    required String contact,
+    required List<String> skills,
+  }) async {
+    final cleanDigits = contact.replaceAll(RegExp(r'[^0-9]'), '');
+    final tenDigitPhone = cleanDigits.length > 10
+        ? cleanDigits.substring(cleanDigits.length - 10)
+        : cleanDigits;
+    final payload = {
+      'name': firstName.trim(),
+      'lastName': lastName.trim(),
+      'phone': tenDigitPhone,
+      'role': 'job_seeker',
+      'skill': skills.isNotEmpty ? skills : ['Mason'],
+    };
+    final r = await _client.dio.post('/auth/signup/send-otp', data: payload);
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return const {'otpSent': true};
+  }
+
+  /// Step 2: Verify OTP for Job Seeker signup (POST /auth/signup/verify-otp)
+  Future<Map<String, dynamic>> signupVerifyOtp({
+    required String contact,
+    required String otp,
+  }) async {
+    final cleanDigits = contact.replaceAll(RegExp(r'[^0-9]'), '');
+    final tenDigitPhone = cleanDigits.length > 10
+        ? cleanDigits.substring(cleanDigits.length - 10)
+        : cleanDigits;
+    final payload = {
+      'phone': tenDigitPhone,
+      'otp': otp.trim(),
+    };
+    final r = await _client.dio.post('/auth/signup/verify-otp', data: payload);
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return Map<String, dynamic>.from(r.data);
+  }
+
+  /// Step 3: Set Password for Job Seeker signup (POST /auth/signup/set-password)
+  Future<Map<String, dynamic>> signupSetPassword({
+    required String signupToken,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final payload = {
+      'signupToken': signupToken.trim(),
+      'password': password,
+      'confirmPassword': confirmPassword,
+    };
+    final r = await _client.dio.post('/auth/signup/set-password', data: payload);
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return Map<String, dynamic>.from(r.data);
+  }
+
   Future<Map<String, dynamic>> requestOtp(String phone) async {
-    final r = await _client.dio.post('/auth/request-otp', data: {'phone': phone});
+    final isEmail = phone.contains('@');
+    final payload = isEmail
+        ? {'email': phone.trim().toLowerCase(), 'phone': phone.trim()}
+        : {'phone': phone.trim()};
+    final r = await _client.dio.post('/auth/request-otp', data: payload);
     final d = r.data is Map ? r.data['data'] : null;
     if (d is Map) return Map<String, dynamic>.from(d);
     return const {'otpSent': true};
   }
   Future<Map<String, dynamic>> verifyOtp({required String phone, required String otp}) async {
-    final r = await _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+    final isEmail = phone.contains('@');
+    final payload = isEmail
+        ? {'email': phone.trim().toLowerCase(), 'phone': phone.trim(), 'otp': otp}
+        : {'phone': phone.trim(), 'otp': otp};
+    final r = await _client.dio.post('/auth/verify-otp', data: payload);
     return Map<String, dynamic>.from(r.data['data']);
   }
-  Future<List<Job>> fetchJobs({String? query}) async {
+
+  /// Step 5: Sign in (POST /auth/login) with method: "phone" | "email"
+  Future<Map<String, dynamic>> loginWithPassword({
+    required String phone,
+    required String password,
+  }) async {
+    final cleanInput = phone.trim();
+    final isEmail = cleanInput.contains('@');
+
+    if (isEmail) {
+      final r = await _client.dio.post('/auth/login', data: {
+        'method': 'email',
+        'email': cleanInput.toLowerCase(),
+        'password': password,
+      });
+      // Response is top-level: { user, accessToken, refreshToken, expiresIn }
+      final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+      if (d is Map) return Map<String, dynamic>.from(d);
+      return const {};
+    }
+
+    final sanitizedDigits = cleanInput.replaceAll(RegExp(r'[^0-9]'), '');
+    final tenDigitPhone = sanitizedDigits.length > 10
+        ? sanitizedDigits.substring(sanitizedDigits.length - 10)
+        : sanitizedDigits;
+
+    final r = await _client.dio.post('/auth/login', data: {
+      'method': 'phone',
+      'phone': tenDigitPhone,
+      'password': password,
+    });
+    // Response is top-level: { user, accessToken, refreshToken, expiresIn }
+    final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return const {};
+  }
+
+  Future<Map<String, dynamic>> setPassword({
+    required String phone,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final isEmail = phone.contains('@');
+    final payload = isEmail
+        ? {'email': phone.trim().toLowerCase(), 'phone': phone, 'otp': otp, 'newPassword': newPassword}
+        : {'phone': phone, 'otp': otp, 'newPassword': newPassword};
+    try {
+      final r = await _client.dio.post('/auth/reset-password', data: payload);
+      final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+      if (d is Map) return Map<String, dynamic>.from(d);
+    } catch (_) {
+      try {
+        final r = await _client.dio.post('/auth/set-password', data: isEmail
+            ? {'email': phone.trim().toLowerCase(), 'phone': phone, 'password': newPassword}
+            : {'phone': phone, 'password': newPassword});
+        final d = r.data is Map ? (r.data['data'] ?? r.data) : null;
+        if (d is Map) return Map<String, dynamic>.from(d);
+      } catch (_) {}
+    }
+    return const {'success': true};
+  }
+  Future<List<Job>> fetchJobs({String? query, String? location}) async {
     final Map<String, Job> jobMap = {};
 
     // 1. Fetch main jobs list
     try {
+      final qParams = <String, dynamic>{};
+      if (query != null && query.trim().isNotEmpty) {
+        qParams['search'] = query.trim();
+      }
+      if (location != null && location.trim().isNotEmpty) {
+        qParams['location'] = location.trim();
+      }
       final response = await _client.dio.get(
         '/jobs',
-        queryParameters: query == null ? null : {'search': query},
+        queryParameters: qParams.isEmpty ? null : qParams,
       );
       final payload = response.data;
       final items = payload['data'] != null 
@@ -109,6 +255,9 @@ class WorkerRepository {
             final appData = Map<String, dynamic>.from(item);
             final appId = appData['id']?.toString();
             final appStatus = appData['status']?.toString();
+            final appRemarks = appData['reviewRemarks']?.toString() ??
+                appData['remark']?.toString() ??
+                appData['remarks']?.toString();
             final jobData = appData['job'] is Map ? Map<String, dynamic>.from(appData['job']) : null;
             final jobId = appData['jobId']?.toString() ?? jobData?['id']?.toString() ?? '';
 
@@ -128,6 +277,7 @@ class WorkerRepository {
                 applied: true,
                 applicationId: appId ?? existing?.applicationId,
                 applicationStatus: appStatus ?? existing?.applicationStatus ?? 'pending',
+                reviewRemarks: appRemarks ?? existing?.reviewRemarks,
                 projectType: existing?.projectType ?? aJob?.projectType ?? 'Full-time',
                 experienceLevel: existing?.experienceLevel ?? aJob?.experienceLevel ?? 'Any',
               );
@@ -157,16 +307,51 @@ class WorkerRepository {
 
   Future<void> apply(String id, {Map<String, dynamic>? details}) async {
     final note = details?['coverNote']?.toString().trim();
-    final body = <String, dynamic>{
-      'coverNote': (note != null && note.isNotEmpty) ? note : 'I am interested in this job.',
-    };
+    final safeNote = (note != null && note.isNotEmpty) ? note : 'I am interested in this job.';
 
-    await _client.dio.post(
-      '/applications/jobs/$id/apply',
-      data: body,
-    );
+    final hasExtra = details != null && details.keys.any((k) => k != 'coverNote');
+
+    if (!hasExtra) {
+      await _client.dio.post(
+        '/applications/jobs/$id/apply',
+        data: {'coverNote': safeNote},
+      );
+      return;
+    }
+
+    try {
+      await _client.dio.post(
+        '/applications/jobs/$id/apply',
+        data: {
+          'coverNote': safeNote,
+          if (details['expectedDailyWage'] != null) 'expectedDailyWage': details['expectedDailyWage'],
+          if (details['skills'] != null) 'skills': details['skills'],
+          if (details['experienceYears'] != null) 'experienceYears': details['experienceYears'],
+          if (details['availableFrom'] != null) 'availableFrom': details['availableFrom'],
+          if (details['contactPhone'] != null) 'contactPhone': details['contactPhone'],
+        },
+      );
+    } on DioException catch (e) {
+      // Deployed backend rejects extra fields with 422. Fallback to only coverNote.
+      if (e.response?.statusCode == 422) {
+        await _client.dio.post(
+          '/applications/jobs/$id/apply',
+          data: {'coverNote': safeNote},
+        );
+        return;
+      }
+      rethrow;
+    }
   }
   Future<void> save(String id) async => _client.dio.post('/jobs/$id/save');
+  Future<void> unsave(String id) async {
+    try {
+      await _client.dio.delete('/jobs/$id/save');
+    } catch (_) {
+      // Fallback: POST /jobs/:id/save toggles save state on some backend schemas
+      await _client.dio.post('/jobs/$id/save');
+    }
+  }
   Future<List<Job>> fetchSavedJobs() async {
     try {
       final response = await _client.dio.get('/jobs/saved/list');
@@ -178,7 +363,6 @@ class WorkerRepository {
     }
   }
 
-  /// Get Active and New Job Counts (GET /jobs/counts)
   Future<Map<String, int>> getJobCounts() async {
     try {
       final response = await _client.dio.get('/jobs/counts');
@@ -245,10 +429,7 @@ class WorkerRepository {
       WorkerProfile.fromJson(
         (await _client.dio.put('/profile', data: body)).data['data'],
       );
-  /// Infer a real Content-Type for the multipart part.
-  /// Without this, Dio sends `application/octet-stream` for every part and
-  /// the backend rejects seeker documents (aadhaar / experience / skill)
-  /// with 400 `Invalid mime application/octet-stream`.
+
   static String _mimeForFilename(String filename) {
     final ext = filename.toLowerCase().split('.').last;
     switch (ext) {
@@ -366,328 +547,5 @@ class WorkerRepository {
     return null;
   }
 
-  Future<List<Conversation>> conversations() async {
-    final response = await _client.dio.get('/conversations');
-    final currentUserId = await _getCurrentUserId();
-    final raw = response.data;
-    List items = [];
-    if (raw is Map) {
-      final d = raw['data'];
-      if (d is List) {
-        items = d;
-      } else if (d is Map) {
-        if (d['data'] is List) items = d['data'];
-        else if (d['items'] is List) items = d['items'];
-      }
-    } else if (raw is List) {
-      items = raw;
-    }
-    return items.map((item) => Conversation.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId)).toList();
-  }
-
-  Future<Conversation?> getConversationById(String conversationId) async {
-    try {
-      final response = await _client.dio.get('/conversations/$conversationId');
-      final currentUserId = await _getCurrentUserId();
-      final raw = response.data;
-      final data = raw is Map ? (raw['data'] ?? raw) : raw;
-      if (data is Map) {
-        return Conversation.fromJson(Map<String, dynamic>.from(data), currentUserId: currentUserId);
-      }
-    } catch (_) {}
-    return null;
-  }
-
-  Future<List<ChatMessage>> fetchMessages(String conversationId) async {
-    final response = await _client.dio.get('/conversations/$conversationId/messages');
-    final currentUserId = await _getCurrentUserId();
-    final raw = response.data;
-    List items = [];
-    if (raw is Map) {
-      final d = raw['data'];
-      if (d is List) items = d;
-      else if (d is Map && d['data'] is List) items = d['data'];
-      else if (d is Map && d['items'] is List) items = d['items'];
-    } else if (raw is List) {
-      items = raw;
-    }
-    return items.map((item) => ChatMessage.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId)).toList();
-  }
-
-  Future<void> sendMessage(String conversationId, String text) async =>
-      _client.dio.post('/conversations/$conversationId/messages', data: {'text': text});
-
-  Future<void> markConversationRead(String conversationId) async =>
-      _client.dio.patch('/conversations/$conversationId/read');
-
-  Future<List<WorkerNotification>> notifications({int page = 1, int limit = 20}) async {
-    try {
-      final response = await _client.dio.get('/notifications', queryParameters: {
-        'page': page,
-        'limit': limit,
-      });
-      final payload = response.data;
-      dynamic itemsRaw;
-      if (payload['data'] is Map) {
-        if (payload['data']['data'] is Map && payload['data']['data']['items'] is List) {
-          itemsRaw = payload['data']['data']['items'];
-        } else if (payload['data']['items'] is List) {
-          itemsRaw = payload['data']['items'];
-        }
-      } else if (payload['items'] is List) {
-        itemsRaw = payload['items'];
-      } else if (payload['data'] is List) {
-        itemsRaw = payload['data'];
-      }
-      if (itemsRaw is List) {
-        return itemsRaw.map((item) => WorkerNotification.fromJson(Map<String, dynamic>.from(item))).toList();
-      }
-      return [];
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<int> unreadNotificationsCount() async {
-    try {
-      final response = await _client.dio.get('/notifications', queryParameters: {'page': 1, 'limit': 1});
-      final payload = response.data;
-      if (payload['data'] is Map && payload['data']['unreadCount'] != null) {
-        return (payload['data']['unreadCount'] as num).toInt();
-      }
-      if (payload['data'] is Map && payload['data']['data'] is Map && payload['data']['data']['unreadCount'] != null) {
-        return (payload['data']['data']['unreadCount'] as num).toInt();
-      }
-      return 0;
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  Future<void> markNotificationRead(String id) async =>
-      _client.dio.patch('/notifications/$id/read');
-
-  Future<void> markAllNotificationsRead() async =>
-      _client.dio.patch('/notifications/read-all');
-
-  Future<void> registerDeviceToken(String token, {String platform = 'android'}) async {
-    try {
-      final response = await _client.dio.post('/notifications/register-device', data: {
-        'token': token,
-        'platform': platform,
-      });
-      // ignore: avoid_print
-      print('🔔 [WorkerRepository] registerDeviceToken response: ${response.statusCode}');
-    } catch (e) {
-      // ignore: avoid_print
-      print('⚠️ [WorkerRepository] registerDeviceToken failed: $e');
-    }
-  }
-
-  Future<void> unregisterDeviceToken(String token) async {
-    try {
-      await _client.dio.delete('/notifications/unregister-device', data: {
-        'token': token,
-      });
-    } catch (e) {
-      // ignore: avoid_print
-      print('⚠️ [WorkerRepository] unregisterDeviceToken failed: $e');
-    }
-  }
-
-  Future<void> logout({String? fcmToken}) async {
-    try {
-      const storage = FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
-      );
-      String? refreshToken;
-      try {
-        refreshToken = await storage.read(key: 'refreshToken');
-      } catch (_) {}
-      await _client.dio.post('/auth/logout', data: {
-        if (fcmToken != null && fcmToken.isNotEmpty) 'fcmToken': fcmToken,
-        if (refreshToken != null && refreshToken.isNotEmpty)
-          'refreshToken': refreshToken,
-      });
-    } catch (_) {
-     
-    }
-  }
-
-
-
-
-  Future<Map<String, dynamic>> fetchPosts({
-    int page = 1,
-    int limit = 10,
-    String? search,
-    String? tag,
-    String? authorId,
-  }) async {
-    final queryParams = <String, dynamic>{
-      'page': page,
-      'limit': limit,
-      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-      if (tag != null && tag.trim().isNotEmpty) 'tag': tag.trim(),
-      if (authorId != null && authorId.trim().isNotEmpty) 'authorId': authorId.trim(),
-    };
-
-    final response = await _client.dio.get('/posts', queryParameters: queryParams);
-    final payload = response.data;
-    List rawItems = [];
-    int total = 0;
-    int totalPages = 1;
-
-    if (payload is Map) {
-      final data = payload['data'];
-      if (data is Map) {
-        if (data['items'] is List) rawItems = data['items'];
-        total = (data['total'] as num?)?.toInt() ?? rawItems.length;
-        totalPages = (data['totalPages'] as num?)?.toInt() ?? 1;
-      } else if (data is List) {
-        rawItems = data;
-      } else if (payload['items'] is List) {
-        rawItems = payload['items'];
-      }
-    }
-
-    final currentUserId = await _getCurrentUserId();
-    final posts = rawItems
-        .whereType<Map>()
-        .map((item) => FeedPost.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId))
-        .toList();
-
-    return {
-      'items': posts,
-      'total': total,
-      'page': page,
-      'limit': limit,
-      'totalPages': totalPages,
-    };
-  }
-
-  /// 2. Get Post Detail (GET /posts/:id)
-  Future<FeedPost> getPostDetail(String id) async {
-    final response = await _client.dio.get('/posts/$id');
-    final payload = response.data;
-    final data = payload is Map ? (payload['data'] ?? payload) : payload;
-    final currentUserId = await _getCurrentUserId();
-    return FeedPost.fromJson(Map<String, dynamic>.from(data), currentUserId: currentUserId);
-  }
-
-  /// 3. Create Post (POST /posts)
-  Future<FeedPost> createPost({
-    required String title,
-    required String description,
-    String? location,
-    List<String>? tags,
-    List<String>? photos,
-    String? coverPhoto,
-    double? latitude,
-    double? longitude,
-    String visibility = 'PUBLIC',
-  }) async {
-    final body = <String, dynamic>{
-      'title': title,
-      'description': description,
-      if (location != null && location.isNotEmpty) 'location': location,
-      if (tags != null && tags.isNotEmpty) 'tags': tags,
-      if (photos != null && photos.isNotEmpty) 'photos': photos,
-      if (coverPhoto != null && coverPhoto.isNotEmpty) 'coverPhoto': coverPhoto,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
-      'visibility': visibility,
-    };
-
-    final response = await _client.dio.post('/posts', data: body);
-    final payload = response.data;
-    final data = payload is Map ? (payload['data'] ?? payload) : payload;
-    return FeedPost.fromJson(Map<String, dynamic>.from(data));
-  }
-
-  /// 4. Update Post (PATCH /posts/:id)
-  Future<FeedPost> updatePost(String id, {String? description, String? location, String? title}) async {
-    final body = <String, dynamic>{
-      if (title != null && title.isNotEmpty) 'title': title,
-      if (description != null && description.isNotEmpty) 'description': description,
-      if (location != null && location.isNotEmpty) 'location': location,
-    };
-
-    final response = await _client.dio.patch('/posts/$id', data: body);
-    final payload = response.data;
-    final data = payload is Map ? (payload['data'] ?? payload) : payload;
-    return FeedPost.fromJson(Map<String, dynamic>.from(data));
-  }
-
-  /// 5. Delete Post (Soft Delete) (DELETE /posts/:id)
-  Future<void> deletePost(String id) async {
-    await _client.dio.delete('/posts/$id');
-  }
-
-  /// 6. Toggle Like Post (POST /posts/:id/like)
-  Future<Map<String, dynamic>> toggleLikePost(String id) async {
-    final response = await _client.dio.post('/posts/$id/like');
-    final payload = response.data;
-    final data = payload is Map ? (payload['data'] ?? payload) : payload;
-    return {
-      'isLiked': data['isLiked'] == true,
-      'likesCount': (data['likesCount'] as num?)?.toInt() ?? 0,
-    };
-  }
-
-  /// 7. Share Post (POST /posts/:id/share)
-  Future<int> sharePost(String id) async {
-    final response = await _client.dio.post('/posts/$id/share');
-    final payload = response.data;
-    final data = payload is Map ? (payload['data'] ?? payload) : payload;
-    return (data['sharesCount'] as num?)?.toInt() ?? 0;
-  }
-
-  /// 8. Add Comment to Post (POST /posts/:id/comments)
-  Future<PostComment> addComment(String postId, String content) async {
-    final response = await _client.dio.post('/posts/$postId/comments', data: {'content': content});
-    final payload = response.data;
-    final data = payload is Map ? (payload['data'] ?? payload) : payload;
-    final currentUserId = await _getCurrentUserId();
-    return PostComment.fromJson(Map<String, dynamic>.from(data), currentUserId: currentUserId);
-  }
-
-  /// 9. List Comments for Post (GET /posts/:id/comments)
-  Future<Map<String, dynamic>> fetchComments(String postId, {int page = 1, int limit = 10}) async {
-    final response = await _client.dio.get('/posts/$postId/comments', queryParameters: {
-      'page': page,
-      'limit': limit,
-    });
-    final payload = response.data;
-    List rawItems = [];
-    int total = 0;
-    int totalPages = 1;
-
-    if (payload is Map) {
-      final data = payload['data'];
-      if (data is Map) {
-        if (data['items'] is List) rawItems = data['items'];
-        total = (data['total'] as num?)?.toInt() ?? rawItems.length;
-        totalPages = (data['totalPages'] as num?)?.toInt() ?? 1;
-      } else if (data is List) {
-        rawItems = data;
-      } else if (payload['items'] is List) {
-        rawItems = payload['items'];
-      }
-    }
-
-    final currentUserId = await _getCurrentUserId();
-    final comments = rawItems
-        .whereType<Map>()
-        .map((item) => PostComment.fromJson(Map<String, dynamic>.from(item), currentUserId: currentUserId))
-        .toList();
-
-    return {
-      'items': comments,
-      'total': total,
-      'page': page,
-      'limit': limit,
-      'totalPages': totalPages,
-    };
-  }
 }
+

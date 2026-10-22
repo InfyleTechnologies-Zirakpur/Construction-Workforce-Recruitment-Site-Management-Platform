@@ -91,17 +91,28 @@ class CompanyRepository {
 
   /// 1. POST /jobs - CREATE JOB POSTING
   Future<Map<String, dynamic>> createJob(Map<String, dynamic> body) async {
-    final payload = Map<String, dynamic>.from(body)
-      ..remove('projectType')
-      ..remove('experienceLevel');
-    final r = await _client.dio.post('/jobs', data: payload);
-    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    try {
+      final r = await _client.dio.post('/jobs', data: body);
+      return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 422 || e.response?.statusCode == 400) {
+        // Fallback: strip extra metadata fields if rejected by older backend schema
+        final stripped = Map<String, dynamic>.from(body)
+          ..remove('projectType')
+          ..remove('experienceLevel');
+        if (stripped.length < body.length) {
+          final r2 = await _client.dio.post('/jobs', data: stripped);
+          return Map<String, dynamic>.from(r2.data['data'] ?? r2.data);
+        }
+      }
+      rethrow;
+    }
   }
 
   /// 2. GET /jobs - LIST COMPANY JOBS
   Future<List<Map<String, dynamic>>> getCompanyJobs({
     int page = 1,
-    int limit = 10,
+    int limit = 50,
     String? search,
     String? location,
     num? minDailyPay,
@@ -134,11 +145,21 @@ class CompanyRepository {
 
   /// 4. PATCH /jobs/:id - UPDATE JOB POSTING
   Future<Map<String, dynamic>> updateJob(String id, Map<String, dynamic> body) async {
-    final payload = Map<String, dynamic>.from(body)
-      ..remove('projectType')
-      ..remove('experienceLevel');
-    final r = await _client.dio.patch('/jobs/$id', data: payload);
-    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    try {
+      final r = await _client.dio.patch('/jobs/$id', data: body);
+      return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 422 || e.response?.statusCode == 400) {
+        final stripped = Map<String, dynamic>.from(body)
+          ..remove('projectType')
+          ..remove('experienceLevel');
+        if (stripped.length < body.length) {
+          final r2 = await _client.dio.patch('/jobs/$id', data: stripped);
+          return Map<String, dynamic>.from(r2.data['data'] ?? r2.data);
+        }
+      }
+      rethrow;
+    }
   }
 
   /// 5. POST /jobs/:id/close - CLOSE JOB POSTING
@@ -150,15 +171,47 @@ class CompanyRepository {
   // --- APPLICATION MANAGEMENT APIS FOR COMPANY ---
 
   /// 10. GET /applications - LIST JOB APPLICATIONS SUBMITTED TO COMPANY JOBS
-  Future<List<Map<String, dynamic>>> getCompanyApplications({String? status, int page = 1, int limit = 10}) async {
-    final r = await _client.dio.get('/applications', queryParameters: {
-      'page': page,
-      'limit': limit,
-      if (status != null && status.isNotEmpty) 'status': status,
-    });
-    final d = r.data['data'];
-    if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
-    if (d is List) return List<Map<String, dynamic>>.from(d);
+  Future<List<Map<String, dynamic>>> getCompanyApplications({
+    String? status,
+    String? jobId,
+    int page = 1,
+    int limit = 50,
+  }) async {
+    try {
+      final r = await _client.dio.get('/applications', queryParameters: {
+        'page': page,
+        'limit': limit,
+        if (status != null && status.isNotEmpty) 'status': status,
+        if (jobId != null && jobId.isNotEmpty) 'jobId': jobId,
+      });
+      final raw = r.data;
+      if (raw is Map) {
+        final d = raw['data'];
+        if (d is List) return List<Map<String, dynamic>>.from(d);
+        if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+        if (d is Map && d['items'] is List) return List<Map<String, dynamic>>.from(d['items']);
+        if (d is Map && d['applications'] is List) return List<Map<String, dynamic>>.from(d['applications']);
+        if (raw['items'] is List) return List<Map<String, dynamic>>.from(raw['items']);
+        if (raw['applications'] is List) return List<Map<String, dynamic>>.from(raw['applications']);
+      }
+      if (raw is List) return List<Map<String, dynamic>>.from(raw);
+    } catch (_) {}
+
+    // Fallback: if jobId is provided and /applications didn't return or failed, try /jobs/:jobId/applications
+    if (jobId != null && jobId.isNotEmpty) {
+      try {
+        final r = await _client.dio.get('/jobs/$jobId/applications');
+        final raw = r.data;
+        if (raw is Map) {
+          final d = raw['data'];
+          if (d is List) return List<Map<String, dynamic>>.from(d);
+          if (d is Map && d['data'] is List) return List<Map<String, dynamic>>.from(d['data']);
+          if (d is Map && d['items'] is List) return List<Map<String, dynamic>>.from(d['items']);
+        }
+        if (raw is List) return List<Map<String, dynamic>>.from(raw);
+      } catch (_) {}
+    }
+
     return [];
   }
 
@@ -169,24 +222,27 @@ class CompanyRepository {
   }
 
   /// 12. PATCH /applications/:id/status - UPDATE APPLICATION STATUS
-  /// The backend accepts { "status": "...", "remark": "..." }.
-  /// If remark is provided, a conversation is auto-created and the remark
-  /// is posted as the first chat message between company and job seeker.
+  /// Supports both `reviewRemarks` (per integration doc) and legacy `remark`.
   Future<Map<String, dynamic>> updateApplicationStatus(
     String id, {
     required String status,
     String? remark,
+    String? reviewRemarks,
   }) async {
-    final body = <String, dynamic>{'status': status};
-    if (remark != null && remark.trim().isNotEmpty) {
-      body['remark'] = remark.trim();
-    }
+    final note = (reviewRemarks ?? remark)?.trim();
+    final body = <String, dynamic>{
+      'status': status,
+      if (note != null && note.isNotEmpty) ...{
+        'reviewRemarks': note,
+        'remark': note,
+      },
+    };
 
     try {
       final r = await _client.dio.patch('/applications/$id/status', data: body);
       return Map<String, dynamic>.from(r.data['data'] ?? r.data);
     } on DioException catch (e) {
-      // If the backend rejects the 'remark' field (422), retry with just status
+      // If the backend rejects the remarks fields (422), retry with just status
       if (e.response?.statusCode == 422 && body.length > 1) {
         final fallback = await _client.dio.patch('/applications/$id/status', data: {'status': status});
         return Map<String, dynamic>.from(fallback.data['data'] ?? fallback.data);

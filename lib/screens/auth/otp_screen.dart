@@ -9,11 +9,11 @@ import '../../features/bloc/worker_blocs.dart';
 import '../home/home_page.dart';
 import '../profile/complete_profile_screen.dart';
 
-/// 6-digit OTP entry screen. Each box auto-advances focus; verifying
-/// on a complete code continues to the worker profile setup.
+
 class OtpScreen extends StatefulWidget {
   final String phoneNumber;
-  const OtpScreen({super.key, required this.phoneNumber});
+  final String countryCode;
+  const OtpScreen({super.key, required this.phoneNumber, this.countryCode = '+91'});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -23,14 +23,8 @@ class _OtpScreenState extends State<OtpScreen> {
   static const int _otpLength = 6;
   static const int _resendSeconds = 30;
 
-  final List<TextEditingController> _controllers = List.generate(
-    _otpLength,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(
-    _otpLength,
-    (_) => FocusNode(),
-  );
+  final TextEditingController _otpController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   Timer? _timer;
   int _secondsLeft = _resendSeconds;
@@ -41,6 +35,17 @@ class _OtpScreenState extends State<OtpScreen> {
   void initState() {
     super.initState();
     _startTimer();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        _otpController.selection = TextSelection.collapsed(
+          offset: _otpController.text.length,
+        );
+      }
+      setState(() {});
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
   void _startTimer() {
@@ -58,62 +63,53 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (final c in _controllers) {
-      c.dispose();
-    }
-    for (final f in _focusNodes) {
-      f.dispose();
-    }
+    _otpController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  String get _enteredOtp => _controllers.map((c) => c.text).join();
-
-  void _onChanged(int index, String value) {
-    if (_errorText != null) setState(() => _errorText = null);
-
-    if (value.isNotEmpty && index < _otpLength - 1) {
-      _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-
-    if (_enteredOtp.length == _otpLength) {
-      FocusScope.of(context).unfocus();
-      _handleVerify();
-    }
-  }
+  String get _enteredOtp => _otpController.text.trim();
 
   Future<void> _handleVerify() async {
-    if (_enteredOtp.length != _otpLength) {
-      setState(() => _errorText = 'Enter the complete 6-digit code');
+    final otp = _enteredOtp;
+    if (otp.isEmpty) {
+      setState(() => _errorText = 'Please enter the 6-digit verification code');
+      return;
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(otp)) {
+      setState(() => _errorText = 'Verification code must contain digits only');
+      return;
+    }
+    if (otp.length != _otpLength) {
+      setState(() => _errorText = 'Enter all 6 digits of the verification code');
       return;
     }
 
-    setState(() => _isVerifying = true);
+    setState(() {
+      _errorText = null;
+      _isVerifying = true;
+    });
 
-    context.read<AuthCubit>().verifyOtp(widget.phoneNumber, _enteredOtp);
+    context.read<AuthCubit>().verifyOtp(widget.phoneNumber, otp);
   }
 
   void _handleResend() {
     if (_secondsLeft > 0) return;
-    for (final c in _controllers) {
-      c.clear();
-    }
-    _focusNodes.first.requestFocus();
-    // TODO: trigger a real "resend OTP" API call.
+    _otpController.clear();
+    setState(() => _errorText = null);
+    _focusNode.requestFocus();
+    context.read<AuthCubit>().requestOtp(widget.phoneNumber);
     _startTimer();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('A new 6-digit OTP has been sent to your number.'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
-  /// Robust existing-user detection.
-  /// Backend (bipul/auth.service) is the source of truth and now returns
-  /// top-level `isNewUser` / `isProfileComplete` + the same flags inside
-  /// `worker`. The fallback below mirrors the backend rule so old builds /
-  /// cached responses still route correctly.
-  /// A brand-new number (e.g. 1234567891) is auto-created with
-  /// name='Job Seeker' + empty city/skills → must go to
-  /// CompleteProfileScreen; an existing number (e.g. 9878261754) with a
-  /// saved real name + city/skills → HomePage.
+
   static const _placeholderNames = {
     '',
     'null',
@@ -259,8 +255,11 @@ class _OtpScreenState extends State<OtpScreen> {
           if (state is Failed<Map<String, dynamic>>) {
             setState(() {
               _isVerifying = false;
-              _errorText = 'Verification failed. Please try again.';
+              _errorText = state.message.isNotEmpty
+                  ? state.message
+                  : 'Invalid OTP code. Please enter the correct code.';
             });
+            _focusNode.requestFocus();
           }
         },
         child: SafeArea(
@@ -278,19 +277,49 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               SizedBox(height: context.h(4)),
               Text(
-                '+91 ${widget.phoneNumber}',
+                widget.phoneNumber.startsWith('+')
+                    ? widget.phoneNumber
+                    : '${widget.countryCode} ${widget.phoneNumber}',
                 style: textTheme.titleSmall?.copyWith(color: AppColors.dark),
               ),
               SizedBox(height: context.h(28)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(_otpLength, (i) => _otpBox(context, i)),
-              ),
+              _buildOtpBoxes(context),
               if (_errorText != null) ...[
-                SizedBox(height: context.h(10)),
-                Text(
-                  _errorText!,
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.error),
+                SizedBox(height: context.h(12)),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.35)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        _errorText!.toLowerCase().contains('internet') ||
+                                _errorText!.toLowerCase().contains('connection') ||
+                                _errorText!.toLowerCase().contains('network') ||
+                                _errorText!.toLowerCase().contains('timed out')
+                            ? Icons.wifi_off_rounded
+                            : Icons.error_outline_rounded,
+                        color: const Color(0xFFDC2626),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorText!,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF991B1B),
+                            fontWeight: FontWeight.w500,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
               SizedBox(height: context.h(28)),
@@ -303,8 +332,8 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                   child: _isVerifying
                       ? SizedBox(
-                          width: context.sp(20),
-                          height: context.sp(20),
+                          width: context.sp(22),
+                          height: context.sp(22),
                           child: const CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2.4,
@@ -345,41 +374,99 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 
-  Widget _otpBox(BuildContext context, int index) {
-    return SizedBox(
-      width: context.w(46),
-      height: context.w(54),
-      child: TextField(
-        controller: _controllers[index],
-        focusNode: _focusNodes[index],
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(color: AppColors.dark),
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          counterText: '',
-          contentPadding: EdgeInsets.zero,
-          filled: true,
-          fillColor: Colors.white,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: _errorText != null ? AppColors.error : AppColors.border,
+  Widget _buildOtpBoxes(BuildContext context) {
+    final currentOtp = _otpController.text;
+    final currentLength = currentOtp.length;
+    final hasFocus = _focusNode.hasFocus;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (!_focusNode.hasFocus) {
+          _focusNode.requestFocus();
+        }
+        _otpController.selection = TextSelection.collapsed(
+          offset: _otpController.text.length,
+        );
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(_otpLength, (index) {
+              final isFilled = index < currentLength;
+              final isCurrent = index == currentLength;
+              final isLastAndFull =
+                  index == _otpLength - 1 && currentLength == _otpLength;
+              final isFocused = hasFocus && (isCurrent || isLastAndFull);
+              final digit = isFilled ? currentOtp[index] : '';
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: context.w(46),
+                height: context.w(54),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _errorText != null
+                        ? AppColors.error
+                        : (isFocused ? AppColors.primary : AppColors.border),
+                    width: isFocused ? 1.8 : 1.0,
+                  ),
+                  boxShadow: isFocused
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  digit,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.dark,
+                        fontWeight: FontWeight.w700,
+                      ) ??
+                      const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.dark,
+                      ),
+                ),
+              );
+            }),
+          ),
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.0,
+              child: TextField(
+                controller: _otpController,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(_otpLength),
+                ],
+                showCursor: false,
+                enableInteractiveSelection: false,
+                onChanged: (val) {
+                  if (_errorText != null) setState(() => _errorText = null);
+                  setState(() {});
+                  if (val.length == _otpLength) {
+                    _focusNode.unfocus();
+                    _handleVerify();
+                  }
+                },
+              ),
             ),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-        ),
-        onChanged: (value) => _onChanged(index, value),
+        ],
       ),
     );
   }

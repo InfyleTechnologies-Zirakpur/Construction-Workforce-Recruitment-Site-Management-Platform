@@ -1,17 +1,20 @@
-# Worker API contract
+# Job Seeker (Worker) API Contract
 
-All endpoints return this envelope:
+All endpoints below are exclusively for the **Job Seeker** role and flow.
 
+Envelope format:
 ```json
 {"success": true, "message": "Success", "data": {}}
 ```
 
-Errors use `success: false`, `message`, and an optional `errors` object.
-
 | Feature | Method / endpoint | Request body | `data` response |
 |---|---|---|---|
-| Send OTP | `POST /auth/request-otp` | `{"phone":"9876543210"}` | `{"otpSent":true,"message":"OTP sent successfully"}` |
-| Verify OTP / login | `POST /auth/verify-otp` | `{"phone":"9876543210","otp":"123456"}` | `{"accessToken":"jwt","worker":{...}}` |
+| Signup: Send OTP | `POST /auth/signup/send-otp` | `{"name":"Rahul","lastName":"Kumar","phone":"9878261754","role":"job_seeker","skill":["Mason"]}` | `{"otpSent":true,"message":"OTP sent successfully","phone":"..."}` |
+| Signup: Verify OTP | `POST /auth/signup/verify-otp` | `{"phone":"9878261754","otp":"545518"}` | `{"verified":true,"signupToken":"jwt","phone":"..."}` |
+| Signup: Set Password | `POST /auth/signup/set-password` | `{"signupToken":"...","password":"...","confirmPassword":"..."}` | `{"accessToken":"jwt","refreshToken":"...","expiresIn":604800}` |
+| Sign in (Job Seeker) | `POST /auth/login` | `{"method":"phone","phone":"9878261754","password":"..."}` | Top-level: `{"user":{...},"accessToken":"...","refreshToken":"...","expiresIn":604800}` |
+| Send OTP (General) | `POST /auth/request-otp` | `{"phone":"9876543210"}` | `{"otpSent":true,"message":"OTP sent successfully"}` |
+| Verify OTP (Login) | `POST /auth/verify-otp` | `{"phone":"9876543210","otp":"123456"}` | `{"accessToken":"jwt","worker":{...}}` |
 | Reset password | `POST /auth/reset-password` | `{"phone":"...","otp":"...","newPassword":"..."}` | `{"changed":true}` |
 | Jobs (filters) | `GET /jobs?search=&location=&minDailyPay=&skill=&projectType=` | none | `{"items":[Job],"total":24}` |
 | Job details | `GET /jobs/{jobId}` | none | `Job` |
@@ -20,12 +23,12 @@ Errors use `success: false`, `message`, and an optional `errors` object.
 | Save / remove job | `POST /jobs/{jobId}/save` | none | updated `Job` |
 | Applications | `GET /applications?status=pending` | none | `{"items":[{"id":"app_1","status":"pending","job":Job}]}` |
 | Profile | `GET /profile` | none | `WorkerProfile` |
-| Update profile | `PUT /profile` | `WorkerProfile` fields below | updated `WorkerProfile` |
+| Update profile | `PUT /profile` | `{"city":"Delhi","salaryExpectation":"800","skills":["Mason","Electrician"],"email":"rahul@gmail.com","experience":[{"title":"Mason","company":"XYZ Constructions","years":"3"}],"education":[]}` | updated `WorkerProfile` |
 | Dashboard | `GET /dashboard` | none | `{"activeProjects":1,"appliedJobs":4,"attendance":"24 days","workingHours":"42h 30m","notifications":["..."]}` |
 | Check in | `POST /attendance/check-in` | `{"latitude":30.210,"longitude":74.945,"projectId":"project_1"}` | `Attendance` |
 | Check out | `POST /attendance/check-out` | same as check in | updated `Attendance` |
 | Attendance list | `GET /attendance?month=2026-08` | none | `{"items":[Attendance],"summary":{"days":24,"overtime":"5h"}}` |
-| Upload document | `POST /documents` multipart | `file`, `type` (`aadhaar`, `experience`, `skill`) | `Document` |
+| Upload document | `POST /documents` multipart | `file`, `type` (`experience`, `skill`) | `Document` |
 | Documents | `GET /documents` | none | `{"items":[Document]}` |
 | Delete document | `DELETE /documents/{documentId}` | none | `{"deleted":true}` |
 | Notifications | `GET /notifications` | none | `{"items":[Notification]}` |
@@ -44,7 +47,7 @@ Errors use `success: false`, `message`, and an optional `errors` object.
 {"id":"att_1","date":"2026-08-03","checkIn":"09:05 AM","checkOut":"06:12 PM","hours":"9h 07m","overtime":"1h 07m","status":"present"}
 
 // Document
-{"id":"doc_1","type":"aadhaar","url":"https://...","verificationStatus":"pending","uploadedAt":"2026-08-03T09:00:00Z"}
+{"id":"doc_1","type":"experience_certificate","url":"https://...","verificationStatus":"pending","uploadedAt":"2026-08-03T09:00:00Z"}
 ```
 
 ## Switching from mock to backend
