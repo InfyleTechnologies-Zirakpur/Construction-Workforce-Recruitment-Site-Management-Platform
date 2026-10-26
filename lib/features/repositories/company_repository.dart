@@ -31,7 +31,12 @@ class CompanyRepository {
       'email': email,
       'role': 'company',
     });
-    return Map<String, dynamic>.from(r.data);
+    final raw = Map<String, dynamic>.from(r.data is Map ? r.data : {});
+    if (raw['data'] is Map) {
+      final inner = Map<String, dynamic>.from(raw['data'] as Map);
+      return {...raw, ...inner};
+    }
+    return raw;
   }
 
   Future<Map<String, dynamic>> verifyCompanySignupOtp({
@@ -42,7 +47,12 @@ class CompanyRepository {
       'email': email,
       'otp': otp,
     });
-    return Map<String, dynamic>.from(r.data);
+    final raw = Map<String, dynamic>.from(r.data is Map ? r.data : {});
+    if (raw['data'] is Map) {
+      final inner = Map<String, dynamic>.from(raw['data'] as Map);
+      return {...raw, ...inner};
+    }
+    return raw;
   }
 
   Future<Map<String, dynamic>> setCompanySignupPassword({
@@ -55,12 +65,41 @@ class CompanyRepository {
       'password': password,
       'confirmPassword': confirmPassword,
     });
-    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    final raw = Map<String, dynamic>.from(r.data is Map ? r.data : {});
+    if (raw['data'] is Map) {
+      final inner = Map<String, dynamic>.from(raw['data'] as Map);
+      return {...raw, ...inner};
+    }
+    return raw;
   }
 
   Future<Map<String, dynamic>> loginCompany({required String email, required String password}) async {
-    final r = await _client.dio.post('/auth/login', data: {"method": "email", 'email': email, 'password': password});
-    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    final r = await _client.dio.post('/auth/login', data: {
+      'method': 'email',
+      'email': email,
+      'password': password,
+    });
+    final raw = Map<String, dynamic>.from(r.data is Map ? r.data : {});
+    if (raw['data'] is Map) {
+      final inner = Map<String, dynamic>.from(raw['data'] as Map);
+      return {...raw, ...inner};
+    }
+    return raw;
+  }
+
+  /// GET /companies/user/:userId - Retrieve company profile by user id
+  Future<Map<String, dynamic>?> getCompanyByUserId(String userId) async {
+    try {
+      final r = await _client.dio.get('/companies/user/$userId');
+      final raw = r.data;
+      if (raw is Map) {
+        final d = raw['data'] ?? raw;
+        if (d is Map) return Map<String, dynamic>.from(d);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   // --- AUTH / SESSION ---
