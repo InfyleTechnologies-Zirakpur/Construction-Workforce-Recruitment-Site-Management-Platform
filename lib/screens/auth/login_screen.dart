@@ -118,17 +118,47 @@ class _LoginScreenState extends State<LoginScreen> {
           await storageEncrypted.write(key: 'email', value: user['email'].toString());
           await storagePlain.write(key: 'email', value: user['email'].toString());
         }
-        if (user['profileCompleted'] == true ||
-            (user['city'] != null && user['city'].toString().isNotEmpty && user['city'] != 'Delhi') ||
-            (user['documents'] is List && (user['documents'] as List).isNotEmpty)) {
+      }
+
+      // Authoritative server flag (present on OTP + password login responses).
+      bool? serverFlag;
+      if (data['isProfileComplete'] is bool) {
+        serverFlag = data['isProfileComplete'] as bool;
+      } else if (data['profileCompleted'] is bool) {
+        serverFlag = data['profileCompleted'] as bool;
+      } else if (data['isNewUser'] is bool) {
+        serverFlag = !(data['isNewUser'] as bool);
+      } else if (user is Map) {
+        if (user['isProfileComplete'] is bool) {
+          serverFlag = user['isProfileComplete'] as bool;
+        } else if (user['profileCompleted'] is bool) {
+          serverFlag = user['profileCompleted'] as bool;
+        } else if (user['isNewUser'] is bool) {
+          serverFlag = !(user['isNewUser'] as bool);
+        }
+      }
+
+      if (serverFlag != null) {
+        profileCompleted = serverFlag;
+        await storageEncrypted.write(key: 'profileCompleted', value: serverFlag.toString());
+        await storagePlain.write(key: 'profileCompleted', value: serverFlag.toString());
+        await storageEncrypted.write(key: 'profileComplete', value: serverFlag.toString());
+        await storagePlain.write(key: 'profileComplete', value: serverFlag.toString());
+      } else {
+        if (user is Map &&
+            user['city'] != null &&
+            user['city'].toString().isNotEmpty &&
+            user['city'] != 'Delhi') {
           profileCompleted = true;
+        }
+        if (!profileCompleted) {
+          profileCompleted = (await storagePlain.read(key: 'profileCompleted')) == 'true' ||
+              (await storageEncrypted.read(key: 'profileCompleted')) == 'true';
+        }
+        if (profileCompleted) {
           await storageEncrypted.write(key: 'profileCompleted', value: 'true');
           await storagePlain.write(key: 'profileCompleted', value: 'true');
         }
-      }
-      if (!profileCompleted) {
-        profileCompleted = (await storagePlain.read(key: 'profileCompleted')) == 'true' ||
-            (await storageEncrypted.read(key: 'profileCompleted')) == 'true';
       }
 
       NotificationService.instance.syncDeviceToken();
@@ -334,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               // PHONE NUMBER BLANK (NO COUNTRY CODE)
                               TextFormField(
                                 controller: _contactController,
-                                keyboardType: TextInputType.phone,
+                                keyboardType: TextInputType.text,
                                 maxLength: 10,
                                 style: const TextStyle(
                                   fontSize: 16,
@@ -343,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 decoration: InputDecoration(
                                   counterText: '',
-                                  hintText: 'Phone Number *',
+                                  hintText: 'Phone Number or Email *',
                                   hintStyle: const TextStyle(
                                     color: Color(0xFF9CA3AF),
                                     fontSize: 14.5,

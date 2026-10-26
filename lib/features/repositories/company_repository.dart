@@ -21,8 +21,45 @@ class CompanyRepository {
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
+  // --- COMPANY EMAIL OTP SIGNUP (new flow per integration/COMPANY_AUTH_AND_SIGNUP.md) ---
+  Future<Map<String, dynamic>> sendCompanySignupOtp({
+    required String name,
+    required String email,
+  }) async {
+    final r = await _client.dio.post('/auth/signup/company/send-otp', data: {
+      'name': name,
+      'email': email,
+      'role': 'company',
+    });
+    return Map<String, dynamic>.from(r.data);
+  }
+
+  Future<Map<String, dynamic>> verifyCompanySignupOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final r = await _client.dio.post('/auth/signup/company/verify-otp', data: {
+      'email': email,
+      'otp': otp,
+    });
+    return Map<String, dynamic>.from(r.data);
+  }
+
+  Future<Map<String, dynamic>> setCompanySignupPassword({
+    required String signupToken,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final r = await _client.dio.post('/auth/signup/company/set-password', data: {
+      'signupToken': signupToken,
+      'password': password,
+      'confirmPassword': confirmPassword,
+    });
+    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+  }
+
   Future<Map<String, dynamic>> loginCompany({required String email, required String password}) async {
-    final r = await _client.dio.post('/auth/login', data: {'email': email, 'password': password});
+    final r = await _client.dio.post('/auth/login', data: {"method": "email", 'email': email, 'password': password});
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 

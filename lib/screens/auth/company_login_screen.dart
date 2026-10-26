@@ -9,6 +9,7 @@ import '../../core/utils/responsive.dart';
 import '../company/company_home_screen.dart';
 import '../../features/repositories/company_repository.dart';
 import 'company_register_screen.dart';
+import 'reset_password_screen.dart';
 
 class CompanyLoginScreen extends StatefulWidget {
   const CompanyLoginScreen({super.key});
@@ -354,9 +355,11 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Please contact administrator to reset company password'),
+                                      // Company forgot-password = email OTP flow.
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const ResetPasswordScreen(initialMethod: 'email'),
                                         ),
                                       );
                                     },

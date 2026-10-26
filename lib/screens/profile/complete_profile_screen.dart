@@ -410,6 +410,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
               await storageEncrypted.write(key: 'profileCompleted', value: 'true');
               await storagePlain.write(key: 'profileCompleted', value: 'true');
+              await storageEncrypted.write(key: 'profileComplete', value: 'true');
+              await storagePlain.write(key: 'profileComplete', value: 'true');
 
               if (!context.mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
@@ -511,7 +513,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     // 5.5 WORK EXPERIENCE CARD
                     CompleteProfileSectionCard(
                       title: 'Work Experience',
-                      subtitle: 'Past company and site experience ({ title, company, years })',
+                      subtitle: 'Past company and site experience',
                       icon: Icons.work_history_rounded,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

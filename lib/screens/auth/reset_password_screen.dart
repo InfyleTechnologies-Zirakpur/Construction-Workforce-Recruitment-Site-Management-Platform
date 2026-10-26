@@ -6,7 +6,11 @@ import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  /// 'phone' → job seeker flow, 'email' → company/contractor flow.
+  /// null → auto-detect from what the user types (phone number vs email).
+  final String? initialMethod;
+
+  const ResetPasswordScreen({super.key, this.initialMethod});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -30,42 +34,57 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
+  // Strong password — mirrors backend policy (8+, upper, lower, digit, special).
+  static final _strongPassword = RegExp(
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$',
+  );
+
+  bool get _isEmailMode {
+    if (widget.initialMethod != null) return widget.initialMethod == 'email';
+    return _phoneController.text.contains('@');
+  }
+
   Future<void> _continue() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
     try {
-      final contact = _phoneController.text.trim();
-      final isEmail = contact.contains('@');
       if (_step == 0) {
+        // POST /auth/forgot-password — role chosen by `method`.
+        final payload = _isEmailMode
+            ? {
+                'method': 'email',
+                'email': _phoneController.text.trim().toLowerCase(),
+              }
+            : {'method': 'phone', 'phone': _phoneController.text.trim()};
         await ApiClient.instance.dio.post(
-          '/auth/request-otp',
-          data: isEmail
-              ? {'email': contact.toLowerCase(), 'phone': contact}
-              : {'phone': contact},
+          '/auth/forgot-password',
+          data: payload,
         );
         if (mounted) setState(() => _step = 1);
       } else if (_step == 1) {
         setState(() => _step = 2);
       } else {
+        // POST /auth/reset-password — verify OTP + set new password.
         await ApiClient.instance.dio.post(
           '/auth/reset-password',
-          data: isEmail
+          data: _isEmailMode
               ? {
-                  'email': contact.toLowerCase(),
-                  'phone': contact,
+                  'method': 'email',
+                  'email': _phoneController.text.trim().toLowerCase(),
                   'otp': _otpController.text.trim(),
                   'newPassword': _passwordController.text,
                 }
               : {
-                  'phone': contact,
+                  'method': 'phone',
+                  'phone': _phoneController.text.trim(),
                   'otp': _otpController.text.trim(),
                   'newPassword': _passwordController.text,
                 },
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password updated successfully.')),
+          const SnackBar(content: Text('Password updated successfully. Please login with your new password.')),
         );
         Navigator.of(context).pop();
       }
@@ -118,14 +137,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
   }
 
-  bool get _isEmail => _phoneController.text.contains('@');
-
-  String get _title => [_isEmail ? 'Your email address' : 'Your mobile number', 'Verify OTP', 'Create password'][_step];
+  String get _title => [_isEmailMode ? 'Your email address' : 'Your mobile number', 'Verify OTP', 'Create password'][_step];
 
   String get _description {
-    if (_step == 0) return 'We will send a secure verification code to your ${_isEmail ? 'email' : 'phone'}.';
+    if (_step == 0) return 'We will send a secure verification code to your ${_isEmailMode ? 'email' : 'phone'}.';
     if (_step == 1) return 'Enter the 6-digit code sent to ${_phoneController.text.trim()}.';
-    return 'Use at least 6 characters for your new password.';
+    return 'Min 8 characters with uppercase, lowercase, number & special character.';
   }
 
   @override
@@ -337,19 +354,20 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget _input() {
     if (_step == 0) {
       return TextFormField(
+        key: const ValueKey('step0_phone'),
         controller: _phoneController,
-        keyboardType: TextInputType.emailAddress,
+        keyboardType: _isEmailMode ? TextInputType.emailAddress : TextInputType.phone,
+        enabled: widget.initialMethod == null, // role-locked flows can't switch
         style: const TextStyle(
           fontSize: 16,
           color: Color(0xFF1E2A38),
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
-          hintText: 'Phone Number or Email ID *',
+          hintText: _isEmailMode ? 'Email ID *' : 'Phone Number *',
           hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14.5),
           prefixIcon: Icon(
-            _phoneController.text.contains('@') ||
-                    RegExp(r'[a-zA-Z]').hasMatch(_phoneController.text)
+            _isEmailMode
                 ? Icons.alternate_email_rounded
                 : Icons.phone_android_rounded,
             color: const Color(0xFF6B7280),
@@ -385,8 +403,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         onChanged: (_) => setState(() {}),
         validator: (value) {
           final val = (value ?? '').trim();
-          if (val.isEmpty) return 'Phone number or email is required';
-          if (val.contains('@')) {
+          if (val.isEmpty) {
+            return _isEmailMode ? 'Email is required' : 'Phone number is required';
+          }
+          if (_isEmailMode) {
             final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
             if (!emailRegex.hasMatch(val)) {
               return 'Please enter a valid email address';
@@ -394,11 +414,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             return null;
           }
           final digits = val.replaceAll(RegExp(r'[^0-9]'), '');
-          if (digits.isEmpty || RegExp(r'[a-zA-Z]').hasMatch(val)) {
-            return 'Please enter a valid phone number or email address';
-          }
-          if (digits.length < 7 || digits.length > 15) {
-            return 'Phone number must be between 7 and 15 digits';
+          if (digits.length != 10 || !RegExp(r'^[6-9]').hasMatch(digits)) {
+            return 'Please enter a valid 10-digit mobile number';
           }
           return null;
         },
@@ -406,6 +423,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
     if (_step == 1) {
       return TextFormField(
+        key: const ValueKey('step1_otp'),
         controller: _otpController,
         maxLength: 6,
         keyboardType: TextInputType.number,
@@ -459,16 +477,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
     }
     return TextFormField(
+       key: const ValueKey('step2_password'),
       controller: _passwordController,
       obscureText: _obscurePassword,
+      keyboardType: TextInputType.visiblePassword, // normal text keyboard
+  textInputAction: TextInputAction.done,
       style: const TextStyle(
         fontSize: 16.5,
         color: Color(0xFF1E2A38),
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        hintText: 'New Password (min 6 characters) *',
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+        hintText: 'New Password (8+ chars, A-Z, a-z, 0-9, special) *',
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13.5),
         prefixIcon: const Icon(
           Icons.lock_outline_rounded,
           color: Color(0xFF6B7280),
@@ -511,7 +532,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       validator: (value) {
         final pass = value ?? '';
         if (pass.isEmpty) return 'New password is required';
-        if (pass.length < 6) return 'Password must be at least 6 characters long';
+        if (!_strongPassword.hasMatch(pass)) {
+          return 'Password needs 8+ chars with uppercase, lowercase, number & special character';
+        }
         return null;
       },
     );

@@ -314,7 +314,14 @@ class AuthCubit extends Cubit<LoadState<Map<String, dynamic>>> {
         completeFlag = !(worker['isNewUser'] as bool);
       }
       if (completeFlag != null) {
-        await storage.write(key: 'profileComplete', value: completeFlag.toString());
+        final flagValue = completeFlag.toString();
+        await storage.write(key: 'profileComplete', value: flagValue);
+        await storage.write(key: 'profileCompleted', value: flagValue);
+        try {
+          const plainStorage = FlutterSecureStorage();
+          await plainStorage.write(key: 'profileComplete', value: flagValue);
+          await plainStorage.write(key: 'profileCompleted', value: flagValue);
+        } catch (_) {}
       }
       final user = data['worker'] ?? data['user'];
       if (user is Map && user['id'] != null) {

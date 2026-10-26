@@ -332,7 +332,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               const SizedBox(height: 16),
 
               // 5. EMAIL (Optional)
-              _buildInputLabel('Email Address (Optional)'),
+              _buildInputLabel('Email Address'),
               _buildTextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,

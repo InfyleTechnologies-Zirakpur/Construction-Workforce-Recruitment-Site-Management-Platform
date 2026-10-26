@@ -121,7 +121,7 @@ class CompleteProfileBasicInfoCard extends StatelessWidget {
           ),
           if (emailController != null) ...[
             const SizedBox(height: 16),
-            _buildInputLabel('Email Address (Optional)'),
+            _buildInputLabel('Email Address'),
             TextFormField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
