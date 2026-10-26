@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
 import '../company/company_home_screen.dart';
+import '../company/company_profile_form_screen.dart';
 import '../../features/repositories/company_repository.dart';
 import 'company_register_screen.dart';
 import 'reset_password_screen.dart';
@@ -36,6 +37,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
     setState(() {
       _loading = true;
       _error = null;
@@ -43,36 +45,102 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
 
     try {
       final repo = CompanyRepository();
-      final data = await repo.loginCompany(email: _email.text.trim(), password: _pass.text);
-      const storage = FlutterSecureStorage();
-      if (data['accessToken'] != null) {
-        final token = data['accessToken'].toString();
-        ApiClient.accessToken = token;
-        ApiClient.instance.dio.options.headers['Authorization'] = 'Bearer $token';
-        await storage.write(key: 'accessToken', value: token);
-      }
-      if (data['refreshToken'] != null) await storage.write(key: 'refreshToken', value: data['refreshToken'].toString());
-      await storage.write(key: 'role', value: 'company');
+      final data = await repo.loginCompany(
+        email: _email.text.trim(),
+        password: _pass.text,
+      );
 
-      // Persist userId & companyName
+      final accessToken = data['accessToken']?.toString();
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception('Login failed: No access token received from server.');
+      }
+
+      ApiClient.accessToken = accessToken;
+      ApiClient.instance.dio.options.headers['Authorization'] = 'Bearer $accessToken';
+
+      const storageEncrypted = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      const storagePlain = FlutterSecureStorage();
+
+      await storageEncrypted.write(key: 'accessToken', value: accessToken);
+      await storagePlain.write(key: 'accessToken', value: accessToken);
+
+      if (data['refreshToken'] != null) {
+        final refresh = data['refreshToken'].toString();
+        await storageEncrypted.write(key: 'refreshToken', value: refresh);
+        await storagePlain.write(key: 'refreshToken', value: refresh);
+      }
+
+      await storageEncrypted.write(key: 'role', value: 'company');
+      await storagePlain.write(key: 'role', value: 'company');
+      await storageEncrypted.write(key: 'email', value: _email.text.trim());
+      await storagePlain.write(key: 'email', value: _email.text.trim());
+
       final user = data['user'] ?? data['company'] ?? data;
+      String compName = '';
       if (user is Map) {
-        if (user['id'] != null) await storage.write(key: 'userId', value: user['id'].toString());
-        final compName = user['companyName']?.toString() ??
+        if (user['isBlocked'] == true) {
+          throw Exception('This company account has been blocked. Please contact support.');
+        }
+
+        final role = user['role']?.toString();
+        if (role != null && role != 'company' && role != 'admin') {
+          throw Exception('This account is registered as a $role. Please login via the job seeker login.');
+        }
+
+        if (user['id'] != null) {
+          final uid = user['id'].toString();
+          await storageEncrypted.write(key: 'userId', value: uid);
+          await storagePlain.write(key: 'userId', value: uid);
+        }
+
+        compName = user['companyName']?.toString() ??
             user['businessName']?.toString() ??
             user['name']?.toString() ??
-            user['fullName']?.toString();
-        if (compName != null && compName.isNotEmpty) {
-          await storage.write(key: 'companyName', value: compName);
+            user['fullName']?.toString() ??
+            '';
+        if (compName.isNotEmpty) {
+          await storageEncrypted.write(key: 'companyName', value: compName);
+          await storagePlain.write(key: 'companyName', value: compName);
         }
       }
+
+      // Check profile completeness per backend specification
+      bool profileComplete = false;
+      if (data['isProfileComplete'] is bool) {
+        profileComplete = data['isProfileComplete'] as bool;
+      } else if (user is Map && user['profileCompleted'] is bool) {
+        profileComplete = user['profileCompleted'] as bool;
+      } else if (user is Map && user['isProfileComplete'] is bool) {
+        profileComplete = user['isProfileComplete'] as bool;
+      }
+
+      await storageEncrypted.write(key: 'profileCompleted', value: profileComplete.toString());
+      await storagePlain.write(key: 'profileCompleted', value: profileComplete.toString());
+      await storageEncrypted.write(key: 'isProfileComplete', value: profileComplete.toString());
+      await storagePlain.write(key: 'isProfileComplete', value: profileComplete.toString());
+
       NotificationService.instance.syncDeviceToken();
 
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const CompanyHomeScreen()),
-        (_) => false,
-      );
+      if (profileComplete) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const CompanyHomeScreen()),
+          (_) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => CompanyProfileFormScreen(
+              isInitialSetup: true,
+              initialEmail: _email.text.trim(),
+              initialName: compName,
+            ),
+          ),
+          (_) => false,
+        );
+      }
     } catch (e) {
       setState(() => _error = ApiErrorParser.extractMessage(
         e,
@@ -289,37 +357,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                 },
                               ),
 
-                              if (_error != null) ...[
-                                SizedBox(height: context.h(12)),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.error.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Padding(
-                                        padding: EdgeInsets.only(top: 2),
-                                        child: Icon(Icons.error_outline_rounded, color: AppColors.error, size: 16),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          _error!,
-                                          style: const TextStyle(
-                                            color: AppColors.error,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+
                               SizedBox(height: context.h(14)),
 
                               // Remember Me & Forgot Password Row

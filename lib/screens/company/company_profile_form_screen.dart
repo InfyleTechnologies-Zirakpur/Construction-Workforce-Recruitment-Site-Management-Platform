@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/api_error_parser.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../features/repositories/company_repository.dart';
@@ -180,6 +182,19 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
         await _repo.createCompanyProfile(body);
       }
 
+      const storageEncrypted = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      const storagePlain = FlutterSecureStorage();
+      await storageEncrypted.write(key: 'profileCompleted', value: 'true');
+      await storagePlain.write(key: 'profileCompleted', value: 'true');
+      await storageEncrypted.write(key: 'isProfileComplete', value: 'true');
+      await storagePlain.write(key: 'isProfileComplete', value: 'true');
+      if (_name.text.trim().isNotEmpty) {
+        await storageEncrypted.write(key: 'companyName', value: _name.text.trim());
+        await storagePlain.write(key: 'companyName', value: _name.text.trim());
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -199,7 +214,10 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = ApiErrorParser.extractMessage(
+            e,
+            fallback: 'Failed to save company profile. Please check your inputs.',
+          );
           _saving = false;
         });
       }
