@@ -62,9 +62,9 @@ class _FeedPostCardState extends State<FeedPostCard> {
         post.authorRole.toLowerCase().contains('contractor');
     final isCompanyFlow = widget.isCompany == true ||
         Theme.of(context).primaryColor.toARGB32() == AppColors.companyPrimary.toARGB32();
-    final isBlueAvatar = isCompanyFlow || isAuthorCompany;
-    final avatarBg = isBlueAvatar ? AppColors.companyPrimary : AppColors.primary;
-    final avatarTextColor = isBlueAvatar ? Colors.white : AppColors.dark;
+    final themePrimary = isCompanyFlow ? AppColors.companyPrimary : AppColors.primary;
+    final avatarBg = isCompanyFlow ? AppColors.companyPrimary : AppColors.primary;
+    final avatarTextColor = isCompanyFlow ? AppColors.dark : Colors.white;
 
     final hasRole = post.taggedTitle != null &&
         post.taggedTitle!.trim().isNotEmpty &&
@@ -120,7 +120,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
                                           .toUpperCase()
                                     : (post.authorName.isNotEmpty
                                           ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
-                                          : (isBlueAvatar ? 'C' : 'U')),
+                                          : (isCompanyFlow ? 'C' : 'U')),
                                 style: TextStyle(
                                   color: avatarTextColor,
                                   fontWeight: FontWeight.w800,
@@ -327,10 +327,10 @@ class _FeedPostCardState extends State<FeedPostCard> {
                     if (hasRole) const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.location_on_outlined,
                           size: 15,
-                          color: Color(0xFF6B7280),
+                          color: themePrimary,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -378,7 +378,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
                       Icon(
                         post.isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_alt_outlined,
                         size: 19,
-                        color: post.isLiked ? Theme.of(context).primaryColor : AppColors.dark,
+                        color: post.isLiked ? themePrimary : AppColors.dark,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -386,7 +386,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
                         style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: post.isLiked ? FontWeight.bold : FontWeight.w600,
-                          color: post.isLiked ? Theme.of(context).primaryColor : AppColors.dark,
+                          color: post.isLiked ? themePrimary : AppColors.dark,
                         ),
                       ),
                     ],

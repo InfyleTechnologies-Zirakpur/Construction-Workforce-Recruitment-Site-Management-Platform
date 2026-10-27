@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  /// Brand primary color (#F7B532)
-  static const Color primary = Color(0xFFF7B532);
+  /// Brand primary color (Blue for Job Seeker #1E75E8)
+  static const Color primary = Color(0xFF1E75E8);
 
   /// Dark typography and prominent headers
   static const Color dark = Color(0xFF101828);
@@ -36,20 +36,20 @@ class AppColors {
   static const Color blue = Color(0xFF007BFF);
   static const Color backgroundBlue = Color(0xFF007BFF);
 
-  /// Warm amber / gold tag accents (harmonized with primary #F7B532)
-  static const Color peachBackground = Color(0xFFFFFBEB);
-  static const Color peachBorder = Color(0xFFFDE68A);
-  static const Color peachText = Color(0xFFB45309);
+  /// Job Seeker Soft Blue tag/surface accents (harmonized with primary #1E75E8)
+  static const Color peachBackground = Color(0xFFEBF3FE);
+  static const Color peachBorder = Color(0xFFBFDBFE);
+  static const Color peachText = Color(0xFF1D4ED8);
 
-  /// Centralized Company Brand Blue Palette
-  static const Color companyPrimary = Color(0xFF1E75E8);
-  static const Color companyPrimaryDark = Color(0xFF1458B2);
-  static const Color companyPrimaryLight = Color(0xFFEBF3FE);
-  static const Color companySurface = Color(0xFFF0F7FE);
-  static const Color companyBorder = Color(0xFFD2E5FC);
-  static const Color companyWave = Color(0xFFA2D1FD);
-  static const Color companyButtonBg = Color(0xFFD8E9FE);
-  static const Color companyTagBackground = Color(0xFFEBF4FE);
-  static const Color companyTagBorder = Color(0xFFBFDBFE);
-  static const Color companyTagText = Color(0xFF1D4ED8);
+  /// Centralized Company Brand Yellow / Amber Palette (#F7B532)
+  static const Color companyPrimary = Color(0xFFF7B532);
+  static const Color companyPrimaryDark = Color(0xFFD99B1E);
+  static const Color companyPrimaryLight = Color(0xFFFFFBEB);
+  static const Color companySurface = Color(0xFFFDF9EA);
+  static const Color companyBorder = Color(0xFFFBE4B4);
+  static const Color companyWave = Color(0xFFFFDF94);
+  static const Color companyButtonBg = Color(0xFFFEEDC8);
+  static const Color companyTagBackground = Color(0xFFFFFBEB);
+  static const Color companyTagBorder = Color(0xFFFDE68A);
+  static const Color companyTagText = Color(0xFFB45309);
 }

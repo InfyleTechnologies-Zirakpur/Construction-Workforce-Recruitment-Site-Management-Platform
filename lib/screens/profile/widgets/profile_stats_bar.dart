@@ -15,10 +15,8 @@ class ProfileStatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wage = profile.salaryExpectation.trim().isNotEmpty
-        ? profile.salaryExpectation.trim()
-        : '₹600/day';
     final skillsCount = profile.skills.length;
+    final location = profile.city.trim().isNotEmpty ? profile.city.trim() : 'Not Set';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -37,7 +35,7 @@ class ProfileStatsBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _buildStatColumn('Expected Wage', wage, Icons.payments_outlined),
+          _buildStatColumn('Location', location, Icons.location_on_outlined),
           _buildDivider(),
           _buildStatColumn('Trade Skills', '$skillsCount', Icons.construction_outlined),
           _buildDivider(),

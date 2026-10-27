@@ -302,24 +302,24 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: (_isCompany ||
-                        comment.authorRole.toLowerCase().contains('employer') ||
-                        comment.authorRole.toLowerCase().contains('company') ||
-                        comment.authorRole.toLowerCase().contains('hiring'))
-                    ? AppColors.companyPrimary
-                    : AppColors.primary,
-                child: Text(
-                  comment.authorName.isNotEmpty
-                      ? comment.authorName[0].toUpperCase()
-                      : 'C',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              Builder(
+                builder: (context) {
+                  final isComp = _isCompany;
+                  return CircleAvatar(
+                    radius: 16,
+                    backgroundColor: isComp ? AppColors.companyPrimary : AppColors.primary,
+                    child: Text(
+                      comment.authorName.isNotEmpty
+                          ? comment.authorName[0].toUpperCase()
+                          : (isComp ? 'C' : 'U'),
+                      style: TextStyle(
+                        color: isComp ? AppColors.dark : Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(width: 10),
               Expanded(

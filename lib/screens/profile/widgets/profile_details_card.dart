@@ -104,14 +104,6 @@ class ProfileDetailsCard extends StatelessWidget {
             value: profile.city.isNotEmpty ? profile.city : 'Not specified',
           ),
           const Divider(height: 16, color: AppColors.border),
-          _buildDetailRow(
-            icon: Icons.payments_outlined,
-            label: 'Salary Expectation',
-            value: profile.salaryExpectation.isNotEmpty
-                ? profile.salaryExpectation
-                : '₹600/day',
-          ),
-          const Divider(height: 16, color: AppColors.border),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(

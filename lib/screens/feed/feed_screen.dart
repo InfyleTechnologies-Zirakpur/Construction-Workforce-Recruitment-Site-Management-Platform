@@ -229,9 +229,9 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _buildFilterChip(String label, int index) {
     final isSelected = _selectedFilter == index;
-    final activeBg = _isCompany ? AppColors.companyTagBackground : const Color(0xFFFFFBEB);
-    final activeBorder = _isCompany ? AppColors.companyTagBorder : const Color(0xFFFDE68A);
-    final activeText = _isCompany ? AppColors.companyPrimary : const Color(0xFFD97706);
+    final activeBg = _isCompany ? AppColors.companyTagBackground : AppColors.peachBackground;
+    final activeBorder = _isCompany ? AppColors.companyTagBorder : AppColors.peachBorder;
+    final activeText = _isCompany ? AppColors.companyPrimary : AppColors.primary;
 
     return InkWell(
       onTap: () => setState(() => _selectedFilter = index),
@@ -304,17 +304,11 @@ class _FeedScreenState extends State<FeedScreen> {
               const SizedBox(height: 14),
 
 
-              // Feed Highlights Stat Bar matching JobsStatsBar
-              BlocBuilder<FeedCubit, LoadState<List<FeedPost>>>(
-                builder: (context, state) {
-                  final totalPosts = state is Loaded<List<FeedPost>> ? state.data.length : 0;
-                  return FeedStatsBar(
-                    activeJobs: _activeJobs,
-                    newJobsToday: _newJobsToday,
-                    totalPosts: totalPosts,
-                    isCompany: _isCompany,
-                  );
-                },
+              // Feed Highlights Stat Bar
+              FeedStatsBar(
+                activeJobs: _activeJobs,
+                newJobsToday: _newJobsToday,
+                isCompany: _isCompany,
               ),
 
               // Section Header & Segment Control matching TradeFilterBar
@@ -329,15 +323,14 @@ class _FeedScreenState extends State<FeedScreen> {
                       color: AppColors.dark,
                     ),
                   ),
-                  Row(
-                    children: [
-                      _buildFilterChip('All Feed', 0),
-                      if (_isCompany) ...[
+                  if (_isCompany)
+                    Row(
+                      children: [
+                        _buildFilterChip('All Feed', 0),
                         const SizedBox(width: 8),
                         _buildFilterChip('My Posts', 1),
                       ],
-                    ],
-                  ),
+                    ),
                 ],
               ),
               const SizedBox(height: 14),

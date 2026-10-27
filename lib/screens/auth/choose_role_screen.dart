@@ -116,24 +116,24 @@ class _ChooseRoleScreenState extends State<ChooseRoleScreen> {
 
                               const SizedBox(height: 32),
 
-                              // Role Card 1: Job Seeker (Yellow theme)
+                              // Role Card 1: Job Seeker (Blue theme)
                               _buildRoleCard(
                                 index: 0,
                                 title: 'Job Seeker',
                                 description:
                                     'Your next job is just a tap away. Explore verified site work & assured wages.',
                                 imageAsset: 'assets/role_job_seeker.png',
-                                cardBgColor: const Color(0xFFFDF9EA),
-                                cardBorderColor: const Color(0xFFFBE4B4),
-                                waveColor: const Color(0xFFFFDF94),
-                                buttonBgColor: const Color(0xFFFEEDC8),
-                                arrowColor: const Color(0xFFE58E12),
+                                cardBgColor: const Color(0xFFF0F7FE),
+                                cardBorderColor: const Color(0xFFD2E5FC),
+                                waveColor: const Color(0xFFA2D1FD),
+                                buttonBgColor: const Color(0xFFD8E9FE),
+                                arrowColor: AppColors.primary,
                                 onTap: () => _onRoleSelected(0),
                               ),
 
                               const SizedBox(height: 18),
 
-                              // Role Card 2: Company (Blue theme)
+                              // Role Card 2: Company (Yellow theme)
                               _buildRoleCard(
                                 index: 1,
                                 title: 'Company',

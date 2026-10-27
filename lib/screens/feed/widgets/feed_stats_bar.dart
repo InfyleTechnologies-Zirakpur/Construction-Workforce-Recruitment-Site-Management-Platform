@@ -6,14 +6,14 @@ import '../../../core/constants/app_colors.dart';
 class FeedStatsBar extends StatelessWidget {
   final int activeJobs;
   final int newJobsToday;
-  final int totalPosts;
+  final int? totalPosts;
   final bool isCompany;
 
   const FeedStatsBar({
     super.key,
     required this.activeJobs,
     required this.newJobsToday,
-    required this.totalPosts,
+    this.totalPosts,
     this.isCompany = false,
   });
 
@@ -70,13 +70,7 @@ class FeedStatsBar extends StatelessWidget {
           Container(width: 1, height: 36, color: const Color(0xFFEAECF0)),
           _buildStatColumn(
             count: '$newJobsToday',
-            label: 'New Today',
-            color: AppColors.dark,
-          ),
-          Container(width: 1, height: 36, color: const Color(0xFFEAECF0)),
-          _buildStatColumn(
-            count: '$totalPosts',
-            label: 'Feed Posts',
+            label: 'New Jobs',
             color: AppColors.dark,
           ),
         ],

@@ -276,19 +276,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               ),
               const SizedBox(height: 14),
 
-              // 3. SALARY EXPECTATION
-              _buildInputLabel('Salary Expectation (Daily/Monthly Wage)'),
-              _buildTextField(
-                controller: _salaryController,
-                keyboardType: TextInputType.number,
-                hintText: 'e.g. 800',
-                prefixText: '₹ ',
-                suffixText: '/day',
-                prefixIcon: Icons.payments_outlined,
-              ),
-              const SizedBox(height: 14),
-
-              // 4. SKILLS
+              // 3. SKILLS
               _buildInputLabel('Skills (replaces existing skills)'),
               _buildTextField(
                 controller: _skillsController,
