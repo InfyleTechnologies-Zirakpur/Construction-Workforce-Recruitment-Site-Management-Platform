@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../features/repositories/worker_repository.dart';
 
 class CompanyApplicantReviewSheet extends StatefulWidget {
   final Map<String, dynamic> app;
@@ -34,11 +36,73 @@ class CompanyApplicantReviewSheet extends StatefulWidget {
 
 class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewSheet> {
   late final TextEditingController _remarksController;
+  bool _isLoadingDocs = false;
+  List<Map<String, dynamic>> _candidateDocs = [];
 
   @override
   void initState() {
     super.initState();
     _remarksController = TextEditingController(text: widget.app['reviewRemarks']?.toString() ?? '');
+    _loadCandidateDocuments();
+  }
+
+  Future<void> _loadCandidateDocuments() async {
+    final app = widget.app;
+    final user = app['user'] is Map ? app['user'] : <String, dynamic>{};
+    final userId = user['id']?.toString() ?? app['userId']?.toString();
+
+    final initialDocs = <Map<String, dynamic>>[];
+    if (app['documents'] is List) {
+      initialDocs.addAll((app['documents'] as List).whereType<Map<String, dynamic>>());
+    } else if (user['documents'] is List) {
+      initialDocs.addAll((user['documents'] as List).whereType<Map<String, dynamic>>());
+    }
+
+    final directResume = app['resumeUrl']?.toString() ??
+        user['resumeUrl']?.toString() ??
+        app['resume']?.toString() ??
+        user['resume']?.toString();
+    if (directResume != null && directResume.isNotEmpty) {
+      final exists = initialDocs.any((d) => (d['fileUrl'] ?? d['url']) == directResume);
+      if (!exists) {
+        initialDocs.insert(0, {
+          'type': 'resume',
+          'originalFilename': 'Candidate Resume.pdf',
+          'fileUrl': directResume,
+        });
+      }
+    }
+
+    if (mounted) {
+      setState(() => _candidateDocs = initialDocs);
+    }
+
+    if (userId != null && userId.isNotEmpty) {
+      if (initialDocs.isEmpty) setState(() => _isLoadingDocs = true);
+      try {
+        final docs = await WorkerRepository().fetchDocumentsForUser(userId);
+        if (mounted && docs.isNotEmpty) {
+          setState(() {
+            _candidateDocs = docs;
+          });
+        }
+      } catch (_) {
+      } finally {
+        if (mounted) setState(() => _isLoadingDocs = false);
+      }
+    }
+  }
+
+  Future<void> _openDocUrl(String? url) async {
+    if (url == null || url.trim().isEmpty) return;
+    try {
+      final uri = Uri.parse(url.trim());
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(uri);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -166,6 +230,131 @@ class _CompanyApplicantReviewSheetState extends State<CompanyApplicantReviewShee
                   child: Text(app['coverNote'].toString(), style: const TextStyle(fontSize: 15, color: AppColors.dark)),
                 ),
               ],
+
+              // Candidate Documents / Resume Section
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Candidate Documents & Resume',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.dark),
+                  ),
+                  if (_isLoadingDocs)
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              if (_candidateDocs.isEmpty && !_isLoadingDocs)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+                      SizedBox(width: 8),
+                      Text(
+                        'No documents attached to this profile',
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Column(
+                  children: _candidateDocs.map((doc) {
+                    final type = (doc['type'] ?? 'document').toString().toLowerCase();
+                    final isResume = type == 'resume' || type == 'cv';
+                    final name = doc['originalFilename']?.toString() ??
+                        doc['fileName']?.toString() ??
+                        doc['name']?.toString() ??
+                        (isResume ? 'Candidate Resume' : '${type.replaceAll('_', ' ').toUpperCase()} Document');
+                    final fileUrl = doc['fileUrl']?.toString() ?? doc['url']?.toString();
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isResume ? const Color(0xFFEFF6FF) : AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isResume ? const Color(0xFFBFDBFE) : AppColors.border,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isResume ? Icons.description_rounded : Icons.folder_shared_outlined,
+                            size: 20,
+                            color: isResume ? const Color(0xFF2563EB) : AppColors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: AppColors.dark,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  isResume ? 'Job Seeker Resume' : type.replaceAll('_', ' ').toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isResume ? const Color(0xFF2563EB) : AppColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (fileUrl != null && fileUrl.isNotEmpty)
+                            InkWell(
+                              onTap: () => _openDocUrl(fileUrl),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isResume ? const Color(0xFF2563EB) : AppColors.companyPrimary,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.visibility_outlined, size: 14, color: Colors.white),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'View',
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
 
               const SizedBox(height: 16),
               TextField(

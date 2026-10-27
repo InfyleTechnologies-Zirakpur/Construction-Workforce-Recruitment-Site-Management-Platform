@@ -13,6 +13,7 @@ class FeedPostCard extends StatefulWidget {
   final VoidCallback onShareTap;
   final VoidCallback? onEditTap;
   final VoidCallback? onDeleteTap;
+  final VoidCallback? onProfileTap;
   final bool? isCompany;
 
   const FeedPostCard({
@@ -24,6 +25,7 @@ class FeedPostCard extends StatefulWidget {
     required this.onShareTap,
     this.onEditTap,
     this.onDeleteTap,
+    this.onProfileTap,
     this.isCompany,
   });
 
@@ -88,62 +90,72 @@ class _FeedPostCardState extends State<FeedPostCard> {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: avatarBg,
-                backgroundImage: (post.authorAvatarUrl != null &&
-                        post.authorAvatarUrl!.trim().isNotEmpty &&
-                        post.authorAvatarUrl != 'null' &&
-                        post.authorAvatarUrl != 'undefined')
-                    ? NetworkImage(post.authorAvatarUrl!.trim())
-                    : null,
-                child: (post.authorAvatarUrl != null &&
-                        post.authorAvatarUrl!.trim().isNotEmpty &&
-                        post.authorAvatarUrl != 'null' &&
-                        post.authorAvatarUrl != 'undefined')
-                    ? null
-                    : Text(
-                        post.authorName.length >= 3 && post.authorName.contains(' ')
-                            ? post.authorName
-                                  .split(' ')
-                                  .take(2)
-                                  .map((e) => e.isNotEmpty ? e[0] : '')
-                                  .join('')
-                                  .toUpperCase()
-                            : (post.authorName.isNotEmpty
-                                  ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
-                                  : (isBlueAvatar ? 'C' : 'U')),
-                        style: TextStyle(
-                          color: avatarTextColor,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
+              Expanded(
+                child: InkWell(
+                  onTap: widget.onProfileTap,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: avatarBg,
+                        backgroundImage: (post.authorAvatarUrl != null &&
+                                post.authorAvatarUrl!.trim().isNotEmpty &&
+                                post.authorAvatarUrl != 'null' &&
+                                post.authorAvatarUrl != 'undefined')
+                            ? NetworkImage(post.authorAvatarUrl!.trim())
+                            : null,
+                        child: (post.authorAvatarUrl != null &&
+                                post.authorAvatarUrl!.trim().isNotEmpty &&
+                                post.authorAvatarUrl != 'null' &&
+                                post.authorAvatarUrl != 'undefined')
+                            ? null
+                            : Text(
+                                post.authorName.length >= 3 && post.authorName.contains(' ')
+                                    ? post.authorName
+                                          .split(' ')
+                                          .take(2)
+                                          .map((e) => e.isNotEmpty ? e[0] : '')
+                                          .join('')
+                                          .toUpperCase()
+                                    : (post.authorName.isNotEmpty
+                                          ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
+                                          : (isBlueAvatar ? 'C' : 'U')),
+                                style: TextStyle(
+                                  color: avatarTextColor,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              post.authorName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 17,
+                                color: AppColors.dark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.formattedTime,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      post.authorName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
-                        color: AppColors.dark,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.formattedTime,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               InkWell(

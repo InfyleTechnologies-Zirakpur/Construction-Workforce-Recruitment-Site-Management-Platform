@@ -45,6 +45,10 @@ class ApiClient {
               options.headers['Authorization'] = 'Bearer $token';
             }
           }
+          if (options.data is FormData) {
+            options.headers.remove('Content-Type');
+            options.headers.remove('content-type');
+          }
           // ignore: avoid_print
           print('🌐 [API REQ] ${options.method} ${options.baseUrl}${options.path}');
           if (options.data != null) {

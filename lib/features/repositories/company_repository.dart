@@ -87,19 +87,44 @@ class CompanyRepository {
     return raw;
   }
 
-  /// GET /companies/user/:userId - Retrieve company profile by user id
-  Future<Map<String, dynamic>?> getCompanyByUserId(String userId) async {
+  /// GET /companies/user/:userId or GET /companies/user/ - Retrieve company profile by user id or currently logged-in user
+  Future<Map<String, dynamic>?> getCompanyByUserId([String? userId]) async {
     try {
-      final r = await _client.dio.get('/companies/user/$userId');
+      final path = (userId != null && userId.trim().isNotEmpty)
+          ? '/companies/user/${userId.trim()}'
+          : '/companies/user/';
+      final r = await _client.dio.get(path);
       final raw = r.data;
       if (raw is Map) {
-        final d = raw['data'] ?? raw;
+        var d = raw['data'] ?? raw;
+        if (d is Map && d['data'] is Map) {
+          d = d['data'];
+        }
         if (d is Map) return Map<String, dynamic>.from(d);
       }
       return null;
     } catch (_) {
+      try {
+        final altPath = (userId != null && userId.trim().isNotEmpty)
+            ? '/companies/user/${userId.trim()}'
+            : '/companies/user';
+        final r = await _client.dio.get(altPath);
+        final raw = r.data;
+        if (raw is Map) {
+          var d = raw['data'] ?? raw;
+          if (d is Map && d['data'] is Map) {
+            d = d['data'];
+          }
+          if (d is Map) return Map<String, dynamic>.from(d);
+        }
+      } catch (_) {}
       return null;
     }
+  }
+
+  /// GET /companies/user/ - Retrieve company profile for the currently logged-in company user
+  Future<Map<String, dynamic>?> getMyCompanyProfile() async {
+    return getCompanyByUserId(null);
   }
 
   // --- AUTH / SESSION ---
@@ -145,7 +170,15 @@ class CompanyRepository {
   /// 4. GET /api/v1/companies/:id - View single company details by UUID
   Future<Map<String, dynamic>> getCompanyById(String id) async {
     final r = await _client.dio.get('/companies/$id');
-    return Map<String, dynamic>.from(r.data['data'] ?? r.data);
+    final raw = r.data;
+    if (raw is Map) {
+      var d = raw['data'] ?? raw;
+      if (d is Map && d['data'] is Map) {
+        d = d['data'];
+      }
+      if (d is Map) return Map<String, dynamic>.from(d);
+    }
+    return <String, dynamic>{};
   }
 
   /// 5. PATCH /api/v1/companies/:id - Update company profile details

@@ -102,6 +102,8 @@ class PostComment {
 class FeedPost {
   const FeedPost({
     required this.id,
+    this.authorId,
+    this.companyId,
     required this.authorName,
     required this.authorRole,
     this.authorAvatarUrl,
@@ -120,6 +122,8 @@ class FeedPost {
   });
 
   final String id;
+  final String? authorId;
+  final String? companyId;
   final String authorName;
   final String authorRole;
   final String? authorAvatarUrl;
@@ -138,6 +142,8 @@ class FeedPost {
 
   FeedPost copyWith({
     String? id,
+    String? authorId,
+    String? companyId,
     String? authorName,
     String? authorRole,
     String? authorAvatarUrl,
@@ -156,6 +162,8 @@ class FeedPost {
   }) {
     return FeedPost(
       id: id ?? this.id,
+      authorId: authorId ?? this.authorId,
+      companyId: companyId ?? this.companyId,
       authorName: authorName ?? this.authorName,
       authorRole: authorRole ?? this.authorRole,
       authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
@@ -177,6 +185,7 @@ class FeedPost {
   factory FeedPost.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
     final authorObj = json['author'] is Map ? Map<String, dynamic>.from(json['author']) : null;
     final companyObj = json['company'] is Map ? Map<String, dynamic>.from(json['company']) : null;
+    final userObj = json['user'] is Map ? Map<String, dynamic>.from(json['user']) : null;
     final String rawTitle = json['title']?.toString() ?? json['taggedTitle']?.toString() ?? '';
     final isDefaultSiteReport = rawTitle.trim().toLowerCase() == 'site report';
     final String? title = (rawTitle.trim().isNotEmpty && !isDefaultSiteReport) ? rawTitle.trim() : null;
@@ -185,7 +194,14 @@ class FeedPost {
     final String? authorIdStr = json['authorId']?.toString() ??
         json['userId']?.toString() ??
         authorObj?['id']?.toString() ??
-        companyObj?['id']?.toString();
+        authorObj?['userId']?.toString() ??
+        userObj?['id']?.toString() ??
+        userObj?['userId']?.toString() ??
+        companyObj?['userId']?.toString();
+
+    final String? companyIdStr = json['companyId']?.toString() ??
+        companyObj?['id']?.toString() ??
+        authorObj?['companyId']?.toString();
 
     final bool matchUserId = (currentUserId != null &&
         currentUserId.isNotEmpty &&
@@ -197,18 +213,26 @@ class FeedPost {
         ((json['isMine'] == true || json['isMyPost'] == true) &&
             (authorIdStr == null || authorIdStr.isEmpty || matchUserId));
 
-    final rawAuthorName = authorObj?['companyName']?.toString() ??
+    final authorCompanyObj = authorObj?['company'] is Map ? Map<String, dynamic>.from(authorObj!['company']) : null;
+    final userCompanyObj = userObj?['company'] is Map ? Map<String, dynamic>.from(userObj!['company']) : null;
+
+    final rawAuthorName = authorCompanyObj?['name']?.toString() ??
+        authorCompanyObj?['companyName']?.toString() ??
+        userCompanyObj?['name']?.toString() ??
+        userCompanyObj?['companyName']?.toString() ??
+        authorObj?['companyName']?.toString() ??
         authorObj?['name']?.toString() ??
         authorObj?['fullName']?.toString() ??
         authorObj?['businessName']?.toString() ??
         authorObj?['displayName']?.toString() ??
-        companyObj?['companyName']?.toString() ??
         companyObj?['name']?.toString() ??
+        companyObj?['companyName']?.toString() ??
         companyObj?['businessName']?.toString() ??
         json['companyName']?.toString() ??
         json['authorName']?.toString() ??
         json['userName']?.toString() ??
-        (json['user'] is Map ? json['user']['name']?.toString() ?? json['user']['companyName']?.toString() ?? json['user']['fullName']?.toString() : null) ??
+        (json['company'] is Map ? (json['company']['name'] ?? json['company']['companyName'])?.toString() : null) ??
+        (json['user'] is Map ? json['user']['companyName']?.toString() ?? json['user']['name']?.toString() ?? json['user']['fullName']?.toString() : null) ??
         '';
 
     final authorName = rawAuthorName.isNotEmpty ? rawAuthorName : '';
@@ -227,6 +251,8 @@ class FeedPost {
 
     return FeedPost(
       id: json['id']?.toString() ?? '',
+      authorId: authorIdStr,
+      companyId: companyIdStr,
       authorName: authorName,
       authorRole: authorRole,
       authorAvatarUrl: authorAvatar,
@@ -249,6 +275,8 @@ class FeedPost {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'authorId': authorId,
+        'companyId': companyId,
         'title': taggedTitle,
         'description': content,
         'location': location,

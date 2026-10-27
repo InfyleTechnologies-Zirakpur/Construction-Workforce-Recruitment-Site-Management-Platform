@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/models/models.dart';
+import '../repositories/company_repository.dart';
 import '../repositories/worker_repository.dart';
 import 'worker_blocs.dart';
 
@@ -27,7 +28,19 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
       const storage = FlutterSecureStorage(
         aOptions: AndroidOptions(encryptedSharedPreferences: true),
       );
-      final savedCompName = await storage.read(key: 'companyName');
+      var savedCompName = await storage.read(key: 'companyName');
+      if (savedCompName == null || savedCompName.trim().isEmpty) {
+        try {
+          final comp = await CompanyRepository().getMyCompanyProfile();
+          if (comp != null) {
+            final fresh = (comp['name'] ?? comp['companyName'] ?? comp['businessName'])?.toString();
+            if (fresh != null && fresh.trim().isNotEmpty) {
+              savedCompName = fresh.trim();
+              await storage.write(key: 'companyName', value: savedCompName);
+            }
+          }
+        } catch (_) {}
+      }
 
       final enriched = items.map((p) {
         bool myPost = p.isMyPost;
@@ -37,13 +50,21 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
           if (effectiveName.isNotEmpty && effectiveName.trim().toLowerCase() == savedCompName.trim().toLowerCase()) {
             myPost = true;
           }
-          if (myPost && (effectiveName.isEmpty || effectiveName == 'Verified Partner')) {
+          if (myPost && (effectiveName.isEmpty || effectiveName == 'Verified Partner' || effectiveName == 'Verified Profile')) {
             effectiveName = savedCompName;
           }
         }
 
-        if (effectiveName.isEmpty) {
-          effectiveName = 'Verified Partner';
+        if (myPost && (effectiveName.isEmpty || effectiveName == 'Verified Partner' || effectiveName == 'Verified Profile')) {
+          if (savedCompName != null && savedCompName.isNotEmpty) {
+            effectiveName = savedCompName;
+          }
+        }
+
+        if (effectiveName.isEmpty || effectiveName == 'Verified Profile') {
+          effectiveName = (myPost && savedCompName != null && savedCompName.isNotEmpty)
+              ? savedCompName
+              : (p.authorRole.isNotEmpty ? p.authorRole : 'Company');
         }
 
         return p.copyWith(

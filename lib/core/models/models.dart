@@ -5,6 +5,7 @@ export 'application_model.dart';
 export 'company_model.dart';
 export 'worker_model.dart';
 export 'feed_post_model.dart';
+export 'document_model.dart';
 
 class Job {
   const Job({
@@ -149,6 +150,7 @@ class WorkerProfile {
     this.experience = const [],
     this.education = const [],
     this.profilePhotoUrl,
+    this.resumeUrl,
     this.documents = const [],
   });
   final String name, phone, city, salaryExpectation;
@@ -157,6 +159,7 @@ class WorkerProfile {
   final List<WorkerExperience> experience;
   final List<dynamic> education;
   final String? profilePhotoUrl;
+  final String? resumeUrl;
   final List<Map<String, dynamic>> documents;
 
   factory WorkerProfile.fromJson(Map<String, dynamic> j) {
@@ -171,6 +174,26 @@ class WorkerProfile {
       }
     }
 
+    final rawDocs = (j['documents'] as List?)
+            ?.whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        const <Map<String, dynamic>>[];
+
+    String? resume = j['resumeUrl']?.toString() ??
+        j['resume']?.toString() ??
+        j['cvUrl']?.toString();
+    if (resume == null || resume.isEmpty) {
+      for (final doc in rawDocs) {
+        final t = (doc['type'] ?? '').toString().toLowerCase();
+        final fn = (doc['fileName'] ?? doc['originalFilename'] ?? doc['name'] ?? '').toString().toLowerCase();
+        if (t == 'resume' || t == 'cv' || fn.contains('resume')) {
+          resume = doc['fileUrl']?.toString() ?? doc['url']?.toString();
+          break;
+        }
+      }
+    }
+
     return WorkerProfile(
       name: j['fullName']?.toString() ?? j['name']?.toString() ?? 'Worker',
       phone: j['phone']?.toString() ?? j['contactPhone']?.toString() ?? '',
@@ -181,9 +204,8 @@ class WorkerProfile {
       experience: parsedExp,
       education: (j['education'] as List?) ?? const [],
       profilePhotoUrl: j['profilePhotoUrl']?.toString() ?? j['profilePhoto']?.toString() ?? j['photoUrl']?.toString(),
-      documents: List<Map<String, dynamic>>.from(
-        (j['documents'] as List?)?.whereType<Map<String, dynamic>>() ?? const [],
-      ),
+      resumeUrl: resume,
+      documents: rawDocs,
     );
   }
 }

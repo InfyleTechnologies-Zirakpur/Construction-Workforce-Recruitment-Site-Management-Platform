@@ -31,6 +31,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   void initState() {
     super.initState();
     context.read<ProfileCubit>().load();
+    context.read<DocumentsCubit>().load(silent: true);
   }
 
   static String _subtypeOf(String t) {
@@ -77,14 +78,15 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   Future<void> _uploadDocument(String type) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
+      allowedExtensions: const ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
       withData: true,
     );
     final file = result?.files.single;
     if (file?.bytes == null || !mounted) return;
 
     setState(() => _isUploadingDocument = true);
-    final document = await context.read<ProfileCubit>().uploadDocument(
+
+    final doc = await context.read<DocumentsCubit>().upload(
       bytes: file!.bytes!,
       filename: file.name,
       type: type,
@@ -93,11 +95,13 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
 
     setState(() => _isUploadingDocument = false);
     _showMessage(
-      document == null
+      doc == null
           ? 'Document upload failed.'
-          : 'Document uploaded for verification.',
+          : (type == 'resume' ? 'Resume updated successfully.' : 'Document uploaded for verification.'),
     );
-    if (document != null) context.read<ProfileCubit>().load();
+    if (doc != null) {
+      context.read<ProfileCubit>().load();
+    }
   }
 
   void _editProfile(WorkerProfile profile) {
@@ -300,7 +304,12 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
 
         return RefreshIndicator(
           color: AppColors.primary,
-          onRefresh: () => context.read<ProfileCubit>().load(),
+          onRefresh: () async {
+            await Future.wait([
+              context.read<ProfileCubit>().load(),
+              context.read<DocumentsCubit>().load(silent: true),
+            ]);
+          },
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 680),
@@ -437,6 +446,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                     documents: profile.documents,
                     isUploadingDocument: _isUploadingDocument,
                     onUploadDocument: _uploadDocument,
+                    onRefresh: () => context.read<ProfileCubit>().load(),
                   ),
                   const SizedBox(height: 20),
 

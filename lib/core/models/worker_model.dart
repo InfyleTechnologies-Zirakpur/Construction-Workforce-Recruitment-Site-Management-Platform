@@ -49,6 +49,7 @@ class WorkerProfileModel {
   final String? email;
   final List<dynamic> education;
   final String? profilePhoto;
+  final String? resumeUrl;
   final int? experienceYears;
   final String? availabilityStatus;
   final List<Map<String, dynamic>> documents;
@@ -67,6 +68,7 @@ class WorkerProfileModel {
     this.email,
     this.education = const [],
     this.profilePhoto,
+    this.resumeUrl,
     this.experienceYears,
     this.availabilityStatus,
     this.documents = const [],
@@ -92,6 +94,10 @@ class WorkerProfileModel {
         json['photoUrl']?.toString() ??
         json['avatarUrl']?.toString();
 
+    final rawResume = json['resumeUrl']?.toString() ??
+        json['resume']?.toString() ??
+        json['cvUrl']?.toString();
+
     final List<WorkerExperience> parsedExp = [];
     if (json['experience'] is List) {
       for (final item in json['experience'] as List) {
@@ -102,6 +108,12 @@ class WorkerProfileModel {
         }
       }
     }
+
+    final rawDocs = (json['documents'] as List?)
+            ?.whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        const <Map<String, dynamic>>[];
 
     return WorkerProfileModel(
       id: json['id']?.toString() ?? '',
@@ -117,11 +129,10 @@ class WorkerProfileModel {
       email: json['email']?.toString(),
       education: (json['education'] as List?) ?? const [],
       profilePhoto: rawPhoto,
+      resumeUrl: rawResume,
       experienceYears: parseYears(json['experienceYears'] ?? json['totalExperienceYears']),
       availabilityStatus: json['availabilityStatus']?.toString(),
-      documents: List<Map<String, dynamic>>.from(
-        (json['documents'] as List?)?.whereType<Map<String, dynamic>>() ?? const [],
-      ),
+      documents: rawDocs,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
@@ -144,6 +155,7 @@ class WorkerProfileModel {
       if (email != null) 'email': email,
       'education': education,
       if (profilePhoto != null) 'profilePhoto': profilePhoto,
+      if (resumeUrl != null) 'resumeUrl': resumeUrl,
       if (experienceYears != null) 'experienceYears': experienceYears,
       if (availabilityStatus != null) 'availabilityStatus': availabilityStatus,
       'documents': documents,
@@ -160,6 +172,7 @@ class WorkerProfileModel {
       'salaryExpectation': salaryExpectation,
       'experience': experience.map((e) => e.toJson()).toList(),
       if (email != null && email!.isNotEmpty) 'email': email,
+      if (resumeUrl != null && resumeUrl!.isNotEmpty) 'resumeUrl': resumeUrl,
       'education': education,
       if (fullName.isNotEmpty) 'name': fullName,
     };

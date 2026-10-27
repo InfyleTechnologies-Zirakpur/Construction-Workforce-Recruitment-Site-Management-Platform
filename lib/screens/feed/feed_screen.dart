@@ -7,7 +7,10 @@ import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../features/bloc/worker_blocs.dart';
+import '../../features/repositories/company_repository.dart';
 import '../../features/repositories/worker_repository.dart';
+import '../company/company_profile_screen.dart';
+import '../profile/worker_profile_screen.dart';
 import 'create_feed_screen.dart';
 import 'widgets/feed_comments_sheet.dart';
 import 'widgets/feed_post_card.dart';
@@ -29,6 +32,7 @@ class _FeedScreenState extends State<FeedScreen> {
   int _activeJobs = 0;
   int _newJobsToday = 0;
   late bool _isCompany;
+  String? _userAvatarUrl;
 
   @override
   void initState() {
@@ -38,6 +42,7 @@ class _FeedScreenState extends State<FeedScreen> {
       _checkUserRole();
     }
     _loadJobCounts();
+    _loadUserProfile();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<FeedCubit>().load();
@@ -69,6 +74,78 @@ class _FeedScreenState extends State<FeedScreen> {
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      const storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      final avatar = await storage.read(key: 'avatarUrl');
+      if (mounted && avatar != null && avatar.isNotEmpty) {
+        setState(() => _userAvatarUrl = avatar);
+      }
+      if (_isCompany) {
+        final profile = await CompanyRepository().getMyCompanyProfile();
+        if (mounted && profile != null) {
+          final logo = (profile['logoUrl'] ?? profile['avatarUrl'])?.toString();
+          if (logo != null && logo.isNotEmpty) {
+            setState(() => _userAvatarUrl = logo);
+          }
+          final compName = (profile['name'] ?? profile['companyName'] ?? profile['businessName'])?.toString();
+          if (compName != null && compName.trim().isNotEmpty) {
+            await storage.write(key: 'companyName', value: compName.trim());
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _openMyProfile() {
+    if (_isCompany) {
+      Navigator.of(context)
+          .push(
+            MaterialPageRoute(
+              builder: (_) => const CompanyProfileScreen(isReadOnly: false),
+            ),
+          )
+          .then((_) => _loadUserProfile());
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const WorkerProfileScreen(),
+        ),
+      );
+    }
+  }
+
+  void _openAuthorProfile(FeedPost post) {
+    if (post.isMyPost) {
+      _openMyProfile();
+      return;
+    }
+
+    final isWorker = post.authorRole.toLowerCase().contains('seeker') ||
+        post.authorRole.toLowerCase().contains('worker') ||
+        post.authorRole.toLowerCase().contains('labor');
+
+    if (isWorker) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const WorkerProfileScreen(),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CompanyProfileScreen(
+            userId: post.authorId,
+            companyId: post.companyId,
+            isReadOnly: true,
+          ),
+        ),
+      );
+    }
   }
 
 
@@ -191,7 +268,10 @@ class _FeedScreenState extends State<FeedScreen> {
         child: RefreshIndicator(
           color: _themePrimary,
           onRefresh: () async {
-            await _loadJobCounts();
+            await Future.wait([
+              _loadJobCounts(),
+              _loadUserProfile(),
+            ]);
             if (context.mounted) {
               await context.read<FeedCubit>().load(refresh: true);
             }
@@ -204,7 +284,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Company Feed',
+                    _isCompany ? 'Company Feed' : 'Industry Feed',
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.dark,
@@ -391,6 +471,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           onShareTap: () => _showShareModal(post),
                           onEditTap: post.isMyPost ? () => _openEditPost(post) : null,
                           onDeleteTap: post.isMyPost ? () => _confirmDeletePost(post) : null,
+                          onProfileTap: () => _openAuthorProfile(post),
                           isCompany: _isCompany,
                         ),
                       );
