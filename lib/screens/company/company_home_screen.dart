@@ -11,11 +11,13 @@ import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
 import '../auth/login_screen.dart';
 import '../feed/feed_screen.dart';
+import '../feed/create_feed_screen.dart';
+import '../settings/settings_screen.dart';
 import 'company_profile_form_screen.dart';
 import 'company_profile_screen.dart';
 import 'widgets/company_analytics_view.dart';
 import 'widgets/company_app_bar.dart';
-import 'widgets/company_applications_view.dart';
+import 'widgets/company_hiring_view.dart';
 import 'widgets/company_chats_view.dart';
 import 'widgets/company_post_job_sheet.dart';
 import 'widgets/company_site_jobs_view.dart';
@@ -53,8 +55,10 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     _loadCompanyData();
   }
 
-  Future<void> _loadCompanyData() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadCompanyData({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() => _isLoading = true);
+    }
     try {
       final results = await Future.wait([
         _repo.getCompanyApplications(limit: 100)
@@ -328,7 +332,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadCompanyData();
+        _loadCompanyData(showLoading: false);
       }
     } catch (e) {
       if (mounted) {
@@ -368,176 +372,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   }
 
   Widget _companyHeader(TextTheme textTheme) {
-    if (_isCompanyVerified) return const SizedBox.shrink();
-
-    final hasProfile = _myProfile != null;
-    final rawName = _myProfile?['name']?.toString() ??
-        _myProfile?['companyName']?.toString() ??
-        _myProfile?['fullName']?.toString() ??
-        'Company Profile';
-    final companyName = rawName.replaceAll(RegExp(r'\s+Admin$', caseSensitive: false), '');
-    final status = hasProfile
-        ? (_myProfile?['verificationStatus'] ?? 'pending').toString().toUpperCase()
-        : 'REQUIRED';
-    final statusColor = !hasProfile
-        ? AppColors.companyPrimary
-        : (status == 'VERIFIED'
-            ? AppColors.success
-            : (status == 'REJECTED' ? AppColors.error : const Color(0xFFF59E0B)));
-
-    return InkWell(
-      onTap: () async {
-        if (!hasProfile) {
-          final shouldSetup = await AppConfirmDialog.show(
-            context,
-            title: 'Company Profile Required',
-            message:
-                'You must register your company profile credentials before posting job requirements on the platform.',
-            confirmLabel: 'Setup Profile',
-            cancelLabel: 'Cancel',
-            icon: Icons.business_rounded,
-            isDestructive: false,
-          );
-          if (shouldSetup && mounted) {
-            final created = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(builder: (_) => const CompanyProfileFormScreen()),
-            );
-            if (created == true && mounted) _loadCompanyData();
-          }
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
-          ).then((_) => _loadCompanyData());
-        }
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 78,
-        decoration: BoxDecoration(
-          color: AppColors.dark,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/company_bg.jpg',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.centerRight,
-                  errorBuilder: (_, __, ___) => const SizedBox(),
-                ),
-              ),
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        AppColors.dark,
-                        AppColors.dark.withValues(alpha: 0.94),
-                        AppColors.dark.withValues(alpha: 0.65),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: !hasProfile ? AppColors.companyTagBackground : AppColors.companyPrimary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        !hasProfile ? Icons.domain_add_rounded : Icons.apartment_rounded,
-                        color: !hasProfile ? AppColors.companyPrimary : Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            hasProfile ? companyName : 'Complete Profile',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            hasProfile
-                                ? 'Manage site hiring & company details'
-                                : 'Set up credentials to start posting job requirements',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.7),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.white70,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   @override
@@ -548,180 +383,159 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       data: AppTheme.companyTheme(context),
       child: Scaffold(
       backgroundColor: AppColors.background,
-      appBar: CompanyAppBar(
-        logoUrl: _myProfile?['logoUrl']?.toString() ??
-            _myProfile?['avatarUrl']?.toString() ??
-            _myProfile?['logo']?.toString() ??
-            _myProfile?['avatar']?.toString() ??
-            _myProfile?['profileImage']?.toString() ??
-            _myProfile?['imageUrl']?.toString() ??
-            _myProfile?['image']?.toString() ??
-            (_myProfile?['user'] is Map
-                ? (_myProfile!['user']['avatarUrl'] ?? _myProfile!['user']['avatar'])?.toString()
-                : null),
-        companyName: _myProfile?['name']?.toString() ??
-            _myProfile?['companyName']?.toString() ??
-            _myProfile?['businessName']?.toString(),
-        onProfileTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
-        ).then((_) => _loadCompanyData()),
-      ),
+      appBar: (_tabIndex == 2 || _tabIndex == 4)
+          ? null
+          : const CompanyAppBar(
+              showSettings: false,
+              showProfileAvatar: false,
+            ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(
-            top: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
+            top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
           ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _tabIndex,
-          onTap: (idx) => setState(() => _tabIndex = idx),
-          selectedItemColor: AppColors.companyPrimary,
-          unselectedItemColor: const Color(0xFF6B7280),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.home_outlined, size: 23),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                index: 0,
+                icon: Icons.home_outlined,
+                label: 'Home',
               ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.home, size: 23, color: AppColors.companyPrimary),
+              _buildNavItem(
+                index: 1,
+                icon: Icons.business_center_outlined,
+                label: 'Hiring',
               ),
-              label: 'Feed',
+              _buildNavItem(
+                index: 2,
+                icon: Icons.add_box_outlined,
+                label: 'Post',
+                isAction: true,
+              ),
+              _buildNavItem(
+                index: 3,
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Chat',
+              ),
+              _buildNavItem(
+                index: 4,
+                icon: Icons.settings_outlined,
+                label: 'Settings',
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: null,
+      body: _tabIndex == 0
+          ? const FeedScreen(isCompany: true)
+          : _tabIndex == 2
+              ? CreateFeedScreen(
+                  isCompany: true,
+                  isTab: true,
+                  onPostSuccess: () {
+                    setState(() => _tabIndex = 0);
+                    _loadCompanyData();
+                  },
+                )
+              : _tabIndex == 4
+                  ? const SettingsScreen(isTab: true)
+                  : SafeArea(
+                      child: RefreshIndicator(
+                        color: AppColors.companyPrimary,
+                        onRefresh: _loadCompanyData,
+                        child: _isLoading
+                            ? const Padding(padding: EdgeInsets.all(20), child: SmartSkeleton.list(itemCount: 4))
+                            : ListView(
+                                padding: const EdgeInsets.all(20),
+                                children: [
+                                  if (_tabIndex == 1)
+                                    CompanyHiringView(
+                                      applications: _applications,
+                                      companyJobs: _companyJobs,
+                                      statusFilter: _appStatusFilter,
+                                      onStatusFilterChanged: (st) {
+                                        setState(() => _appStatusFilter = st);
+                                      },
+                                      selectedAppIds: _selectedAppIds,
+                                      isBulkAction: _isBulkAction,
+                                      onBulkShortlist: _bulkShortlist,
+                                      onUpdateStatus: _updateAppStatus,
+                                      onRefresh: _loadCompanyData,
+                                      myProfile: _myProfile,
+                                      onNewJob: () => CompanyPostJobSheet.show(
+                                        context,
+                                        myProfile: _myProfile,
+                                        onJobPosted: _loadCompanyData,
+                                      ),
+                                      onEditJob: (job) => CompanyPostJobSheet.show(
+                                        context,
+                                        myProfile: _myProfile,
+                                        existingJob: job,
+                                        onJobPosted: _loadCompanyData,
+                                      ),
+                                    )
+                                  else if (_tabIndex == 3)
+                                    CompanyChatsView(
+                                      companyConversations: _companyConversations,
+                                      companyUserId: _myProfile?['id']?.toString(),
+                                      onRefresh: _loadCompanyData,
+                                    ),
+                                ],
+                              ),
+                      ),
+                    ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+    bool isAction = false,
+  }) {
+    final isSelected = _tabIndex == index;
+
+    return InkWell(
+      onTap: () => setState(() => _tabIndex = index),
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        width: 62,
+        height: 56,
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.companyPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: isSelected ? AppColors.dark : const Color(0xFF334155),
             ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.group_outlined, size: 23),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? AppColors.dark : const Color(0xFF334155),
+                letterSpacing: -0.2,
               ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.group, size: 23, color: AppColors.companyPrimary),
-              ),
-              label: 'Applications',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.business_center_outlined, size: 23),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.business_center, size: 23, color: AppColors.companyPrimary),
-              ),
-              label: 'Site Jobs',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.bar_chart_rounded, size: 23),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.bar_chart_rounded, size: 23, color: AppColors.companyPrimary),
-              ),
-              label: 'Analytics',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.chat_outlined, size: 22),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: Icon(Icons.chat, size: 22, color: AppColors.companyPrimary),
-              ),
-              label: 'Chats',
             ),
           ],
         ),
-      ),
-      floatingActionButton: (_tabIndex == 1 || _tabIndex == 2)
-          ? FloatingActionButton(
-              onPressed: () => CompanyPostJobSheet.show(
-                context,
-                myProfile: _myProfile,
-                onJobPosted: _loadCompanyData,
-              ),
-              backgroundColor: AppColors.companyPrimary,
-              tooltip: 'Post Job',
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
-      body: _tabIndex == 0
-          ? const FeedScreen(isCompany: true)
-          : SafeArea(
-              child: RefreshIndicator(
-                color: AppColors.companyPrimary,
-                onRefresh: _loadCompanyData,
-                child: _isLoading
-                    ? const Padding(padding: EdgeInsets.all(20), child: SmartSkeleton.list(itemCount: 4))
-                    : ListView(
-                        padding: const EdgeInsets.all(20),
-                        children: [
-                          if (!_isCompanyVerified) ...[
-                            _companyHeader(textTheme),
-                            const SizedBox(height: 16),
-                          ],
-                          if (_tabIndex == 1)
-                            CompanyApplicationsView(
-                              applications: _applications,
-                              statusFilter: _appStatusFilter,
-                              onStatusFilterChanged: (st) {
-                                setState(() => _appStatusFilter = st);
-                              },
-                              selectedAppIds: _selectedAppIds,
-                              isBulkAction: _isBulkAction,
-                              onBulkShortlist: _bulkShortlist,
-                              onUpdateStatus: _updateAppStatus,
-                              onRefresh: _loadCompanyData,
-                            )
-                          else if (_tabIndex == 2)
-                            CompanySiteJobsView(
-                              companyJobs: _companyJobs,
-                              applications: _applications,
-                              onNewJob: () => CompanyPostJobSheet.show(
-                                context,
-                                myProfile: _myProfile,
-                                onJobPosted: _loadCompanyData,
-                              ),
-                              onPublishJob: _publishJob,
-                              onCloseJob: _closeJob,
-                              onUpdateStatus: _updateAppStatus,
-                              onViewApplicants: () => setState(() => _tabIndex = 1),
-                            )
-                          else if (_tabIndex == 3)
-                            CompanyAnalyticsView(
-                              reportsData: _reportsData,
-                              jobsCount: _companyJobs.length,
-                              applicationsCount: _applications.length,
-                              companyJobs: _companyJobs,
-                              applications: _applications,
-                              onNavigateToJobs: () => setState(() => _tabIndex = 2),
-                              onNavigateToApplications: (status) {
-                                setState(() {
-                                  _appStatusFilter = status;
-                                  _tabIndex = 1;
-                                });
-                              },
-                            )
-                          else
-                            CompanyChatsView(
-                              companyConversations: _companyConversations,
-                              companyUserId: _myProfile?['id']?.toString(),
-                              onRefresh: _loadCompanyData,
-                            ),
-                        ],
-                      ),
-              ),
-            ),
       ),
     );
   }

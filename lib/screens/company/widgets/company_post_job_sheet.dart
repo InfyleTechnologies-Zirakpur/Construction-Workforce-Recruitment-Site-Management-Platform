@@ -7,17 +7,20 @@ import '../company_profile_form_screen.dart';
 
 class CompanyPostJobSheet extends StatefulWidget {
   final Map<String, dynamic>? myProfile;
+  final Map<String, dynamic>? existingJob;
   final VoidCallback onJobPosted;
 
   const CompanyPostJobSheet({
     super.key,
     this.myProfile,
+    this.existingJob,
     required this.onJobPosted,
   });
 
   static Future<void> show(
     BuildContext context, {
     required Map<String, dynamic>? myProfile,
+    Map<String, dynamic>? existingJob,
     required VoidCallback onJobPosted,
   }) async {
     if (myProfile == null) {
@@ -46,6 +49,7 @@ class CompanyPostJobSheet extends StatefulWidget {
               CompanyPostJobSheet.show(
                 context,
                 myProfile: updatedProfile,
+                existingJob: existingJob,
                 onJobPosted: onJobPosted,
               );
             }
@@ -61,6 +65,7 @@ class CompanyPostJobSheet extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => CompanyPostJobSheet(
         myProfile: myProfile,
+        existingJob: existingJob,
         onJobPosted: onJobPosted,
       ),
     );
@@ -71,137 +76,266 @@ class CompanyPostJobSheet extends StatefulWidget {
 }
 
 class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
-  final _title = TextEditingController();
-  final _location = TextEditingController();
-  final _compensation = TextEditingController();
-  final _skillInput = TextEditingController();
-  final _description = TextEditingController();
-  final _skillFocusNode = FocusNode();
+  final _titleController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _salaryController = TextEditingController();
+  final _experienceController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
+  String? _selectedCategory;
+  String? _selectedJobType;
+
+  final _titleFocusNode = FocusNode();
+  final _locationFocusNode = FocusNode();
+  final _salaryFocusNode = FocusNode();
+  final _experienceFocusNode = FocusNode();
+  final _descriptionFocusNode = FocusNode();
+
   final _repo = CompanyRepository();
+  bool _isSubmitting = false;
 
-  int _workersNeeded = 5;
-  bool _isPosting = false;
-  String? _selectedTradePreset;
-
-  // Predefined trades from Job Seeker screen
-  static const List<String> _tradePresets = [
-    'Electrician',
-    'Plumber',
-    'Mason',
-    'Carpenter',
-    'Painter',
-    'Welder',
-    'Laborer',
+  static const List<String> _categoryOptions = [
+    'Civil Engineering',
+    'Site Management',
+    'Construction Engineering',
+    'Electrical & Wiring',
+    'Plumbing & Sanitation',
+    'Masonry & Concrete',
+    'Carpentry & Woodwork',
+    'Welding & Fabrication',
+    'Painting & Finishing',
+    'Heavy Machinery Operation',
+    'Safety & Quality Inspection',
+    'General Workforce & Labor',
+    'Architecture & Planning',
   ];
 
-  // Active skill chips list - starts empty with no prefilled suggestions
-  final List<String> _skillsList = [];
+  static const List<String> _jobTypeOptions = [
+    'Full-time',
+    'Part-time',
+    'Contract',
+    'Temporary',
+    'Internship',
+    'Freelance',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _titleFocusNode.addListener(() => setState(() {}));
+    _locationFocusNode.addListener(() => setState(() {}));
+    _salaryFocusNode.addListener(() => setState(() {}));
+    _experienceFocusNode.addListener(() => setState(() {}));
+    _descriptionFocusNode.addListener(() => setState(() {}));
+
+    if (widget.existingJob != null) {
+      final job = widget.existingJob!;
+      _titleController.text = (job['title'] ?? '').toString();
+      _locationController.text = (job['location'] ?? job['address'] ?? '').toString();
+
+      final sal = job['salary'] ?? job['compensation'] ?? job['pay'] ?? job['wage'];
+      if (sal != null) _salaryController.text = sal.toString();
+
+      final exp = job['experience'] ?? job['experienceRequired'] ?? job['yearsOfExperience'];
+      if (exp != null) _experienceController.text = exp.toString();
+
+      _descriptionController.text = (job['description'] ?? '').toString();
+
+      final cat = job['category'] ?? (job['skills'] is List && (job['skills'] as List).isNotEmpty ? job['skills'][0] : null);
+      if (cat != null && cat.toString().isNotEmpty) {
+        _selectedCategory = cat.toString();
+      }
+
+      final type = job['jobType'] ?? job['type'] ?? job['employmentType'];
+      if (type != null && type.toString().isNotEmpty) {
+        _selectedJobType = type.toString();
+      }
+    }
+  }
 
   @override
   void dispose() {
-    _title.dispose();
-    _location.dispose();
-    _compensation.dispose();
-    _skillInput.dispose();
-    _skillFocusNode.dispose();
-    _description.dispose();
+    _titleController.dispose();
+    _locationController.dispose();
+    _salaryController.dispose();
+    _experienceController.dispose();
+    _descriptionController.dispose();
+
+    _titleFocusNode.dispose();
+    _locationFocusNode.dispose();
+    _salaryFocusNode.dispose();
+    _experienceFocusNode.dispose();
+    _descriptionFocusNode.dispose();
     super.dispose();
   }
 
-  InputDecoration _cleanDeco(
-    String hint, {
-    String? counterText,
-    TextStyle? hintStyle,
-  }) {
-    return InputDecoration(
-      isDense: true,
-      filled: false,
-      fillColor: Colors.transparent,
-      border: InputBorder.none,
-      enabledBorder: InputBorder.none,
-      focusedBorder: InputBorder.none,
-      errorBorder: InputBorder.none,
-      disabledBorder: InputBorder.none,
-      focusedErrorBorder: InputBorder.none,
-      contentPadding: EdgeInsets.zero,
-      counterText: counterText,
-      hintText: hint,
-      hintStyle: hintStyle ??
-          const TextStyle(
-            fontSize: 15.5,
-            color: Color(0xFF98A2B3),
-            fontWeight: FontWeight.normal,
-          ),
-    );
-  }
-
-  void _onTradeSelected(String trade) {
-    setState(() {
-      if (_selectedTradePreset == trade) {
-        _selectedTradePreset = null;
-      } else {
-        _selectedTradePreset = trade;
-        _title.text = trade;
-      }
-    });
-  }
-
-  void _autoFillLocation() {
-    final companyLoc = widget.myProfile?['address']?.toString() ??
-        widget.myProfile?['city']?.toString() ??
-        widget.myProfile?['location']?.toString();
-
-    final target = (companyLoc != null && companyLoc.trim().isNotEmpty)
-        ? companyLoc.trim()
-        : 'Sector 17, Chandigarh';
-
-    setState(() {
-      _location.text = target;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Site location set to: $target'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppColors.companyPrimary,
-        behavior: SnackBarBehavior.floating,
+  void _showCategoryPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Select Category',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Color(0xFF64748B), size: 22),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const Divider(color: Color(0xFFE2E8F0)),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _categoryOptions.length,
+                itemBuilder: (context, idx) {
+                  final cat = _categoryOptions[idx];
+                  final isSel = _selectedCategory == cat;
+                  return InkWell(
+                    onTap: () {
+                      setState(() => _selectedCategory = cat);
+                      Navigator.pop(ctx);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isSel ? const Color(0xFFFEF3C7) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              cat,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                                color: isSel ? const Color(0xFFD97706) : const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ),
+                          if (isSel)
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFFD97706), size: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _addSkill(String skill) {
-    final trimmed = skill.trim();
-    if (trimmed.isEmpty) return;
-    if (trimmed.contains(',')) {
-      final parts = trimmed.split(',');
-      for (final part in parts) {
-        final p = part.trim();
-        if (p.isNotEmpty && !_skillsList.contains(p)) {
-          setState(() {
-            _skillsList.add(p);
-          });
-        }
-      }
-      _skillInput.clear();
-      _skillFocusNode.requestFocus();
-      return;
-    }
-    if (!_skillsList.contains(trimmed)) {
-      setState(() {
-        _skillsList.add(trimmed);
-        _skillInput.clear();
-      });
-    } else {
-      _skillInput.clear();
-    }
-    _skillFocusNode.requestFocus();
+  void _showJobTypePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Select Job Type',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Color(0xFF64748B), size: 22),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const Divider(color: Color(0xFFE2E8F0)),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: _jobTypeOptions.length,
+              itemBuilder: (context, idx) {
+                final type = _jobTypeOptions[idx];
+                final isSel = _selectedJobType == type;
+                return InkWell(
+                  onTap: () {
+                    setState(() => _selectedJobType = type);
+                    Navigator.pop(ctx);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    margin: const EdgeInsets.symmetric(vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isSel ? const Color(0xFFFEF3C7) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            type,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                              color: isSel ? const Color(0xFFD97706) : const Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                        if (isSel)
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFFD97706), size: 20),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
-    if (_title.text.trim().isEmpty || _location.text.trim().isEmpty) {
+    final title = _titleController.text.trim();
+    final location = _locationController.text.trim();
+
+    if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Job Title and Site Location are required.'),
+          content: Text('Please enter a Job Title.'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -209,33 +343,63 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
       return;
     }
 
-    setState(() => _isPosting = true);
+    if (location.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a Location.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
     try {
-      await _repo.createJob({
-        'title': _title.text.trim(),
-        'location': _location.text.trim(),
-        'compensation': num.tryParse(_compensation.text.trim()) ?? 800,
-        'workforceRequired': _workersNeeded,
+      final salaryText = _salaryController.text.trim();
+      final numSalary = num.tryParse(salaryText.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0;
+      final expText = _experienceController.text.trim();
+
+      final payload = <String, dynamic>{
+        'title': title,
+        'category': _selectedCategory ?? 'Construction Engineering',
+        'location': location,
+        'salary': salaryText,
+        'compensation': numSalary,
+        'jobType': _selectedJobType ?? 'Full-time',
+        'type': _selectedJobType ?? 'Full-time',
+        'projectType': _selectedJobType ?? 'Full-time',
+        'experience': expText.isNotEmpty ? expText : 'Any',
+        'experienceRequired': expText.isNotEmpty ? expText : 'Any',
+        'experienceLevel': expText.isNotEmpty ? expText : 'Any',
+        'description': _descriptionController.text.trim(),
         'status': 'published',
-        'skills': () {
-          final all = List<String>.from(_skillsList);
-          if (_skillInput.text.trim().isNotEmpty) {
-            final extra = _skillInput.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty);
-            for (final s in extra) {
-              if (!all.contains(s)) all.add(s);
-            }
-          }
-          return all;
-        }(),
-        'description': _description.text.trim(),
-      });
+        'workforceRequired': 1,
+        'skills': [
+          if (_selectedCategory != null) _selectedCategory!,
+          title,
+        ],
+      };
+
+      final existingId = widget.existingJob != null
+          ? (widget.existingJob!['id'] ?? widget.existingJob!['_id'] ?? widget.existingJob!['jobId'])?.toString()
+          : null;
+
+      if (existingId != null && existingId.isNotEmpty) {
+        await _repo.updateJob(existingId, payload);
+      } else {
+        await _repo.createJob(payload);
+      }
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job requirement published successfully!'),
-            backgroundColor: Color(0xFF16A34A),
+          SnackBar(
+            content: Text(existingId != null
+                ? 'Job opening updated successfully!'
+                : 'Job opening posted successfully!'),
+            backgroundColor: const Color(0xFF16A34A),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -243,7 +407,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isPosting = false);
+      setState(() => _isSubmitting = false);
       final errStr = e.toString();
       if (errStr.contains('Company profile not found')) {
         Navigator.pop(context);
@@ -280,11 +444,14 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
 
   @override
   Widget build(BuildContext context) {
+    const warmAmber = Color(0xFFF5A623); // Exact amber from screenshots
+    final isEditing = widget.existingJob != null;
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.90,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.92,
         ),
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -294,635 +461,351 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
           top: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top drag pill
+              // Top drag bar indicator
               const SizedBox(height: 10),
               Center(
                 child: Container(
                   width: 44,
                   height: 4.5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD0D5DD),
+                    color: const Color(0xFFE2E8F0),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-              // Title Header Row with Close 'X'
+              // Title Header & Subtitle (Exact Replica of Image 1)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                child: Row(
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Post New Job Requirement',
-                            style: TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF101828),
-                              letterSpacing: -0.4,
-                            ),
-                          ),
-                          SizedBox(height: 3),
-                          Text(
-                            'Find the right workers for your site',
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              color: Color(0xFF667085),
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      isEditing ? 'Edit Job Opening' : 'Create Job Opening',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(Icons.close, color: Color(0xFF101828), size: 22),
-                      onPressed: () => Navigator.pop(context),
+                    const SizedBox(height: 4),
+                    Text(
+                      isEditing
+                          ? 'Update the form below to modify this job opening.'
+                          : 'Fill out the form below to create a new job opening.',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
 
-              // Predefined trade chips from Job Seeker screen
-              SizedBox(
-                height: 34,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _tradePresets.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final trade = _tradePresets[index];
-                    final isSelected = _selectedTradePreset == trade ||
-                        _title.text.trim().toLowerCase() == trade.toLowerCase();
-                    return InkWell(
-                      onTap: () => _onTradeSelected(trade),
-                      borderRadius: BorderRadius.circular(18),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFFFF4ED) : Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: isSelected ? AppColors.companyPrimary : const Color(0xFFEAECF0),
-                            width: isSelected ? 1.4 : 1.1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            trade,
-                            style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? AppColors.companyPrimary : const Color(0xFF475467),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Scrollable Form Body
+              // Form Scrollable Body
               Flexible(
                 child: SingleChildScrollView(
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 22),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 1. Job Title Card
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFEAECF0), width: 1.2),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.work_outline_rounded, color: Color(0xFF344054), size: 22),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  RichText(
-                                    text: const TextSpan(
-                                      text: 'Job Title ',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF475467),
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: '*',
-                                          style: TextStyle(
-                                            color: Color(0xFFF95724),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  TextField(
-                                    controller: _title,
-                                    onChanged: (val) {
-                                      if (_selectedTradePreset != null &&
-                                          val.trim().toLowerCase() != _selectedTradePreset!.toLowerCase()) {
-                                        setState(() => _selectedTradePreset = null);
-                                      }
-                                    },
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF101828),
-                                    ),
-                                    decoration: _cleanDeco('e.g. Electrician, Painter, Helper'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 2. Location / Site Card with Peach GPS Button
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFEAECF0), width: 1.2),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined, color: Color(0xFF344054), size: 22),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  RichText(
-                                    text: const TextSpan(
-                                      text: 'Location / Site ',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF475467),
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: '*',
-                                          style: TextStyle(
-                                            color: Color(0xFFF95724),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  TextField(
-                                    controller: _location,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF101828),
-                                    ),
-                                    decoration: _cleanDeco('e.g. Sector 17, Chandigarh'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: _autoFillLocation,
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF4ED),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFFFFD9C7), width: 1),
-                                ),
-                                child: const Icon(
-                                  Icons.my_location_rounded,
-                                  size: 20,
-                                  color: AppColors.companyPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 3. Daily Pay (₹) & Workers Needed (2 Column Row)
-                      Row(
-                        children: [
-                          // Daily Pay
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFEAECF0), width: 1.2),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Text(
-                                    '₹',
-                                    style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF344054),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Text(
-                                          'Daily Pay (₹)',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF475467),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        TextField(
-                                          controller: _compensation,
-                                          keyboardType: TextInputType.number,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color(0xFF101828),
-                                          ),
-                                          decoration: _cleanDeco('e.g. 800'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-
-                          // Workers Needed
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFEAECF0), width: 1.2),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.people_outline_rounded, color: Color(0xFF344054), size: 22),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Text(
-                                          'Workers Needed',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF475467),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              '$_workersNeeded',
-                                              style: const TextStyle(
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.w700,
-                                                color: Color(0xFF101828),
-                                              ),
-                                            ),
-                                            const Spacer(),
-                                            // Minus button
-                                            InkWell(
-                                              onTap: () {
-                                                if (_workersNeeded > 1) {
-                                                  setState(() => _workersNeeded--);
-                                                }
-                                              },
-                                              borderRadius: BorderRadius.circular(14),
-                                              child: Container(
-                                                width: 26,
-                                                height: 26,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFFF2F4F7),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.remove,
-                                                  size: 15,
-                                                  color: Color(0xFF475467),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            // Plus button
-                                            InkWell(
-                                              onTap: () => setState(() => _workersNeeded++),
-                                              borderRadius: BorderRadius.circular(14),
-                                              child: Container(
-                                                width: 26,
-                                                height: 26,
-                                                decoration: const BoxDecoration(
-                                                  color: AppColors.companyPrimary,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.add,
-                                                  size: 15,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 4. Skills Required Card
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFEAECF0), width: 1.2),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.handyman_outlined, color: Color(0xFF344054), size: 22),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'Skills Required',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF475467),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  TextField(
-                                    controller: _skillInput,
-                                    focusNode: _skillFocusNode,
-                                    textInputAction: TextInputAction.done,
-                                    onSubmitted: (val) => _addSkill(val),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF101828),
-                                    ),
-                                    decoration: _cleanDeco('e.g. Electrical work, Wiring, Installation'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _skillInput,
-                              builder: (context, value, _) {
-                                if (value.text.trim().isEmpty) return const SizedBox.shrink();
-                                return Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    onTap: () => _addSkill(_skillInput.text),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.companyPrimary,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Text(
-                                        'Add',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_skillsList.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _skillsList.map((skill) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF4ED),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFFFFD9C7),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    skill,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFF95724),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    onTap: () {
-                                      setState(() {
-                                        _skillsList.remove(skill);
-                                      });
-                                    },
-                                    child: Container(
-                                      width: 18,
-                                      height: 18,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.companyPrimary.withValues(alpha: 0.15),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        size: 12,
-                                        color: AppColors.companyPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-
-                      // 5. Job Description & Site Requirements Card
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFEAECF0), width: 1.2),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(top: 2),
-                              child: Icon(Icons.description_outlined, color: Color(0xFF344054), size: 22),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'Job Description & Site Requirements',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF475467),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  TextField(
-                                    controller: _description,
-                                    maxLines: 3,
-                                    maxLength: 500,
-                                    style: const TextStyle(
-                                      fontSize: 15.5,
-                                      fontWeight: FontWeight.normal,
-                                      color: Color(0xFF101828),
-                                    ),
-                                    decoration: _cleanDeco(
-                                      'Describe the job, work hours, site details, requirements, safety guidelines, etc.',
-                                      counterText: '',
-                                      hintStyle: const TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFF98A2B3),
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.bottomRight,
-                                    child: ValueListenableBuilder<TextEditingValue>(
-                                      valueListenable: _description,
-                                      builder: (context, val, _) {
-                                        return Text(
-                                          '${val.text.length}/500',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: Color(0xFF98A2B3),
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                      // 1. Job Title
+                      _buildFieldLabel('Job Title'),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        controller: _titleController,
+                        focusNode: _titleFocusNode,
+                        hint: 'e.g., Senior Civil Engineer',
+                        warmAmber: warmAmber,
                       ),
                       const SizedBox(height: 18),
 
-                      // 6. Publish Requirement Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.companyPrimary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: _isPosting ? null : _submit,
-                          child: _isPosting
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
-                              : const Text(
-                                  'Publish Requirement',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
+                      // 2. Category Dropdown
+                      _buildFieldLabel('Category'),
+                      const SizedBox(height: 8),
+                      _buildDropdownSelector(
+                        value: _selectedCategory,
+                        placeholder: 'Select Category',
+                        onTap: _showCategoryPicker,
+                      ),
+                      const SizedBox(height: 18),
+
+                      // 3. Location
+                      _buildFieldLabel('Location'),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        controller: _locationController,
+                        focusNode: _locationFocusNode,
+                        hint: 'e.g., Mumbai, Maharashtra',
+                        warmAmber: warmAmber,
+                      ),
+                      const SizedBox(height: 18),
+
+                      // 4. Salary
+                      _buildFieldLabel('Salary'),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        controller: _salaryController,
+                        focusNode: _salaryFocusNode,
+                        hint: 'e.g., ₹8-12 LPA or ₹25,000-35,000/month',
+                        warmAmber: warmAmber,
+                      ),
+                      const SizedBox(height: 18),
+
+                      // 5. Job Type Dropdown
+                      _buildFieldLabel('Job Type'),
+                      const SizedBox(height: 8),
+                      _buildDropdownSelector(
+                        value: _selectedJobType,
+                        placeholder: 'Select Type',
+                        onTap: _showJobTypePicker,
+                      ),
+                      const SizedBox(height: 18),
+
+                      
+                      _buildFieldLabel('Experience Required'),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        controller: _experienceController,
+                        focusNode: _experienceFocusNode,
+                        hint: 'e.g., 5-8 years or 3+ years',
+                        warmAmber: warmAmber,
+                      ),
+                      const SizedBox(height: 18),
+
+                      // 7. Job Description
+                      _buildFieldLabel('Job Description'),
+                      const SizedBox(height: 8),
+                      _buildTextArea(
+                        controller: _descriptionController,
+                        focusNode: _descriptionFocusNode,
+                        hint: 'Enter a detailed job description...',
+                        warmAmber: warmAmber,
                       ),
                       const SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
+
+              // 8. Sticky Action Buttons at bottom: [ Post Job ] and [ Cancel ]
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Yellow Primary Button [ Post Job ]
+                    Expanded(
+                      flex: 3,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: warmAmber,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              )
+                            : Text(
+                                isEditing ? 'Save Changes' : 'Post Job',
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Outlined [ Cancel ] Button
+                    Expanded(
+                      flex: 2,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFFD1D5DB)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 15.5,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF0F172A),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String hint,
+    required Color warmAmber,
+  }) {
+    return TextField(
+      controller: controller,
+      focusNode: focusNode,
+      style: const TextStyle(
+        fontSize: 15.5,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF0F172A),
+      ),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        isDense: true,
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF94A3B8),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: warmAmber, width: 1.8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownSelector({
+    required String? value,
+    required String placeholder,
+    required VoidCallback onTap,
+  }) {
+    final hasValue = value != null && value.isNotEmpty;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                hasValue ? value : placeholder,
+                style: TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
+                  color: hasValue ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF64748B),
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextArea({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String hint,
+    required Color warmAmber,
+  }) {
+    return TextField(
+      controller: controller,
+      focusNode: focusNode,
+      minLines: 4,
+      maxLines: 6,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF0F172A),
+      ),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        isDense: true,
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF94A3B8),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: warmAmber, width: 1.8),
         ),
       ),
     );

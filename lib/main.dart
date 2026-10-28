@@ -34,7 +34,6 @@ Future<void> main() async {
   );
 }
 
-/// Root App
 class BuildHireApp extends StatelessWidget {
   const BuildHireApp({super.key});
 

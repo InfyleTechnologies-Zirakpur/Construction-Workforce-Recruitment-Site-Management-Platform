@@ -651,6 +651,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               }
             }
             final filteredNotifications = _filterNotifications(allNotifications);
+            final newNotifications = filteredNotifications.where((n) => !n.isRead).toList();
+            final earlierNotifications = filteredNotifications.where((n) => n.isRead).toList();
 
             final appCount = allNotifications
                 .where((n) => n.type.toLowerCase().contains('application'))
@@ -666,61 +668,115 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               onRefresh: () async => context.read<NotificationsCubit>().load(),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.only(bottom: 30),
                 children: [
-                  // Page Header
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Activity & Updates',
-                        style: textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.dark,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Stay informed on applications and messages',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // Filter Chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      children: [
-                        _buildFilterChip('All', NotificationFilter.all, allNotifications.length),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Applications', NotificationFilter.applications, appCount),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Messages', NotificationFilter.messages, msgCount),
-                      ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: [
+                          _buildFilterChip('All', NotificationFilter.all, allNotifications.length),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Applications', NotificationFilter.applications, appCount),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Messages', NotificationFilter.messages, msgCount),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   // Notifications List or Empty State
                   if (filteredNotifications.isEmpty)
-                    _buildEmptyState(context, textTheme)
-                  else
-                    ...filteredNotifications.map((notification) {
-                      return NotificationCard(
-                        notification: notification,
-                        isCompany: _effectiveIsCompany,
-                        onTap: () => _onTapNotification(notification),
-                      );
-                    }),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildEmptyState(context, textTheme),
+                    )
+                  else ...[
+                    // 1. "New (count)" Section Header & Items
+                    if (newNotifications.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        color: AppColors.card,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'New (${newNotifications.length})',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () async {
+                                await context.read<NotificationsCubit>().markAllRead();
+                              },
+                              child: Text(
+                                'Mark all as read',
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: _themePrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ...newNotifications.map((notification) {
+                        return Column(
+                          children: [
+                            NotificationCard(
+                              notification: notification,
+                              isCompany: _effectiveIsCompany,
+                              onTap: () => _onTapNotification(notification),
+                            ),
+                            const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                          ],
+                        );
+                      }),
+                    ],
 
-                  const SizedBox(height: 30),
+                    // 2. "Earlier" Section Header & Items
+                    if (earlierNotifications.isNotEmpty) ...[
+                      Container(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          newNotifications.isNotEmpty ? 20 : 12,
+                          16,
+                          10,
+                        ),
+                        color: AppColors.card,
+                        child: const Text(
+                          'Earlier',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      ...earlierNotifications.map((notification) {
+                        return Column(
+                          children: [
+                            NotificationCard(
+                              notification: notification,
+                              isCompany: _effectiveIsCompany,
+                              onTap: () => _onTapNotification(notification),
+                            ),
+                            const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                          ],
+                        );
+                      }),
+                    ],
+                  ],
                 ],
               ),
             );

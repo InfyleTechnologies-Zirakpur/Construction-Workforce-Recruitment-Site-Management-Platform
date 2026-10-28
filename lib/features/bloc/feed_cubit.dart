@@ -181,25 +181,30 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
 
   Future<void> toggleLike(String postId) async {
     final index = _posts.indexWhere((p) => p.id == postId);
-    if (index == -1) return;
+    bool newIsLiked = false;
+    int newCount = 0;
+    if (index != -1) {
+      final current = _posts[index];
+      newIsLiked = !current.isLiked;
+      newCount = newIsLiked ? current.likesCount + 1 : (current.likesCount > 0 ? current.likesCount - 1 : 0);
 
-    final current = _posts[index];
-    final newIsLiked = !current.isLiked;
-    final newCount = newIsLiked ? current.likesCount + 1 : (current.likesCount > 0 ? current.likesCount - 1 : 0);
-
-    _posts[index] = current.copyWith(
-      isLiked: newIsLiked,
-      likesCount: newCount,
-    );
-    emit(Loaded(List.unmodifiable(_posts)));
+      _posts[index] = current.copyWith(
+        isLiked: newIsLiked,
+        likesCount: newCount,
+      );
+      emit(Loaded(List.unmodifiable(_posts)));
+    }
 
     try {
       final res = await _repo.toggleLikePost(postId);
-      _posts[index] = _posts[index].copyWith(
-        isLiked: res['isLiked'] as bool? ?? newIsLiked,
-        likesCount: res['likesCount'] as int? ?? newCount,
-      );
-      emit(Loaded(List.unmodifiable(_posts)));
+      final idxAfter = _posts.indexWhere((p) => p.id == postId);
+      if (idxAfter != -1) {
+        _posts[idxAfter] = _posts[idxAfter].copyWith(
+          isLiked: res['isLiked'] as bool? ?? newIsLiked,
+          likesCount: res['likesCount'] as int? ?? newCount,
+        );
+        emit(Loaded(List.unmodifiable(_posts)));
+      }
     } catch (e) {
       // ignore: avoid_print
       print('⚠️ [FeedCubit] toggleLike API error: $e');
@@ -275,11 +280,6 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
     String? authorName,
     String? authorRole,
   }) async {
-    final index = _posts.indexWhere((p) => p.id == postId);
-    if (index == -1) return;
-
-    final currentPost = _posts[index];
-
     PostComment? networkComment;
     try {
       networkComment = await _repo.addComment(postId, text);
@@ -287,6 +287,11 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
       // ignore: avoid_print
       print('⚠️ [FeedCubit] addComment API error: $e');
     }
+
+    final index = _posts.indexWhere((p) => p.id == postId);
+    if (index == -1) return;
+
+    final currentPost = _posts[index];
 
     final finalAuthorName = (authorName != null && authorName.trim().isNotEmpty)
         ? authorName.trim()

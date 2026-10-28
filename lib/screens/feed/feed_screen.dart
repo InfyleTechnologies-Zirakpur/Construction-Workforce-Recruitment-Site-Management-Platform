@@ -426,26 +426,7 @@ class _FeedScreenState extends State<FeedScreen> {
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            if (_isCompany) ...[
-                              const SizedBox(height: 18),
-                              ElevatedButton.icon(
-                                onPressed: _openCreatePost,
-                                icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Create Post'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _themePrimary,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ],
+
                           ],
                         ),
                       ),
@@ -477,26 +458,7 @@ class _FeedScreenState extends State<FeedScreen> {
           ),
         ),
       ),
-      floatingActionButton: _isCompany
-          ? FloatingActionButton.extended(
-              onPressed: _openCreatePost,
-              backgroundColor: _themePrimary,
-              elevation: 2,
-              highlightElevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-              label: const Text(
-                'Create Post',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-            )
-          : null,
+      floatingActionButton: null,
     );
   }
 }

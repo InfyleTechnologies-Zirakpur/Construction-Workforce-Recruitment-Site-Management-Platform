@@ -7,6 +7,7 @@ import '../../../core/models/models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../features/bloc/worker_blocs.dart';
 import '../../notifications/notifications_screen.dart';
+import '../../settings/settings_screen.dart';
 
 class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onProfileTap;
@@ -15,6 +16,8 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final bool showNotifications;
   final bool showProfileAvatar;
+  final bool showSettings;
+  final VoidCallback? onSettingsTap;
   final VoidCallback? onBackPressed;
 
   const CompanyAppBar({
@@ -24,7 +27,9 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.companyName,
     this.showBackButton = false,
     this.showNotifications = true,
-    this.showProfileAvatar = true,
+    this.showProfileAvatar = false,
+    this.showSettings = false,
+    this.onSettingsTap,
     this.onBackPressed,
   });
 
@@ -128,12 +133,14 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         if (showNotifications)
-          BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
-            builder: (context, state) {
-              final hasUnread = state is Loaded<List<WorkerNotification>> &&
-                  state.data.any((n) => !n.isRead);
+          Padding(
+            padding: EdgeInsets.only(right: (!showSettings && !showProfileAvatar) ? 12 : 0),
+            child: BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
+              builder: (context, state) {
+                final hasUnread = state is Loaded<List<WorkerNotification>> &&
+                    state.data.any((n) => !n.isRead);
 
-              return InkWell(
+                return InkWell(
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -174,6 +181,23 @@ class CompanyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               );
             },
+          ),
+        ),
+        if (showSettings)
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: AppColors.dark, size: 23),
+            tooltip: 'Settings',
+            onPressed: onSettingsTap ??
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => Theme(
+                        data: AppTheme.companyTheme(context),
+                        child: const SettingsScreen(),
+                      ),
+                    ),
+                  );
+                },
           ),
         if (showProfileAvatar)
           Padding(

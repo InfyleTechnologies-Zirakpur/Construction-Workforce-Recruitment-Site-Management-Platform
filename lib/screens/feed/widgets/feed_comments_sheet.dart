@@ -12,8 +12,8 @@ class FeedCommentsSheet extends StatefulWidget {
 
   const FeedCommentsSheet({super.key, required this.post, this.isCompany = false});
 
-  static void show(BuildContext context, FeedPost post, {bool isCompany = false}) {
-    showModalBottomSheet(
+  static Future<void> show(BuildContext context, FeedPost post, {bool isCompany = false}) {
+    return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
