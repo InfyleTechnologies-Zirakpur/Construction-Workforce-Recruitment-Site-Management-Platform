@@ -259,6 +259,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             );
           }
         }
+        if (matchedJob == null && refId != null && refId.isNotEmpty) {
+          try {
+            matchedJob = await WorkerRepository().getJobById(refId);
+          } catch (_) {}
+        }
         if (!mounted) return;
 
         if (matchedJob != null) {
@@ -305,6 +310,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               orElse: () => null,
             );
           }
+        }
+        if (matchedJob == null && refId != null && refId.isNotEmpty) {
+          try {
+            matchedJob = await WorkerRepository().getJobById(refId);
+          } catch (_) {}
         }
         if (!mounted) return;
 

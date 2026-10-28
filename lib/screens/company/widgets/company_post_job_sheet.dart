@@ -216,6 +216,7 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
         'location': _location.text.trim(),
         'compensation': num.tryParse(_compensation.text.trim()) ?? 800,
         'workforceRequired': _workersNeeded,
+        'status': 'published',
         'skills': () {
           final all = List<String>.from(_skillsList);
           if (_skillInput.text.trim().isNotEmpty) {

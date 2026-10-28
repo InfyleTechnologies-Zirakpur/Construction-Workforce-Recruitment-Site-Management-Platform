@@ -439,7 +439,7 @@ class WorkerNotification {
         type: (json['event'] ?? json['type'])?.toString() ?? 'general',
         time: (json['createdAt'] ?? json['time'])?.toString() ?? '',
         isRead: json['isRead'] as bool? ?? false,
-        referenceId: json['referenceId']?.toString(),
+        referenceId: (json['referenceId'] ?? json['jobId'])?.toString(),
         isPushed: json['isPushed'] as bool? ?? false,
       );
 }

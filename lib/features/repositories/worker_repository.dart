@@ -344,6 +344,22 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
     }
   }
   Future<void> save(String id) async => _client.dio.post('/jobs/$id/save');
+
+  /// GET /jobs/:id - Fetch single job details by ID (e.g. from push notification tap)
+  Future<Job?> getJobById(String id) async {
+    try {
+      final response = await _client.dio.get('/jobs/$id');
+      final payload = response.data;
+      final jobData = payload is Map ? (payload['data'] ?? payload) : null;
+      if (jobData is Map) {
+        return Job.fromJson(Map<String, dynamic>.from(jobData));
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] Error fetching job by id ($id): $e');
+    }
+    return null;
+  }
   Future<void> unsave(String id) async {
     try {
       await _client.dio.delete('/jobs/$id/save');

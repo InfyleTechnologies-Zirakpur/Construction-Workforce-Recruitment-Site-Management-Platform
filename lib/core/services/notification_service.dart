@@ -119,7 +119,12 @@ class NotificationService {
         FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
           // ignore: avoid_print
           print('🔔 [FCM] Notification tapped from background: ${message.data}');
-          _handleNotificationTap(jsonEncode(message.data));
+          final map = Map<String, dynamic>.from(message.data);
+          if (message.notification != null) {
+            map.putIfAbsent('title', () => message.notification!.title);
+            map.putIfAbsent('body', () => message.notification!.body);
+          }
+          _handleNotificationTap(jsonEncode(map));
         });
 
         // 8. Handle if app was opened directly from a terminated state notification
@@ -127,7 +132,12 @@ class NotificationService {
         if (initialMessage != null) {
           // ignore: avoid_print
           print('🔔 [FCM] App opened from terminated notification: ${initialMessage.data}');
-          _handleNotificationTap(jsonEncode(initialMessage.data));
+          final map = Map<String, dynamic>.from(initialMessage.data);
+          if (initialMessage.notification != null) {
+            map.putIfAbsent('title', () => initialMessage.notification!.title);
+            map.putIfAbsent('body', () => initialMessage.notification!.body);
+          }
+          _handleNotificationTap(jsonEncode(map));
         }
       }
     } catch (e) {
