@@ -101,6 +101,59 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
 
     _businessType = p['businessType']?.toString();
     _teamSizeRange = p['teamSizeRange']?.toString();
+
+    if (widget.profile == null) {
+      _checkExistingProfile();
+    }
+  }
+
+  Map<String, dynamic>? _existingProfile;
+
+  Future<void> _checkExistingProfile() async {
+    try {
+      final prof = await _repo.getMyCompanyProfile();
+      if (prof != null && prof['id'] != null && mounted) {
+        setState(() {
+          _existingProfile = prof;
+          if (_name.text.isEmpty && prof['name'] != null) {
+            _name.text = prof['name'].toString();
+          }
+          if (_contactEmail.text.isEmpty && prof['contactEmail'] != null) {
+            _contactEmail.text = prof['contactEmail'].toString();
+          }
+          if (_contactPhone.text.isEmpty && prof['contactPhone'] != null) {
+            _contactPhone.text = prof['contactPhone'].toString();
+          }
+          if (_alternatePhone.text.isEmpty && prof['alternatePhone'] != null) {
+            _alternatePhone.text = prof['alternatePhone'].toString();
+          }
+          if (_city.text.isEmpty && prof['city'] != null) {
+            _city.text = prof['city'].toString();
+          }
+          if (_state.text.isEmpty && prof['state'] != null) {
+            _state.text = prof['state'].toString();
+          }
+          if (_address.text.isEmpty && prof['address'] != null) {
+            _address.text = prof['address'].toString();
+          }
+          if (_pincode.text.isEmpty && prof['pincode'] != null) {
+            _pincode.text = prof['pincode'].toString();
+          }
+          if (_gstNumber.text.isEmpty && prof['gstNumber'] != null) {
+            _gstNumber.text = prof['gstNumber'].toString();
+          }
+          if (_website.text.isEmpty && prof['website'] != null) {
+            _website.text = prof['website'].toString();
+          }
+          if (_businessType == null && prof['businessType'] != null) {
+            _businessType = prof['businessType'].toString();
+          }
+          if (_teamSizeRange == null && prof['teamSizeRange'] != null) {
+            _teamSizeRange = prof['teamSizeRange'].toString();
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   String? get _selectedBusinessType {
@@ -176,8 +229,9 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
     };
 
     try {
-      if (widget.profile != null && widget.profile!['id'] != null) {
-        await _repo.updateCompanyProfile(widget.profile!['id'].toString(), body);
+      final existingId = widget.profile?['id']?.toString() ?? _existingProfile?['id']?.toString();
+      if (existingId != null && existingId.isNotEmpty) {
+        await _repo.updateCompanyProfile(existingId, body);
       } else {
         await _repo.createCompanyProfile(body);
       }

@@ -108,12 +108,25 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
 
       // Check profile completeness per backend specification
       bool profileComplete = false;
-      if (data['isProfileComplete'] is bool) {
-        profileComplete = data['isProfileComplete'] as bool;
-      } else if (user is Map && user['profileCompleted'] is bool) {
-        profileComplete = user['profileCompleted'] as bool;
-      } else if (user is Map && user['isProfileComplete'] is bool) {
-        profileComplete = user['isProfileComplete'] as bool;
+      if (data['isProfileComplete'] == true ||
+          (user is Map && (user['profileCompleted'] == true || user['isProfileComplete'] == true))) {
+        profileComplete = true;
+      }
+
+   
+      if (!profileComplete) {
+        try {
+          final uid = user is Map ? user['id']?.toString() : null;
+          final existingProfile = await repo.getCompanyByUserId(uid);
+          if (existingProfile != null && existingProfile['id'] != null) {
+            profileComplete = true;
+            final existingName = existingProfile['name']?.toString() ?? compName;
+            if (existingName.isNotEmpty) {
+              await storageEncrypted.write(key: 'companyName', value: existingName);
+              await storagePlain.write(key: 'companyName', value: existingName);
+            }
+          }
+        } catch (_) {}
       }
 
       await storageEncrypted.write(key: 'profileCompleted', value: profileComplete.toString());

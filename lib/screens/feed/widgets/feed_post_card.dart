@@ -13,6 +13,7 @@ class FeedPostCard extends StatefulWidget {
   final VoidCallback onShareTap;
   final VoidCallback? onEditTap;
   final VoidCallback? onDeleteTap;
+  final VoidCallback? onProfileTap;
   final bool? isCompany;
 
   const FeedPostCard({
@@ -24,6 +25,7 @@ class FeedPostCard extends StatefulWidget {
     required this.onShareTap,
     this.onEditTap,
     this.onDeleteTap,
+    this.onProfileTap,
     this.isCompany,
   });
 
@@ -60,9 +62,9 @@ class _FeedPostCardState extends State<FeedPostCard> {
         post.authorRole.toLowerCase().contains('contractor');
     final isCompanyFlow = widget.isCompany == true ||
         Theme.of(context).primaryColor.toARGB32() == AppColors.companyPrimary.toARGB32();
-    final isBlueAvatar = isCompanyFlow || isAuthorCompany;
-    final avatarBg = isBlueAvatar ? AppColors.companyPrimary : AppColors.primary;
-    final avatarTextColor = isBlueAvatar ? Colors.white : AppColors.dark;
+    final themePrimary = isCompanyFlow ? AppColors.companyPrimary : AppColors.primary;
+    final avatarBg = isCompanyFlow ? AppColors.companyPrimary : AppColors.primary;
+    final avatarTextColor = isCompanyFlow ? AppColors.dark : Colors.white;
 
     final hasRole = post.taggedTitle != null &&
         post.taggedTitle!.trim().isNotEmpty &&
@@ -88,62 +90,72 @@ class _FeedPostCardState extends State<FeedPostCard> {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: avatarBg,
-                backgroundImage: (post.authorAvatarUrl != null &&
-                        post.authorAvatarUrl!.trim().isNotEmpty &&
-                        post.authorAvatarUrl != 'null' &&
-                        post.authorAvatarUrl != 'undefined')
-                    ? NetworkImage(post.authorAvatarUrl!.trim())
-                    : null,
-                child: (post.authorAvatarUrl != null &&
-                        post.authorAvatarUrl!.trim().isNotEmpty &&
-                        post.authorAvatarUrl != 'null' &&
-                        post.authorAvatarUrl != 'undefined')
-                    ? null
-                    : Text(
-                        post.authorName.length >= 3 && post.authorName.contains(' ')
-                            ? post.authorName
-                                  .split(' ')
-                                  .take(2)
-                                  .map((e) => e.isNotEmpty ? e[0] : '')
-                                  .join('')
-                                  .toUpperCase()
-                            : (post.authorName.isNotEmpty
-                                  ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
-                                  : (isBlueAvatar ? 'C' : 'U')),
-                        style: TextStyle(
-                          color: avatarTextColor,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
+              Expanded(
+                child: InkWell(
+                  onTap: widget.onProfileTap,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: avatarBg,
+                        backgroundImage: (post.authorAvatarUrl != null &&
+                                post.authorAvatarUrl!.trim().isNotEmpty &&
+                                post.authorAvatarUrl != 'null' &&
+                                post.authorAvatarUrl != 'undefined')
+                            ? NetworkImage(post.authorAvatarUrl!.trim())
+                            : null,
+                        child: (post.authorAvatarUrl != null &&
+                                post.authorAvatarUrl!.trim().isNotEmpty &&
+                                post.authorAvatarUrl != 'null' &&
+                                post.authorAvatarUrl != 'undefined')
+                            ? null
+                            : Text(
+                                post.authorName.length >= 3 && post.authorName.contains(' ')
+                                    ? post.authorName
+                                          .split(' ')
+                                          .take(2)
+                                          .map((e) => e.isNotEmpty ? e[0] : '')
+                                          .join('')
+                                          .toUpperCase()
+                                    : (post.authorName.isNotEmpty
+                                          ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
+                                          : (isCompanyFlow ? 'C' : 'U')),
+                                style: TextStyle(
+                                  color: avatarTextColor,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              post.authorName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 17,
+                                color: AppColors.dark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.formattedTime,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      post.authorName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
-                        color: AppColors.dark,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.formattedTime,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               InkWell(
@@ -315,10 +327,10 @@ class _FeedPostCardState extends State<FeedPostCard> {
                     if (hasRole) const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.location_on_outlined,
                           size: 15,
-                          color: Color(0xFF6B7280),
+                          color: themePrimary,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -366,7 +378,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
                       Icon(
                         post.isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_alt_outlined,
                         size: 19,
-                        color: post.isLiked ? Theme.of(context).primaryColor : AppColors.dark,
+                        color: post.isLiked ? themePrimary : AppColors.dark,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -374,7 +386,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
                         style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: post.isLiked ? FontWeight.bold : FontWeight.w600,
-                          color: post.isLiked ? Theme.of(context).primaryColor : AppColors.dark,
+                          color: post.isLiked ? themePrimary : AppColors.dark,
                         ),
                       ),
                     ],

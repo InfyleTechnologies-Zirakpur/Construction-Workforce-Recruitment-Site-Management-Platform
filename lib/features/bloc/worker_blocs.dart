@@ -5,6 +5,7 @@ import '../../core/utils/api_error_parser.dart';
 import '../repositories/worker_repository.dart';
 
 export 'feed_cubit.dart';
+export 'documents_cubit.dart';
 
 sealed class LoadState<T> {
   const LoadState();

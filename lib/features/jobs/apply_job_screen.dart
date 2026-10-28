@@ -30,6 +30,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   bool _hasExperience = true;
   bool _isSubmitting = false;
+  DocumentModel? _selectedResume;
 
   @override
   void initState() {
@@ -84,9 +85,17 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       if (phone != null && phone.isNotEmpty) {
         buffer.write('\n\n• Contact Phone: $phone');
       }
+      if (_selectedResume != null) {
+        buffer.write('\n\n[Resume Document]\n• File: ${_selectedResume!.displayName}');
+        if (_selectedResume!.fileUrl != null && _selectedResume!.fileUrl!.isNotEmpty) {
+          buffer.write('\n• URL: ${_selectedResume!.fileUrl}');
+        }
+      }
 
       final details = <String, dynamic>{
         'coverNote': buffer.toString().trim(),
+        if (_selectedResume?.fileUrl != null && _selectedResume!.fileUrl!.isNotEmpty)
+          'resumeUrl': _selectedResume!.fileUrl,
       };
 
       await context.read<JobsCubit>().apply(widget.job.id, details: details);
@@ -297,7 +306,9 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const ApplyJobDocumentsCard(),
+              ApplyJobDocumentsCard(
+                onSelectResume: (doc) => setState(() => _selectedResume = doc),
+              ),
             ],
           ),
         ),

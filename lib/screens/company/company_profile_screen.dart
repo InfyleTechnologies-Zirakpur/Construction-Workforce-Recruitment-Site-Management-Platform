@@ -14,7 +14,18 @@ import 'company_profile_form_screen.dart';
 import 'widgets/company_app_bar.dart';
 
 class CompanyProfileScreen extends StatefulWidget {
-  const CompanyProfileScreen({super.key});
+  final String? userId;
+  final String? companyId;
+  final Map<String, dynamic>? initialProfile;
+  final bool isReadOnly;
+
+  const CompanyProfileScreen({
+    super.key,
+    this.userId,
+    this.companyId,
+    this.initialProfile,
+    this.isReadOnly = false,
+  });
 
   @override
   State<CompanyProfileScreen> createState() => _CompanyProfileScreenState();
@@ -39,10 +50,28 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
       _error = null;
     });
     try {
-      final profiles = await _repo.getMyProfiles();
+      Map<String, dynamic>? prof;
+      if (widget.initialProfile != null) {
+        prof = widget.initialProfile;
+      } else if (widget.userId != null && widget.userId!.trim().isNotEmpty) {
+        prof = await _repo.getCompanyByUserId(widget.userId!.trim());
+        if (prof == null && widget.companyId != null && widget.companyId!.trim().isNotEmpty) {
+          prof = await _repo.getCompanyById(widget.companyId!.trim());
+        }
+      } else if (widget.companyId != null && widget.companyId!.trim().isNotEmpty) {
+        prof = await _repo.getCompanyById(widget.companyId!.trim());
+      } else {
+        // Fetch logged in company via GET /companies/user/
+        prof = await _repo.getMyCompanyProfile();
+        if (prof == null) {
+          final profiles = await _repo.getMyProfiles();
+          if (profiles.isNotEmpty) prof = profiles.first;
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _profile = profiles.isNotEmpty ? profiles.first : null;
+          _profile = prof;
           _isLoading = false;
         });
       }
@@ -382,7 +411,14 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
     final status = (p['verificationStatus'] ?? 'pending').toString().toLowerCase();
     final statusColor = _getStatusColor(status);
     final isVerified = status == 'verified';
-    final companyName = (p['name'] ?? 'Company').toString().trim();
+    final companyName = (p['name'] ??
+            p['companyName'] ??
+            p['businessName'] ??
+            (p['owner'] is Map ? p['owner']['companyName'] : null) ??
+            (p['user'] is Map ? (p['user']['companyName'] ?? p['user']['name']) : null) ??
+            'Company')
+        .toString()
+        .trim();
     final logoUrl = (p['logoUrl'] ?? p['avatarUrl'])?.toString().trim();
     final businessType = p['businessType']?.toString().trim() ?? 'Company';
     final city = p['city']?.toString().trim() ?? '';
@@ -461,39 +497,40 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                   : null,
                             ),
                           ),
-                          Positioned(
-                            right: -2,
-                            bottom: -2,
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: _isUploadingPhoto ? null : _uploadLogo,
-                                borderRadius: BorderRadius.circular(16),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.companyPrimary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.dark, width: 2),
-                                  ),
-                                  child: _isUploadingPhoto
-                                      ? const SizedBox(
-                                          height: 14,
-                                          width: 14,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                          if (!widget.isReadOnly)
+                            Positioned(
+                              right: -2,
+                              bottom: -2,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _isUploadingPhoto ? null : _uploadLogo,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.companyPrimary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: AppColors.dark, width: 2),
+                                    ),
+                                    child: _isUploadingPhoto
+                                        ? const SizedBox(
+                                            height: 14,
+                                            width: 14,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.camera_alt_rounded,
+                                            size: 14,
                                             color: Colors.white,
                                           ),
-                                        )
-                                      : const Icon(
-                                          Icons.camera_alt_rounded,
-                                          size: 14,
-                                          color: Colors.white,
-                                        ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(width: 16),
@@ -688,9 +725,19 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
             _buildSectionCard(
               icon: Icons.contact_phone_outlined,
               title: 'Contact Details',
-              onEdit: () => _editProfile(p),
+              onEdit: widget.isReadOnly ? null : () => _editProfile(p),
               child: Column(
                 children: [
+                  if (p['owner'] is Map &&
+                      p['owner']['fullName'] != null &&
+                      p['owner']['fullName'].toString().trim().isNotEmpty) ...[
+                    _buildDetailRow(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Authorized Representative',
+                      value: p['owner']['fullName'].toString().trim(),
+                    ),
+                    const Divider(height: 16, color: AppColors.border),
+                  ],
                   _buildDetailRow(
                     icon: Icons.email_outlined,
                     label: 'Contact Email',
@@ -866,66 +913,68 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               ),
             ],
 
-            const SizedBox(height: 24),
+            if (!widget.isReadOnly) ...[
+              const SizedBox(height: 24),
 
-            // 7. Edit Profile Button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () => _editProfile(p),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.companyPrimary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              // 7. Edit Profile Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () => _editProfile(p),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.companyPrimary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text(
-                  'Edit Company Details',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text(
+                    'Edit Company Details',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // 8. Log Out Button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: _logout,
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: AppColors.companyTagBackground,
-                  foregroundColor: AppColors.companyPrimary,
-                  side: const BorderSide(
-                    color: AppColors.companyTagBorder,
-                    width: 1.2,
+              // 8. Log Out Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _logout,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: AppColors.companyTagBackground,
+                    foregroundColor: AppColors.companyPrimary,
+                    side: const BorderSide(
+                      color: AppColors.companyTagBorder,
+                      width: 1.2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.logout_rounded,
-                  color: AppColors.companyPrimary,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Log Out Company',
-                  style: TextStyle(
+                  icon: const Icon(
+                    Icons.logout_rounded,
                     color: AppColors.companyPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                    size: 18,
+                  ),
+                  label: const Text(
+                    'Log Out Company',
+                    style: TextStyle(
+                      color: AppColors.companyPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

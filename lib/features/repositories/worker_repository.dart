@@ -344,6 +344,22 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
     }
   }
   Future<void> save(String id) async => _client.dio.post('/jobs/$id/save');
+
+  /// GET /jobs/:id - Fetch single job details by ID (e.g. from push notification tap)
+  Future<Job?> getJobById(String id) async {
+    try {
+      final response = await _client.dio.get('/jobs/$id');
+      final payload = response.data;
+      final jobData = payload is Map ? (payload['data'] ?? payload) : null;
+      if (jobData is Map) {
+        return Job.fromJson(Map<String, dynamic>.from(jobData));
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] Error fetching job by id ($id): $e');
+    }
+    return null;
+  }
   Future<void> unsave(String id) async {
     try {
       await _client.dio.delete('/jobs/$id/save');
@@ -435,6 +451,10 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
     switch (ext) {
       case 'pdf':
         return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       case 'jpg':
       case 'jpeg':
         return 'image/jpeg';
@@ -462,7 +482,6 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
           contentType: DioMediaType.parse(_mimeForFilename(filename)),
         ),
       }),
-      options: Options(contentType: 'multipart/form-data'),
     );
     final data = response.data['data'];
     if (data is Map && data['profilePhotoUrl'] is String) {
@@ -490,11 +509,21 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
         ),
         'type': type,
       }),
-      options: Options(contentType: 'multipart/form-data'),
     );
     // ignore: avoid_print
     print('uploadDocument <- ${response.statusCode} ${response.data}');
-    return Map<String, dynamic>.from(response.data['data']);
+    final payload = response.data;
+    if (payload is Map && payload['data'] is Map) {
+      final inner = payload['data'] as Map;
+      if (inner['data'] is Map) {
+        return Map<String, dynamic>.from(inner['data'] as Map);
+      }
+      return Map<String, dynamic>.from(inner);
+    }
+    if (payload is Map) {
+      return Map<String, dynamic>.from(payload);
+    }
+    return <String, dynamic>{};
   }
   Future<Attendance> checkIn() async => Attendance.fromJson(
     (await _client.dio.post(
@@ -547,5 +576,148 @@ class WorkerRepository with WorkerChatRepositoryMixin, WorkerFeedRepositoryMixin
     return null;
   }
 
+  // ─── DOCUMENT CRUD ──────────────────────────────────────────────
+
+  /// GET /documents — Fetch all documents for the current user.
+  /// Optionally filter by [entityType] (e.g. 'worker_doc').
+  Future<List<Map<String, dynamic>>> fetchDocuments({String? entityType}) async {
+    List<Map<String, dynamic>> parseList(dynamic raw) {
+      if (raw is List) {
+        return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+      return [];
+    }
+
+    try {
+      final qp = <String, dynamic>{};
+      if (entityType != null && entityType.isNotEmpty) {
+        qp['entityType'] = entityType;
+      }
+      final response = await _client.dio.get(
+        '/documents',
+        queryParameters: qp.isEmpty ? null : qp,
+      );
+      final payload = response.data;
+      List<Map<String, dynamic>> result = [];
+      if (payload is Map) {
+        final d = payload['data'];
+        if (d is List) {
+          result = parseList(d);
+        } else if (d is Map) {
+          if (d['data'] is List) result = parseList(d['data']);
+          else if (d['items'] is List) result = parseList(d['items']);
+          else if (d['documents'] is List) result = parseList(d['documents']);
+          else if (d['rows'] is List) result = parseList(d['rows']);
+        }
+        if (result.isEmpty && payload['items'] is List) result = parseList(payload['items']);
+        if (result.isEmpty && payload['documents'] is List) result = parseList(payload['documents']);
+      } else if (payload is List) {
+        result = parseList(payload);
+      }
+
+      // If bare GET /documents returned empty and entityType wasn't explicitly given, try with entityType=worker_doc
+      if (result.isEmpty && (entityType == null || entityType.isEmpty)) {
+        try {
+          final fallbackResp = await _client.dio.get(
+            '/documents',
+            queryParameters: {'entityType': 'worker_doc'},
+          );
+          final fbPayload = fallbackResp.data;
+          if (fbPayload is Map) {
+            final fbd = fbPayload['data'];
+            if (fbd is List) result = parseList(fbd);
+            else if (fbd is Map && fbd['data'] is List) result = parseList(fbd['data']);
+          } else if (fbPayload is List) {
+            result = parseList(fbPayload);
+          }
+        } catch (_) {}
+      }
+
+      return result;
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] fetchDocuments error: $e');
+      return [];
+    }
+  }
+
+  /// GET /documents/:id — Fetch single document by ID.
+  Future<Map<String, dynamic>?> getDocumentById(String documentId) async {
+    try {
+      final response = await _client.dio.get('/documents/$documentId');
+      final payload = response.data;
+      if (payload is Map) {
+        final d = payload['data'];
+        if (d is Map) return Map<String, dynamic>.from(d);
+        return Map<String, dynamic>.from(payload);
+      }
+      return null;
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] getDocumentById error: $e');
+      return null;
+    }
+  }
+
+  /// DELETE /documents/:id — Delete a document by ID.
+  Future<bool> deleteDocument(String documentId) async {
+    try {
+      await _client.dio.delete('/documents/$documentId');
+      return true;
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] deleteDocument error: $e');
+      return false;
+    }
+  }
+
+  /// PUT /profile — Update skills, education, and experience on the profile.
+  Future<WorkerProfile> updateProfileFields({
+    List<String>? skills,
+    List<dynamic>? education,
+    List<Map<String, dynamic>>? experience,
+  }) async {
+    final body = <String, dynamic>{};
+    if (skills != null) body['skills'] = skills;
+    if (education != null) body['education'] = education;
+    if (experience != null) body['experience'] = experience;
+    return updateProfile(body);
+  }
+
+  /// Fetch all resume documents for the current user.
+  Future<List<Map<String, dynamic>>> fetchResumes() async {
+    final docs = await fetchDocuments();
+    return docs.where((d) {
+      final t = (d['type'] ?? '').toString().toLowerCase();
+      return t == 'resume' || t == 'cv';
+    }).toList();
+  }
+
+  /// Fetch documents for a specific user by userId (for companies viewing applicants).
+  Future<List<Map<String, dynamic>>> fetchDocumentsForUser(String userId) async {
+    try {
+      final response = await _client.dio.get(
+        '/documents',
+        queryParameters: {'entityId': userId, 'entityType': 'worker_doc'},
+      );
+      final payload = response.data;
+      if (payload is Map) {
+        final d = payload['data'];
+        if (d is List) return List<Map<String, dynamic>>.from(d.whereType<Map>());
+        if (d is Map && d['data'] is List) {
+          return List<Map<String, dynamic>>.from((d['data'] as List).whereType<Map>());
+        }
+        if (d is Map && d['items'] is List) {
+          return List<Map<String, dynamic>>.from((d['items'] as List).whereType<Map>());
+        }
+      }
+      if (payload is List) return List<Map<String, dynamic>>.from(payload.whereType<Map>());
+      return [];
+    } catch (e) {
+      // ignore: avoid_print
+      print('⚠️ [WorkerRepository] fetchDocumentsForUser error: $e');
+      return [];
+    }
+  }
 }
 

@@ -50,6 +50,7 @@ class BuildHireApp extends StatelessWidget {
         BlocProvider(create: (_) => DashboardCubit(repository)),
         BlocProvider(create: (_) => MessagesCubit(repository)),
         BlocProvider(create: (_) => NotificationsCubit(repository)),
+        BlocProvider(create: (_) => DocumentsCubit(repository)),
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,

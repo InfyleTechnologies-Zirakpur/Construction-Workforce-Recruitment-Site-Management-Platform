@@ -61,17 +61,17 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
 
       if (role == 'company') {
         try {
-          final profiles = await CompanyRepository().getMyProfiles();
-          if (profiles.isNotEmpty) {
-            final p = profiles.first;
-            final freshName = p['companyName']?.toString() ??
+          final comp = await CompanyRepository().getMyCompanyProfile();
+          final p = comp ?? (await CompanyRepository().getMyProfiles()).firstOrNull;
+          if (p != null) {
+            final freshName = p['name']?.toString() ??
+                p['companyName']?.toString() ??
                 p['businessName']?.toString() ??
                 p['organizationName']?.toString() ??
-                p['name']?.toString() ??
                 p['fullName']?.toString();
 
-            if (freshName != null && freshName.isNotEmpty) {
-              cName = freshName;
+            if (freshName != null && freshName.trim().isNotEmpty) {
+              cName = freshName.trim();
               await storage.write(key: 'companyName', value: cName);
             }
           }
