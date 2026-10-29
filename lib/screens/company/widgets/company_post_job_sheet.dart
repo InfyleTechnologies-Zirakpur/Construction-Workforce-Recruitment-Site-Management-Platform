@@ -363,21 +363,17 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
 
       final payload = <String, dynamic>{
         'title': title,
-        'category': _selectedCategory ?? 'Construction Engineering',
         'location': location,
-        'salary': salaryText,
+        'description': _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : '$title required at $location.',
         'compensation': numSalary,
-        'jobType': _selectedJobType ?? 'Full-time',
-        'type': _selectedJobType ?? 'Full-time',
-        'projectType': _selectedJobType ?? 'Full-time',
-        'experience': expText.isNotEmpty ? expText : 'Any',
-        'experienceRequired': expText.isNotEmpty ? expText : 'Any',
-        'experienceLevel': expText.isNotEmpty ? expText : 'Any',
-        'description': _descriptionController.text.trim(),
-        'status': 'published',
         'workforceRequired': 1,
+        'projectType': _selectedJobType ?? 'Full-time',
+        'experienceLevel': expText.isNotEmpty ? expText : 'Any',
+        'status': 'published',
         'skills': [
-          if (_selectedCategory != null) _selectedCategory!,
+          if (_selectedCategory != null && _selectedCategory!.isNotEmpty) _selectedCategory!,
           title,
         ],
       };

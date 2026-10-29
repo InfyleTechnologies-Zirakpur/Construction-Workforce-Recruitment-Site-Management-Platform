@@ -209,6 +209,7 @@ class ProfileDetailsCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
+                      
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
@@ -221,22 +222,51 @@ class ProfileDetailsCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         ...profile.experience.map((WorkerExperience exp) {
+                          final roleText = exp.role.isNotEmpty ? exp.role : 'Worker';
+                          final compText = (exp.company.isNotEmpty && exp.company != 'XYZ Constructions')
+                              ? ' at ${exp.company}'
+                              : '';
+                          final durationText = exp.startDate != null && exp.startDate!.isNotEmpty
+                              ? ' (${exp.startDate} - ${exp.endDate?.isNotEmpty == true ? exp.endDate : (exp.isCurrentlyWorking ? "Present" : "")})'
+                              : (exp.years > 0 ? ' (${exp.years} ${exp.years == 1 ? 'yr' : 'yrs'})' : '');
+
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Row(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.circle, size: 6, color: AppColors.primary),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${exp.role.isNotEmpty ? exp.role : 'Worker'} at ${exp.company.isNotEmpty ? exp.company : 'Site'} (${exp.years} ${exp.years == 1 ? 'yr' : 'yrs'})',
-                                    style: const TextStyle(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.dark,
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 5),
+                                      child: Icon(Icons.circle, size: 6, color: AppColors.primary),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '$roleText$compText$durationText',
+                                        style: const TextStyle(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.dark,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (exp.responsibility != null && exp.responsibility!.trim().isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 14, top: 2),
+                                    child: Text(
+                                      exp.responsibility!.trim(),
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        color: AppColors.textSecondary,
+                                        height: 1.3,
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                           );

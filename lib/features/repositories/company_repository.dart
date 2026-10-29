@@ -201,12 +201,25 @@ class CompanyRepository {
   /// 1. POST /jobs - CREATE JOB POSTING
   Future<Map<String, dynamic>> createJob(Map<String, dynamic> body) async {
     try {
-      final r = await _client.dio.post('/jobs', data: body);
+      final cleanBody = Map<String, dynamic>.from(body)
+        ..remove('category')
+        ..remove('salary')
+        ..remove('jobType')
+        ..remove('type')
+        ..remove('experience')
+        ..remove('experienceRequired');
+      final r = await _client.dio.post('/jobs', data: cleanBody);
       return Map<String, dynamic>.from(r.data['data'] ?? r.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 422 || e.response?.statusCode == 400) {
         // Fallback: strip extra metadata fields if rejected by older backend schema
         final stripped = Map<String, dynamic>.from(body)
+          ..remove('category')
+          ..remove('salary')
+          ..remove('jobType')
+          ..remove('type')
+          ..remove('experience')
+          ..remove('experienceRequired')
           ..remove('projectType')
           ..remove('experienceLevel');
         if (stripped.length < body.length) {
@@ -255,11 +268,24 @@ class CompanyRepository {
   /// 4. PATCH /jobs/:id - UPDATE JOB POSTING
   Future<Map<String, dynamic>> updateJob(String id, Map<String, dynamic> body) async {
     try {
-      final r = await _client.dio.patch('/jobs/$id', data: body);
+      final cleanBody = Map<String, dynamic>.from(body)
+        ..remove('category')
+        ..remove('salary')
+        ..remove('jobType')
+        ..remove('type')
+        ..remove('experience')
+        ..remove('experienceRequired');
+      final r = await _client.dio.patch('/jobs/$id', data: cleanBody);
       return Map<String, dynamic>.from(r.data['data'] ?? r.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 422 || e.response?.statusCode == 400) {
         final stripped = Map<String, dynamic>.from(body)
+          ..remove('category')
+          ..remove('salary')
+          ..remove('jobType')
+          ..remove('type')
+          ..remove('experience')
+          ..remove('experienceRequired')
           ..remove('projectType')
           ..remove('experienceLevel');
         if (stripped.length < body.length) {

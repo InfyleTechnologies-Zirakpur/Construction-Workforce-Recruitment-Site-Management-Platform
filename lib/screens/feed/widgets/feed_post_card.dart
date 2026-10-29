@@ -15,7 +15,6 @@ class FeedPostCard extends StatefulWidget {
   final VoidCallback? onDeleteTap;
   final VoidCallback? onProfileTap;
   final bool? isCompany;
-
   const FeedPostCard({
     super.key,
     required this.post,

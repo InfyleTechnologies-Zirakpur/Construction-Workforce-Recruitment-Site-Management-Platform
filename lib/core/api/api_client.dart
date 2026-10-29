@@ -18,7 +18,6 @@ class ApiClient {
           headers: const {'Content-Type': 'application/json'},
         ),
       ) {
-   // if (ApiConfig.useDummyApi) dio.interceptors.add(DummyApiInterceptor());
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -71,29 +70,28 @@ class ApiClient {
           print('   Error Data: ${e.response?.data ?? e.message}');
           if (e.response?.statusCode == 401) {
             final path = e.requestOptions.path;
-            // Only redirect to login if it's an established session expiring, not during auth/signup/profile setup
+            // When an authenticated endpoint returns 401, clear stale token and redirect to LoginScreen
             if (!path.startsWith('/auth/')) {
-              final msg = e.response?.data?['message']?.toString() ?? '';
-              if (msg.contains('Session expired') || msg.contains('jwt expired') || msg.contains('token expired')) {
+              try {
                 const storage = FlutterSecureStorage(
                   aOptions: AndroidOptions(encryptedSharedPreferences: true),
                 );
                 await storage.deleteAll();
                 await const FlutterSecureStorage().deleteAll();
-                ApiClient.accessToken = null;
-                final navState = navigatorKey.currentState;
-                if (navState != null && navState.mounted) {
-                  ScaffoldMessenger.of(navState.context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Session expired. Please log in again.'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  navState.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
+              } catch (_) {}
+              ApiClient.accessToken = null;
+              final navState = navigatorKey.currentState;
+              if (navState != null && navState.mounted) {
+                ScaffoldMessenger.of(navState.context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Session expired or unauthorized. Please log in again.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                navState.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
               }
             }
           }
@@ -105,5 +103,7 @@ class ApiClient {
 
   static final ApiClient instance = ApiClient._();
   final Dio dio;
-  void clearAuth() {}
+  void clearAuth() {
+    accessToken = null;
+  }
 }

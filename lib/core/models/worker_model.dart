@@ -3,12 +3,20 @@ class WorkerExperience {
   final String role;
   final int years;
   final String? summary;
+  final String? startDate;
+  final String? endDate;
+  final String? responsibility;
+  final bool isCurrentlyWorking;
 
   const WorkerExperience({
     required this.company,
     required this.role,
     this.years = 0,
     this.summary,
+    this.startDate,
+    this.endDate,
+    this.responsibility,
+    this.isCurrentlyWorking = false,
   });
 
   factory WorkerExperience.fromJson(Map<String, dynamic> json) {
@@ -19,20 +27,38 @@ class WorkerExperience {
       return 0;
     }
 
+    final rawCompany = json['company']?.toString() ?? json['companyName']?.toString() ?? '';
+    final safeCompany = rawCompany == 'XYZ Constructions' ? '' : rawCompany;
+    final role = json['title']?.toString() ?? json['role']?.toString() ?? json['jobTitle']?.toString() ?? '';
+    final summary = json['summary']?.toString() ?? json['responsibility']?.toString();
+    final startDate = json['startDate']?.toString();
+    final endDate = json['endDate']?.toString();
+    final isWorking = json['isCurrentlyWorking'] == true || endDate == 'Present';
+
     return WorkerExperience(
-      company: json['company']?.toString() ?? '',
-      role: json['title']?.toString() ?? json['role']?.toString() ?? '',
+      company: safeCompany,
+      role: role,
       years: parseYears(json['years'] ?? json['experienceYears']),
-      summary: json['summary']?.toString(),
+      summary: summary,
+      startDate: startDate,
+      endDate: endDate,
+      responsibility: json['responsibility']?.toString() ?? summary,
+      isCurrentlyWorking: isWorking,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'title': role,
+      'role': role,
       'company': company,
+      'companyName': company,
       'years': years.toString(),
       if (summary != null) 'summary': summary,
+      if (startDate != null) 'startDate': startDate,
+      if (endDate != null) 'endDate': endDate,
+      if (responsibility != null) 'responsibility': responsibility,
+      'isCurrentlyWorking': isCurrentlyWorking,
     };
   }
 }

@@ -164,7 +164,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         if (profile.experience.isNotEmpty) {
           final exp = profile.experience.first;
           _experienceRoleController.text = exp.role;
-          _experienceCompanyController.text = exp.company;
+          _experienceCompanyController.text = exp.company == 'XYZ Constructions' ? '' : exp.company;
           _experienceYearsController.text = exp.years > 0 ? exp.years.toString() : '1';
         }
         if (profile.documents.isNotEmpty) {
@@ -311,7 +311,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     if (expCompany.isNotEmpty || expRole.isNotEmpty) {
       experienceList.add({
         'title': expRole.isNotEmpty ? expRole : effectiveSkills.first,
-        'company': expCompany.isNotEmpty ? expCompany : 'XYZ Constructions',
+        'company': expCompany,
+        'companyName': expCompany,
         'years': expYears.isNotEmpty ? expYears : '1',
       });
     }
@@ -590,7 +591,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                             textCapitalization: TextCapitalization.words,
                             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.dark),
                             decoration: InputDecoration(
-                              hintText: 'e.g. XYZ Constructions',
+                              hintText: 'e.g. L&T Construction, Tata Projects, NCC Ltd',
                               hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13.5),
                               prefixIcon: const Icon(Icons.business_outlined, size: 18, color: AppColors.textSecondary),
                               filled: true,

@@ -84,15 +84,15 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     _experienceList = widget.profile.experience.map((WorkerExperience e) {
       return _ExperienceItemControllers(
         title: e.role,
-        company: e.company,
+        company: e.company == 'XYZ Constructions' ? '' : e.company,
         years: e.years > 0 ? e.years.toString() : '1',
       );
     }).toList();
 
     if (_experienceList.isEmpty) {
       _experienceList.add(_ExperienceItemControllers(
-        title: widget.profile.skills.isNotEmpty ? widget.profile.skills.first : 'Mason',
-        company: 'XYZ Constructions',
+        title: widget.profile.skills.isNotEmpty ? widget.profile.skills.first : '',
+        company: '',
         years: '1',
       ));
     }

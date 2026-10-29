@@ -6,6 +6,7 @@ export 'company_model.dart';
 export 'worker_model.dart';
 export 'feed_post_model.dart';
 export 'document_model.dart';
+export 'resume_model.dart';
 
 class Job {
   const Job({
@@ -170,6 +171,32 @@ class WorkerProfile {
           parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
         } else if (item is String) {
           parsedExp.add(WorkerExperience(company: '', role: item));
+        }
+      }
+    }
+
+    // Extract real work experiences from stored resumes if user.experience is empty
+    if (parsedExp.isEmpty && j['resumes'] is List) {
+      for (final res in j['resumes']) {
+        if (res is Map && res['workExperiences'] is List) {
+          for (final item in res['workExperiences']) {
+            if (item is Map) {
+              parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
+            }
+          }
+          if (parsedExp.isNotEmpty) break;
+        }
+      }
+    }
+    if (parsedExp.isEmpty && j['metadata'] is Map && j['metadata']['resumes'] is List) {
+      for (final res in j['metadata']['resumes']) {
+        if (res is Map && res['workExperiences'] is List) {
+          for (final item in res['workExperiences']) {
+            if (item is Map) {
+              parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
+            }
+          }
+          if (parsedExp.isNotEmpty) break;
         }
       }
     }

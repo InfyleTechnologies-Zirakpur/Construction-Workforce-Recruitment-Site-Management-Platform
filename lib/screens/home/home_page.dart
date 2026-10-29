@@ -11,6 +11,7 @@ import '../jobs/my_jobs_screen.dart';
 import '../messages/messages_screen.dart';
 import '../profile/complete_profile_screen.dart';
 import '../profile/worker_profile_screen.dart';
+import '../resume/resume_cv_screen.dart';
 import '../search/search_screen.dart';
 import 'widgets/home_app_bar.dart';
 import 'widgets/home_job_card.dart';
@@ -641,7 +642,7 @@ class _HomePageState extends State<HomePage> {
           : _navIndex == 3
           ? MessagesScreen(onExploreJobs: () => setState(() => _navIndex = 1))
           : _navIndex == 2
-          ? MyJobsScreen(onExploreJobs: () => setState(() => _navIndex = 1))
+          ? const ResumeCvScreen()
           : _navIndex == 0
           ? const FeedScreen(isCompany: false)
           : _buildJobsTab(context),
@@ -698,9 +699,9 @@ class _HomePageState extends State<HomePage> {
                 label: 'Jobs',
               ),
               NavigationDestination(
-                icon: Icon(Icons.bookmark_border_rounded),
-                selectedIcon: Icon(Icons.bookmark_rounded),
-                label: 'My Jobs',
+                icon: Icon(Icons.description_outlined),
+                selectedIcon: Icon(Icons.description_rounded),
+                label: 'Resume',
               ),
               NavigationDestination(
                 icon: Icon(Icons.chat_bubble_outline_rounded),
