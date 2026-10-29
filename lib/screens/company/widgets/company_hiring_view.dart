@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import 'company_applicant_review_sheet.dart';
+import 'company_candidate_card.dart';
 import 'company_post_job_sheet.dart';
 
 /// Company Hiring Screen / View
@@ -1245,7 +1246,11 @@ class _CompanyHiringViewState extends State<CompanyHiringView> {
             itemCount: filtered.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
-              return _buildCandidateCard(context, filtered[index], job);
+              return CompanyCandidateCard(
+                app: filtered[index],
+                job: job,
+                onUpdateStatus: widget.onUpdateStatus,
+              );
             },
           ),
       ],

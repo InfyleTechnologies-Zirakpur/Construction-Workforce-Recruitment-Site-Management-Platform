@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
 import '../../../core/widgets/sheets/report_job_sheet.dart';
@@ -198,14 +197,14 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                       children: job.skills.map((skill) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
+                          color: const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFFEDD5), width: 1.0),
+                          border: Border.all(color: const Color(0xFFDBEAFE), width: 1.0),
                         ),
                         child: Text(
                           skill,
                           style: const TextStyle(
-                            color: Color(0xFFEA580C),
+                            color: AppColors.primary,
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                           ),
@@ -263,7 +262,7 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                         children: [
                           const Padding(
                             padding: EdgeInsets.only(top: 2),
-                            child: Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFFEA580C)),
+                            child: Icon(Icons.check_circle_rounded, size: 16, color: AppColors.primary),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -336,10 +335,10 @@ class _JobDetailsSheetState extends State<JobDetailsSheet> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: _isSaved ? const Color(0xFFFFF7ED) : const Color(0xFFF8FAFC),
+                        color: _isSaved ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: _isSaved ? const Color(0xFFFFEDD5) : const Color(0xFFE2E8F0),
+                          color: _isSaved ? const Color(0xFFBFDBFE) : const Color(0xFFE2E8F0),
                           width: 1.2,
                         ),
                       ),

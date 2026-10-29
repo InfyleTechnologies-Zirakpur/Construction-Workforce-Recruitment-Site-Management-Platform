@@ -19,6 +19,7 @@ import '../feed/create_feed_screen.dart';
 import '../feed/widgets/feed_comments_sheet.dart';
 import '../feed/widgets/feed_post_card.dart';
 import 'company_profile_form_screen.dart';
+import 'widgets/company_candidate_card.dart';
 import 'widgets/company_post_job_sheet.dart';
 
 class CompanyProfileScreen extends StatefulWidget {
@@ -52,10 +53,49 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
   List<Map<String, dynamic>> _companyApplications = [];
   List<FeedPost> _companyPosts = [];
 
+  Map<String, dynamic>? _selectedJobForApplicants;
+  String _applicantStatusFilter = 'all';
+  String _applicantSearchQuery = '';
+  final _applicantSearchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _loadAllData();
+  }
+
+  @override
+  void dispose() {
+    _applicantSearchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _updateApplicationStatus(
+    String appId,
+    String status, {
+    String? remarks,
+    Map<String, dynamic>? app,
+  }) async {
+    final note = remarks?.trim();
+    try {
+      await _repo.updateApplicationStatus(appId, status: status, remark: note);
+      if (mounted) {
+        setState(() {
+          final idx = _companyApplications.indexWhere((a) => (a['id'] ?? a['_id'])?.toString() == appId);
+          if (idx != -1) {
+            final updated = Map<String, dynamic>.from(_companyApplications[idx]);
+            updated['status'] = status;
+            if (note != null) updated['reviewRemarks'] = note;
+            _companyApplications[idx] = updated;
+          }
+        });
+        _showMessage('Application status updated to ${status.toUpperCase()}');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showMessage('Failed to update status: $e');
+      }
+    }
   }
 
   Future<void> _loadAllData() async {
@@ -233,6 +273,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
   }
 
   Future<void> _openComments(FeedPost post) async {
+
     await FeedCommentsSheet.show(context, post, isCompany: true);
     if (mounted) {
       try {
@@ -543,7 +584,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
       children: [
         // Top Amber Banner (strictly using existing company theme!)
         Container(
-          height: 140,
+          height: 160,
           width: double.infinity,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -560,7 +601,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
             child: Align(
               alignment: Alignment.topLeft,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.only(left: 14, top: 6),
                 child: Navigator.canPop(context)
                     ? Material(
                         color: Colors.transparent,
@@ -589,14 +630,12 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
 
         // Bottom space so Stack child can overlap
         Container(
-          margin: const EdgeInsets.only(top: 140),
+          margin: const EdgeInsets.only(top: 160),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // Action Buttons Row (aligned to right, matching screenshot 1)
               if (!widget.isReadOnly) ...[
-                // Edit Button (Company Primary Amber)
                 ElevatedButton.icon(
                   onPressed: () => _editProfile(p),
                   style: ElevatedButton.styleFrom(
@@ -653,7 +692,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
         // Overlapping Square Logo Card
         Positioned(
           left: 16,
-          top: 85,
+          top: 110,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -675,11 +714,15 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
                     color: Colors.white,
-                    child: (logoUrl != null && logoUrl.startsWith('http'))
+                    child: (logoUrl != null && logoUrl.isNotEmpty)
                         ? Image.network(
-                            logoUrl,
-                            fit: BoxFit.contain,
+                            logoUrl.startsWith('http') ? logoUrl : 'https://$logoUrl',
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
                             errorBuilder: (_, __, ___) => _buildLogoInitials(initials),
                           )
                         : _buildLogoInitials(initials),
@@ -1196,6 +1239,10 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
 
   // --- 6. Tab 2: Jobs Tab ---
   Widget _buildJobsTab(Map<String, dynamic> p) {
+    if (_selectedJobForApplicants != null) {
+      return _buildManageApplicantsView(context, _selectedJobForApplicants!);
+    }
+
     if (_companyJobs.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
@@ -1524,7 +1571,14 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 Expanded(
                   flex: 3,
                   child: ElevatedButton(
-                    onPressed: () => _showManageApplicantsModal(context, job),
+                    onPressed: () {
+                      setState(() {
+                        _selectedJobForApplicants = job;
+                        _applicantStatusFilter = 'all';
+                        _applicantSearchQuery = '';
+                        _applicantSearchController.clear();
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.companyPrimary,
                       elevation: 0,
@@ -1618,183 +1672,339 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
     );
   }
 
-  void _showManageApplicantsModal(BuildContext context, Map<String, dynamic> job) {
-    final title = (job['title'] ?? 'Job Requirement').toString();
-    final apps = _getApplicationsForJob(job);
+  Widget _buildCandidateFilterCard({
+    required String category,
+    required int count,
+    required Color countColor,
+    required String label,
+  }) {
+    final isSelected = _applicantStatusFilter == category;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalCtx) {
-        return Container(
-          height: MediaQuery.of(modalCtx).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 10, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${apps.length} Total Applicants',
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.pop(modalCtx),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
-              Expanded(
-                child: apps.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.people_outline, size: 48, color: Color(0xFF94A3B8)),
-                            SizedBox(height: 12),
-                            Text(
-                              'No applicants yet for this job',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: apps.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (_, i) {
-                          final a = apps[i];
-                          final applicant = (a['worker'] is Map ? a['worker'] : (a['applicant'] is Map ? a['applicant'] : a)) as Map<String, dynamic>;
-                          final name = (applicant['name'] ?? applicant['fullName'] ?? a['workerName'] ?? 'Applicant').toString();
-                          final status = (a['status'] ?? 'pending').toString().toLowerCase();
-                          final trade = (applicant['trade'] ?? applicant['skill'] ?? a['trade'] ?? 'Worker').toString();
-
-                          Color statusBg = const Color(0xFFEFF6FF);
-                          Color statusFg = const Color(0xFF1D4ED8);
-                          if (status == 'shortlisted') {
-                            statusBg = const Color(0xFFFEFCE8);
-                            statusFg = const Color(0xFFB45309);
-                          } else if (status == 'hired' || status == 'accepted') {
-                            statusBg = const Color(0xFFF0FDF4);
-                            statusFg = const Color(0xFF15803D);
-                          } else if (status == 'rejected') {
-                            statusBg = const Color(0xFFFEF2F2);
-                            statusFg = const Color(0xFFB91C1C);
-                          }
-
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: AppColors.companyPrimary.withValues(alpha: 0.15),
-                                  child: Text(
-                                    name.isNotEmpty ? name[0].toUpperCase() : 'A',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.companyPrimary,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        trade,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Color(0xFF64748B),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: statusBg,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    status.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: statusFg,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        );
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (_applicantStatusFilter == category) {
+            _applicantStatusFilter = 'all';
+          } else {
+            _applicantStatusFilter = category;
+          }
+        });
       },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? countColor : const Color(0xFFE5E7EB),
+            width: isSelected ? 2.0 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected ? countColor.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: countColor,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF4B5563),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  Widget _buildManageApplicantsView(BuildContext context, Map<String, dynamic> job) {
+    final title = (job['title'] ?? 'Job Requirement').toString();
+    final location = (job['location'] ?? job['description'] ?? 'Site Location').toString();
+
+    final allJobApps = _getApplicationsForJob(job);
+    final appliedCount = _countStatus(allJobApps, 'applied');
+    final shortlistedCount = _countStatus(allJobApps, 'shortlisted');
+    final hiredCount = _countStatus(allJobApps, 'hired');
+    final rejectedCount = _countStatus(allJobApps, 'rejected');
+
+    // Filter by candidate status
+    List<Map<String, dynamic>> filtered = allJobApps;
+    if (_applicantStatusFilter != 'all') {
+      filtered = filtered.where((a) {
+        final s = (a['status'] ?? 'pending').toString().toLowerCase().trim();
+        switch (_applicantStatusFilter) {
+          case 'applied':
+            return s == 'pending' || s == 'applied';
+          case 'shortlisted':
+            return s == 'shortlisted';
+          case 'hired':
+            return s == 'accepted' || s == 'hired';
+          case 'rejected':
+            return s == 'rejected';
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Filter by search query
+    if (_applicantSearchQuery.isNotEmpty) {
+      filtered = filtered.where((a) {
+        final user = a['user'] is Map ? a['user'] as Map<String, dynamic> : <String, dynamic>{};
+        final name = (user['fullName'] ?? user['name'] ?? a['workerName'] ?? '').toString().toLowerCase();
+        final company = (user['company'] ?? user['trade'] ?? a['trade'] ?? '').toString().toLowerCase();
+        final phone = (user['phone'] ?? a['phone'] ?? '').toString().toLowerCase();
+        final q = _applicantSearchQuery.toLowerCase();
+        return name.contains(q) || company.contains(q) || phone.contains(q);
+      }).toList();
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      children: [
+        // 1. Top Section: Title with pencil icon & Red Close Button (Exact replica of Image)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.4,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (!widget.isReadOnly) ...[
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _openEditJob(job),
+                          child: const Icon(
+                            Icons.edit_outlined,
+                            size: 20,
+                            color: Color(0xFF4B5563),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    location,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Red Close Button: [ ✕ Close ]
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _selectedJobForApplicants = null;
+                  _applicantStatusFilter = 'all';
+                  _applicantSearchQuery = '';
+                  _applicantSearchController.clear();
+                });
+              },
+              icon: const Icon(Icons.close, size: 16, color: Colors.white),
+              label: const Text(
+                'Close',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626), // Vibrant red
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // 2. Search applicants textfield
+        TextField(
+          controller: _applicantSearchController,
+          onChanged: (val) {
+            setState(() {
+              _applicantSearchQuery = val.trim();
+            });
+          },
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF0F172A),
+          ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+            hintText: 'Search applicants...',
+            hintStyle: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 15,
+              fontWeight: FontWeight.normal,
+            ),
+            prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF9CA3AF), size: 22),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.2),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.companyPrimary, width: 1.8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // 3. Filter Metric Cards Row (Applied, Shortlisted, Hired, Rejected)
+        Row(
+          children: [
+            Expanded(
+              child: _buildCandidateFilterCard(
+                category: 'applied',
+                count: appliedCount,
+                countColor: const Color(0xFF2563EB),
+                label: 'Applied',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildCandidateFilterCard(
+                category: 'shortlisted',
+                count: shortlistedCount,
+                countColor: const Color(0xFFD97706),
+                label: 'Shortlisted',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildCandidateFilterCard(
+                category: 'hired',
+                count: hiredCount,
+                countColor: const Color(0xFF16A34A),
+                label: 'Hired',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildCandidateFilterCard(
+                category: 'rejected',
+                count: rejectedCount,
+                countColor: const Color(0xFFDC2626),
+                label: 'Rejected',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // 4. Candidate Cards List
+        if (filtered.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.person_search_outlined, size: 48, color: Color(0xFF94A3B8)),
+                const SizedBox(height: 12),
+                Text(
+                  _applicantSearchQuery.isNotEmpty
+                      ? 'No applicants matching "$_applicantSearchQuery"'
+                      : (_applicantStatusFilter != 'all'
+                          ? 'No ${_applicantStatusFilter.toUpperCase()} Applicants'
+                          : 'No Applicants Found'),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Applicants for this role will appear here with full contact info & credentials.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 13.5),
+                ),
+              ],
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filtered.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              return CompanyCandidateCard(
+                app: filtered[index],
+                job: job,
+                onUpdateStatus: _updateApplicationStatus,
+                isReadOnly: widget.isReadOnly,
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  void _showManageApplicantsModal(BuildContext context, Map<String, dynamic> job) {
+    setState(() {
+      _selectedJobForApplicants = job;
+      _applicantStatusFilter = 'all';
+      _applicantSearchQuery = '';
+      _applicantSearchController.clear();
+    });
   }
 
   void _openEditJob(Map<String, dynamic> job) {

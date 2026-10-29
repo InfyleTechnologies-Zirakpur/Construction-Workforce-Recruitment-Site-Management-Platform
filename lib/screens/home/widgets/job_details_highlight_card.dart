@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
+
 class JobDetailsHighlightCard extends StatelessWidget {
   final int dailyPay;
   final String projectType;
@@ -15,9 +17,9 @@ class JobDetailsHighlightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFEDD5), width: 1.2),
+        border: Border.all(color: const Color(0xFFDBEAFE), width: 1.2),
       ),
       child: Row(
         children: [
@@ -26,12 +28,10 @@ class JobDetailsHighlightCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  
-                  width :44,
+                  width: 44,
                   height: 44,
-                  
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFEDD5),
+                    color: const Color(0xFFDBEAFE),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
@@ -40,7 +40,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFFEA580C),
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
@@ -64,7 +64,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFEA580C),
+                          color: AppColors.primary,
                           letterSpacing: -0.5,
                         ),
                         maxLines: 1,
@@ -87,7 +87,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
           Container(
             width: 1,
             height: 46,
-            color: const Color(0xFFFFEDD5),
+            color: const Color(0xFFDBEAFE),
             margin: const EdgeInsets.symmetric(horizontal: 8),
           ),
           // Right: Job Type
@@ -98,12 +98,12 @@ class JobDetailsHighlightCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFEDD5),
+                    color: const Color(0xFFDBEAFE),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.access_time_rounded,
-                    color: Color(0xFFEA580C),
+                    color: AppColors.primary,
                     size: 22,
                   ),
                 ),

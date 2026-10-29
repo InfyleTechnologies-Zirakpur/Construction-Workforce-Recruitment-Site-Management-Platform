@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
+
 class JobDetailsLocationCard extends StatelessWidget {
   final String location;
 
@@ -23,13 +25,13 @@ class JobDetailsLocationCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFEDD5),
+              color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.location_on_rounded,
               size: 22,
-              color: Color(0xFFEA580C),
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(width: 12),
