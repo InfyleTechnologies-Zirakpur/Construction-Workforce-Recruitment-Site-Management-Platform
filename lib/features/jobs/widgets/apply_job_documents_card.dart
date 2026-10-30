@@ -6,9 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
 import '../../../features/bloc/worker_blocs.dart';
+import '../../../features/resume/resume_storage_service.dart';
 
-/// Documents section card for job application — shows profile documents
-/// and allows the user to select/change their resume for this application.
+/// Documents section card for job application — allows the user to select
+/// from their saved/uploaded resumes or upload a new one.
 class ApplyJobDocumentsCard extends StatefulWidget {
   final ValueChanged<DocumentModel?>? onSelectResume;
 
@@ -25,17 +26,46 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
   bool _isUploading = false;
   String? _selectedResumeId;
   DocumentModel? _uploadedResume;
+  List<ResumeModel> _savedResumes = [];
+  bool _isLoadingSavedResumes = true;
 
   @override
   void initState() {
     super.initState();
-    // Pre-seed from ProfileCubit if profile already exists
     final profileState = context.read<ProfileCubit>().state;
     if (profileState is Loaded<WorkerProfile>) {
       context.read<DocumentsCubit>().seedFromProfile(profileState.data);
     }
-    // Load documents when card appears
     context.read<DocumentsCubit>().load(silent: true);
+    _loadSavedResumes();
+  }
+
+  Future<void> _loadSavedResumes() async {
+    try {
+      final list = await ResumeStorageService.loadResumes();
+      if (mounted) {
+        setState(() {
+          _savedResumes = list;
+          _isLoadingSavedResumes = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingSavedResumes = false);
+    }
+  }
+
+  DocumentModel _resumeModelToDoc(ResumeModel r) {
+    final title = r.title.isNotEmpty ? r.title : 'Resume';
+    return DocumentModel(
+      id: r.id,
+      type: 'resume',
+      fileName: title.toLowerCase().endsWith('.pdf') ? title : '$title.pdf',
+      originalFilename: title,
+      fileUrl: r.fileUrl,
+      uploadedAt: r.updatedAt,
+      createdAt: r.updatedAt,
+      verificationStatus: 'verified',
+    );
   }
 
   Future<void> _uploadNewResume() async {
@@ -64,10 +94,10 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
     });
 
     if (doc != null) {
-      // Keep profile in sync
       try {
         context.read<ProfileCubit>().load();
       } catch (_) {}
+      await _loadSavedResumes();
     }
 
     if (doc != null && mounted) {
@@ -100,8 +130,201 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
     } catch (_) {}
   }
 
+  void _showResumePickerSheet(BuildContext context, List<DocumentModel> resumes) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Select Resume',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.dark,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'Choose which resume to submit with this job application',
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 14),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: resumes.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, index) {
+                      final item = resumes[index];
+                      final isSelected = item.id == _selectedResumeId;
+
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedResumeId = item.id;
+                          });
+                          widget.onSelectResume?.call(item);
+                          Navigator.pop(ctx);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: AppColors.dark,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              content: Text('Selected "${item.displayName}" for this application'),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppColors.peachBackground : const Color(0xFFFAFAFA),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected ? AppColors.primary : AppColors.border,
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                                color: isSelected ? AppColors.primary : const Color(0xFF94A3B8),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Colors.white : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.description_rounded,
+                                  size: 20,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.displayName,
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                        color: AppColors.dark,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.uploadedAt != null
+                                          ? 'Updated ${_formatDate(item.uploadedAt!)}'
+                                          : (item.createdAt != null
+                                              ? 'Updated ${_formatDate(item.createdAt!)}'
+                                              : 'Ready to attach'),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isSelected)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDCFCE7),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Active',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF15803D),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _uploadNewResume();
+                  },
+                  icon: const Icon(Icons.upload_file_rounded, size: 18),
+                  label: const Text(
+                    'Upload a Different Resume',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary, width: 1.2),
+                    minimumSize: const Size.fromHeight(44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildResumeSelector(List<DocumentModel> resumes) {
-    final activeResume = resumes.firstOrNull;
+    DocumentModel? activeResume;
+    if (_selectedResumeId != null) {
+      activeResume = resumes.where((r) => r.id == _selectedResumeId).firstOrNull;
+    }
+    activeResume ??= resumes.firstOrNull;
 
     if (activeResume != null && _selectedResumeId != activeResume.id) {
       _selectedResumeId = activeResume.id;
@@ -139,7 +362,7 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Upload your resume to stand out and improve your chance of getting hired',
+                        'Upload or select your resume to stand out to employers',
                         style: TextStyle(
                           fontSize: 12.5,
                           color: const Color(0xFFDC2626).withValues(alpha: 0.7),
@@ -175,7 +398,7 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
             ),
           ),
         ] else ...[
-          // Resume is uploaded: Show resume details + Edit/Change option
+          // Resume is selected
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -232,7 +455,7 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                                   border: Border.all(color: const Color(0xFF86EFAC), width: 0.8),
                                 ),
                                 child: const Text(
-                                  'Attached ✓',
+                                  'Selected ✓',
                                   style: TextStyle(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w800,
@@ -245,9 +468,9 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                           const SizedBox(height: 3),
                           Text(
                             activeResume.uploadedAt != null
-                                ? 'Uploaded ${_formatDate(activeResume.uploadedAt!)} • Will be submitted with application'
+                                ? 'Updated ${_formatDate(activeResume.uploadedAt!)} • Attached to this application'
                                 : (activeResume.createdAt != null
-                                    ? 'Uploaded ${_formatDate(activeResume.createdAt!)} • Will be submitted with application'
+                                    ? 'Updated ${_formatDate(activeResume.createdAt!)} • Attached to this application'
                                     : 'Attached resume ready for submission'),
                             style: const TextStyle(
                               fontSize: 12,
@@ -259,9 +482,11 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                     ),
                     const SizedBox(width: 8),
 
-                    // Edit / Change Button
+                    // Change / Choose Resume Button
                     InkWell(
-                      onTap: _isUploading ? null : _uploadNewResume,
+                      onTap: resumes.length > 1
+                          ? () => _showResumePickerSheet(context, resumes)
+                          : (_isUploading ? null : _uploadNewResume),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -280,17 +505,14 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (_isUploading)
-                              const SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                              )
-                            else
-                              const Icon(Icons.edit_outlined, size: 14, color: AppColors.primary),
+                            Icon(
+                              resumes.length > 1 ? Icons.swap_horiz_rounded : Icons.edit_outlined,
+                              size: 15,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 4),
                             Text(
-                              _isUploading ? 'Updating...' : 'Change',
+                              resumes.length > 1 ? 'Choose' : 'Change',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -305,15 +527,15 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                 ),
 
                 // Preview Link row
-                if (activeResume.fileUrl != null && activeResume.fileUrl!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  const Divider(height: 1, color: AppColors.peachBorder),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                const SizedBox(height: 10),
+                const Divider(height: 1, color: AppColors.peachBorder),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (activeResume.fileUrl != null && activeResume.fileUrl!.isNotEmpty)
                       InkWell(
-                        onTap: () => _openResumeUrl(activeResume.fileUrl),
+                        onTap: () => _openResumeUrl(activeResume?.fileUrl),
                         borderRadius: BorderRadius.circular(6),
                         child: const Padding(
                           padding: EdgeInsets.symmetric(vertical: 2),
@@ -334,7 +556,24 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                             ],
                           ),
                         ),
-                      ),
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    if (resumes.length > 1)
+                      InkWell(
+                        onTap: () => _showResumePickerSheet(context, resumes),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Text(
+                          '${resumes.length} resumes available • Tap to switch',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      )
+                    else
                       InkWell(
                         onTap: _isUploading ? null : _uploadNewResume,
                         borderRadius: BorderRadius.circular(6),
@@ -348,9 +587,8 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -427,18 +665,28 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
             ? List<DocumentModel>.from(docState.data)
             : <DocumentModel>[];
 
-        // 1. If documents has no resume, check ProfileCubit documents
+        // 1. Merge saved resumes from ResumeStorageService (contains all uploaded and builder resumes)
+        for (final r in _savedResumes) {
+          final doc = _resumeModelToDoc(r);
+          if (!documents.any((d) => d.id == doc.id || (doc.fileUrl != null && doc.fileUrl!.isNotEmpty && d.fileUrl == doc.fileUrl))) {
+            documents.insert(0, doc);
+          }
+        }
+
+        // 2. If documents has no resume, check ProfileCubit documents
         if (!documents.any((d) => d.isResume) && profile != null) {
           for (final pd in profile.documents) {
             final doc = DocumentModel.fromJson(pd);
             if (doc.isResume) {
-              documents.insert(0, doc);
+              if (!documents.any((d) => d.id == doc.id)) {
+                documents.insert(0, doc);
+              }
               break;
             }
           }
         }
 
-        // 2. If still no resume, check profile.resumeUrl
+        // 3. If still no resume, check profile.resumeUrl
         if (!documents.any((d) => d.isResume) &&
             profile != null &&
             profile.resumeUrl != null &&
@@ -455,7 +703,7 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
           );
         }
 
-        // 3. If user just uploaded a resume in this session, ensure it's included
+        // 4. If user just uploaded a resume in this session, ensure it's included
         if (_uploadedResume != null) {
           if (!documents.any((d) => d.isResume)) {
             documents.insert(0, _uploadedResume!);
@@ -469,7 +717,7 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
 
         final resumes = documents.where((d) => d.isResume).toList();
         final certificates = documents.where((d) => !d.isResume).toList();
-        final bool isLoading = docState is Loading<List<DocumentModel>> && resumes.isEmpty;
+        final bool isLoading = (_isLoadingSavedResumes || docState is Loading<List<DocumentModel>>) && resumes.isEmpty;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -497,7 +745,7 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
               ),
               const SizedBox(height: 3),
               const Text(
-                'Select or upload the resume you want to attach to this application',
+                'Select which resume you want to attach to this job application',
                 style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 14),
@@ -537,7 +785,7 @@ class _ApplyJobDocumentsCardState extends State<ApplyJobDocumentsCard> {
               ],
 
               // Fallback: show profile documents if no DocumentsCubit docs
-              if (documents.isEmpty && docState is! Loading<List<DocumentModel>>)
+              if (documents.isEmpty && docState is! Loading<List<DocumentModel>> && !_isLoadingSavedResumes)
                 BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
                   builder: (context, profileState) {
                     final profileDocs = profileState is Loaded<WorkerProfile>
