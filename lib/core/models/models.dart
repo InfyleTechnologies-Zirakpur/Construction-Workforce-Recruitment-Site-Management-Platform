@@ -1,4 +1,5 @@
 import 'worker_model.dart';
+import 'resume_model.dart';
 
 export 'job_model.dart';
 export 'application_model.dart';
@@ -163,14 +164,36 @@ class WorkerProfile {
   final String? resumeUrl;
   final List<Map<String, dynamic>> documents;
 
+  List<ResumeEducation> get parsedEducation {
+    final List<ResumeEducation> list = [];
+    for (final item in education) {
+      if (item is ResumeEducation) {
+        list.add(item);
+      } else if (item is Map) {
+        list.add(ResumeEducation.fromJson(Map<String, dynamic>.from(item)));
+      } else if (item is String && item.trim().isNotEmpty) {
+        list.add(ResumeEducation(qualification: item.trim(), instituteName: ''));
+      }
+    }
+    return list;
+  }
+
   factory WorkerProfile.fromJson(Map<String, dynamic> j) {
     final List<WorkerExperience> parsedExp = [];
+
+    void addValidExp(Map<String, dynamic> map) {
+      final exp = WorkerExperience.fromJson(map);
+      if (exp.role.trim().isNotEmpty || exp.company.trim().isNotEmpty) {
+        parsedExp.add(exp);
+      }
+    }
+
     if (j['experience'] is List) {
       for (final item in j['experience'] as List) {
         if (item is Map) {
-          parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
-        } else if (item is String) {
-          parsedExp.add(WorkerExperience(company: '', role: item));
+          addValidExp(Map<String, dynamic>.from(item));
+        } else if (item is String && item.trim().isNotEmpty) {
+          parsedExp.add(WorkerExperience(company: '', role: item.trim()));
         }
       }
     }
@@ -181,7 +204,7 @@ class WorkerProfile {
         if (res is Map && res['workExperiences'] is List) {
           for (final item in res['workExperiences']) {
             if (item is Map) {
-              parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
+              addValidExp(Map<String, dynamic>.from(item));
             }
           }
           if (parsedExp.isNotEmpty) break;
@@ -193,10 +216,45 @@ class WorkerProfile {
         if (res is Map && res['workExperiences'] is List) {
           for (final item in res['workExperiences']) {
             if (item is Map) {
-              parsedExp.add(WorkerExperience.fromJson(Map<String, dynamic>.from(item)));
+              addValidExp(Map<String, dynamic>.from(item));
             }
           }
           if (parsedExp.isNotEmpty) break;
+        }
+      }
+    }
+
+    final List<dynamic> parsedEdu = [];
+    if (j['education'] is List) {
+      for (final item in j['education'] as List) {
+        if (item is Map) {
+          parsedEdu.add(Map<String, dynamic>.from(item));
+        } else if (item != null) {
+          parsedEdu.add(item);
+        }
+      }
+    }
+    if (parsedEdu.isEmpty && j['resumes'] is List) {
+      for (final res in j['resumes']) {
+        if (res is Map && res['educations'] is List && (res['educations'] as List).isNotEmpty) {
+          for (final item in res['educations']) {
+            if (item is Map) {
+              parsedEdu.add(Map<String, dynamic>.from(item));
+            }
+          }
+          if (parsedEdu.isNotEmpty) break;
+        }
+      }
+    }
+    if (parsedEdu.isEmpty && j['metadata'] is Map && j['metadata']['resumes'] is List) {
+      for (final res in j['metadata']['resumes']) {
+        if (res is Map && res['educations'] is List && (res['educations'] as List).isNotEmpty) {
+          for (final item in res['educations']) {
+            if (item is Map) {
+              parsedEdu.add(Map<String, dynamic>.from(item));
+            }
+          }
+          if (parsedEdu.isNotEmpty) break;
         }
       }
     }
@@ -229,7 +287,7 @@ class WorkerProfile {
       salaryExpectation: j['salaryExpectation']?.toString() ?? '',
       email: j['email']?.toString(),
       experience: parsedExp,
-      education: (j['education'] as List?) ?? const [],
+      education: parsedEdu,
       profilePhotoUrl: j['profilePhotoUrl']?.toString() ?? j['profilePhoto']?.toString() ?? j['photoUrl']?.toString(),
       resumeUrl: resume,
       documents: rawDocs,

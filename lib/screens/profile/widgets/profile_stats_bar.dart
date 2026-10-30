@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
+import '../skills_education_screen.dart';
 
 class ProfileStatsBar extends StatelessWidget {
   final WorkerProfile profile;
   final int verifiedDocsCount;
+  final VoidCallback? onTapSkills;
 
   const ProfileStatsBar({
     super.key,
     required this.profile,
     required this.verifiedDocsCount,
+    this.onTapSkills,
   });
 
   @override
@@ -37,7 +40,20 @@ class ProfileStatsBar extends StatelessWidget {
         children: [
           _buildStatColumn('Location', location, Icons.location_on_outlined),
           _buildDivider(),
-          _buildStatColumn('Trade Skills', '$skillsCount', Icons.construction_outlined),
+          _buildStatColumn(
+            'Trade Skills',
+            '$skillsCount',
+            Icons.construction_outlined,
+            onTap: onTapSkills ??
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SkillsEducationScreen(initialProfile: profile),
+                    ),
+                  );
+                },
+          ),
           _buildDivider(),
           _buildStatColumn('Documents', '$verifiedDocsCount/2', Icons.verified_outlined),
         ],
@@ -45,35 +61,56 @@ class ProfileStatsBar extends StatelessWidget {
     );
   }
 
-  Widget _buildStatColumn(String label, String value, IconData icon) {
+  Widget _buildStatColumn(String label, String value, IconData icon, {VoidCallback? onTap}) {
+    final content = Column(
+      children: [
+        Icon(icon, color: AppColors.primary, size: 20),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.dark,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 2),
+              const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.primary),
+            ],
+          ],
+        ),
+      ],
+    );
+
     return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.primary, size: 20),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.dark,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+      child: onTap != null
+          ? InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: content,
+              ),
+            )
+          : content,
     );
   }
 

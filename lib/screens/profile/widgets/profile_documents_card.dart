@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
+import '../../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../../features/bloc/worker_blocs.dart';
 
 /// Card displaying user's documents (Resume/CV, Skill Certificate, Experience Certificate, and others)
@@ -87,61 +88,14 @@ class _ProfileDocumentsCardState extends State<ProfileDocumentsCard> {
   }
 
   Future<void> _deleteDocument(String docId, String title) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
-        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        title: Text(
-          'Delete $title?',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.dark,
-          ),
-        ),
-        content: const Text(
-          'Are you sure you want to remove this document? This action cannot be undone.',
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.4,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            ),
-            child: const Text(
-              'Delete',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
+    final confirm = await AppConfirmDialog.show(
+      context,
+      title: 'Delete $title?',
+      message: 'Are you sure you want to remove this document? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      icon: Icons.delete_outline_rounded,
+      isDestructive: true,
     );
 
     if (confirm != true || !mounted) return;

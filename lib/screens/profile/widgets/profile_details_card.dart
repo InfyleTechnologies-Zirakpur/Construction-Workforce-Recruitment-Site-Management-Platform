@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/models.dart';
+import '../skills_education_screen.dart';
 
 class ProfileDetailsCard extends StatelessWidget {
   final WorkerProfile profile;
@@ -104,79 +105,237 @@ class ProfileDetailsCard extends StatelessWidget {
             value: profile.city.isNotEmpty ? profile.city : 'Not specified',
           ),
           const Divider(height: 16, color: AppColors.border),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.peachBackground,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.construction_outlined,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
+          // Trade Skills Row (Tappable -> Skills & Education list screen)
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SkillsEducationScreen(initialProfile: profile),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Trade Skills',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
+              );
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.peachBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.construction_outlined,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Trade Skills',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  '${profile.skills.length} Skills',
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      if (profile.skills.isEmpty)
-                        const Text(
-                          'No skills specified',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.dark,
+                        const SizedBox(height: 6),
+                        if (profile.skills.isEmpty)
+                          const Text(
+                            'No skills specified (Tap to add)',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        else
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: profile.skills.map((skill) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.peachBackground,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.peachBorder,
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Text(
+                                  skill,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.peachText,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
-                        )
-                      else
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: profile.skills.map((skill) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.peachBackground,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.peachBorder,
-                                  width: 0.8,
-                                ),
-                              ),
-                              child: Text(
-                                skill,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.peachText,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // Education & Qualifications Row (Tappable -> Skills & Education list screen)
+          const Divider(height: 16, color: AppColors.border),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SkillsEducationScreen(initialProfile: profile),
                 ),
-              ],
+              );
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.peachBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.school_outlined,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Education & Qualifications',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  profile.parsedEducation.isNotEmpty
+                                      ? '${profile.parsedEducation.length} Record${profile.parsedEducation.length == 1 ? '' : 's'}'
+                                      : 'Add',
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        if (profile.parsedEducation.isEmpty)
+                          const Text(
+                            'Tap to add education records',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        else
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: profile.parsedEducation.map((edu) {
+                              final title = edu.qualification.isNotEmpty
+                                  ? edu.qualification
+                                  : 'Qualification';
+                              final inst = edu.instituteName.isNotEmpty
+                                  ? '  •  ${edu.instituteName}'
+                                  : '';
+                              final yr = edu.yearOfPassing.isNotEmpty
+                                  ? ' (${edu.yearOfPassing})'
+                                  : '';
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 5),
+                                      child: Icon(Icons.circle, size: 5, color: AppColors.primary),
+                                    ),
+                                    const SizedBox(width: 7),
+                                    Expanded(
+                                      child: Text(
+                                        '$title$inst$yr',
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.dark,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           if (profile.email != null && profile.email!.isNotEmpty) ...[

@@ -11,8 +11,11 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../core/services/pdf_resume_generator.dart';
+import '../../core/widgets/dialogs/app_confirm_dialog.dart';
 import '../../features/bloc/worker_blocs.dart';
 import '../../features/resume/resume_storage_service.dart';
+import '../profile/skills_education_screen.dart';
+import '../profile/widgets/edit_profile_sheet.dart';
 import 'create_resume_screen.dart';
 
 class ResumeCvScreen extends StatefulWidget {
@@ -170,33 +173,31 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
     }
   }
 
-  Future<void> _deleteResume(ResumeModel resume) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Resume', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text('Are you sure you want to delete "${resume.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
+  void _navigateToSkillsEducation(WorkerProfile? profile) {
+    if (profile == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SkillsEducationScreen(initialProfile: profile),
       ),
+    ).then((_) {
+      if (mounted) {
+        context.read<ProfileCubit>().load();
+      }
+    });
+  }
+
+  Future<void> _deleteResume(ResumeModel resume) async {
+    final confirm = await AppConfirmDialog.show(
+      context,
+      title: 'Delete Resume',
+      message: 'Are you sure you want to delete "${resume.title}"? This cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      icon: Icons.delete_outline_rounded,
+      isDestructive: true,
     );
 
-    if (confirm == true) {
+    if (confirm) {
       await ResumeStorageService.deleteResume(resume.id);
       await _loadResumes();
       if (mounted) {
@@ -388,7 +389,9 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
     return BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
       builder: (context, profileState) {
         final profile = profileState is Loaded<WorkerProfile> ? profileState.data : null;
-        final experiences = profile?.experience ?? [];
+        final experiences = (profile?.experience ?? [])
+            .where((e) => e.role.trim().isNotEmpty || e.company.trim().isNotEmpty)
+            .toList();
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),
@@ -494,7 +497,17 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () => _navigateToCreate(),
+                      onPressed: () {
+                        if (profile != null) {
+                          EditProfileSheet.show(
+                            context,
+                            profile: profile,
+                            onSave: (data) => context.read<ProfileCubit>().update(data),
+                          );
+                        } else {
+                          _navigateToCreate();
+                        }
+                      },
                       icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
                       label: const Text(
                         'Add',
@@ -540,14 +553,35 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                     ),
                   ),
                 ] else ...[
-                  ...experiences.map((exp) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _buildExperienceCard(
-                          title: exp.role.isNotEmpty ? exp.role : 'Worker',
-                          company: exp.company.isNotEmpty ? exp.company : 'Construction Project',
-                          duration: exp.years > 0 ? '${exp.years} Years Exp' : 'Experience',
-                        ),
-                      )),
+                  ...experiences.map((exp) {
+                    final roleText = exp.role.isNotEmpty ? exp.role : 'Work Experience';
+                    final compText = (exp.company.isNotEmpty && exp.company != 'XYZ Constructions')
+                        ? exp.company
+                        : '';
+                    final durationText = exp.startDate != null && exp.startDate!.isNotEmpty
+                        ? '${exp.startDate} - ${exp.endDate?.isNotEmpty == true ? exp.endDate : (exp.isCurrentlyWorking ? "Present" : "")}'
+                        : (exp.years > 0 ? '${exp.years} ${exp.years == 1 ? "Year" : "Years"} Exp' : '');
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _buildExperienceCard(
+                        title: roleText,
+                        company: compText,
+                        duration: durationText,
+                        onEdit: () {
+                          if (profile != null) {
+                            EditProfileSheet.show(
+                              context,
+                              profile: profile,
+                              onSave: (data) => context.read<ProfileCubit>().update(data),
+                            );
+                          } else {
+                            _navigateToCreate();
+                          }
+                        },
+                      ),
+                    );
+                  }),
                 ],
 
                 const SizedBox(height: 20),
@@ -562,8 +596,8 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                         title: 'Skills',
                         subtitle: profile != null && profile.skills.isNotEmpty
                             ? '${profile.skills.length} skills added'
-                            : 'Add your skills',
-                        onTap: () => _navigateToCreate(),
+                            : 'View & add skills',
+                        onTap: () => _navigateToSkillsEducation(profile),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -572,10 +606,12 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                         icon: Icons.school_rounded,
                         iconColor: const Color(0xFF6366F1),
                         title: 'Education',
-                        subtitle: profile != null && profile.education.isNotEmpty
-                            ? '${profile.education.length} records added'
-                            : 'Add education',
-                        onTap: () => _navigateToCreate(),
+                        subtitle: profile != null && profile.parsedEducation.isNotEmpty
+                            ? '${profile.parsedEducation.length} records added'
+                            : (profile != null && profile.education.isNotEmpty
+                                ? '${profile.education.length} records added'
+                                : 'View & add education'),
+                        onTap: () => _navigateToSkillsEducation(profile),
                       ),
                     ),
                   ],
@@ -813,6 +849,7 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
     required String title,
     required String company,
     required String duration,
+    VoidCallback? onEdit,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -836,30 +873,34 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  company,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
+                if (company.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    company,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  duration,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF94A3B8),
+                ],
+                if (duration.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    duration,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF94A3B8),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF0F172A)),
-            onPressed: () => _navigateToCreate(),
+            onPressed: onEdit ?? () => _navigateToCreate(),
           ),
         ],
       ),
@@ -888,7 +929,7 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.12),
+                color: iconColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, size: 22, color: iconColor),
