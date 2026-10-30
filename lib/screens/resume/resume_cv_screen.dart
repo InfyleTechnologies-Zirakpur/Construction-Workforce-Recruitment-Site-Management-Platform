@@ -385,6 +385,10 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 360;
+    final isVeryCompact = screenWidth < 340;
+
     return BlocBuilder<ProfileCubit, LoadState<WorkerProfile>>(
       builder: (context, profileState) {
         final profile = profileState is Loaded<WorkerProfile> ? profileState.data : null;
@@ -400,196 +404,216 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
               await context.read<ProfileCubit>().load();
               await _loadResumes();
             },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-              children: [
-                // Top Header
-                const Text(
-                  'Resume & CV',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                    letterSpacing: -0.4,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    isCompact ? 12 : 16,
+                    16,
+                    isCompact ? 12 : 16,
+                    80,
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Manage your resumes and professional profile',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                // Dashed Upload Box (Screenshot 1)
-                _buildUploadBox(),
-                const SizedBox(height: 24),
-
-                // "My Resumes" Section Header with [ + Create New ] button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'My Resumes',
+                    // Top Header
+                    Text(
+                      'Resume & CV',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: isCompact ? 22 : 24,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.3,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.4,
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => _navigateToCreate(),
-                      icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                      label: const Text(
-                        'Create New',
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // Resume Cards List (Real data only, no dummy data)
-                if (_isLoadingResumes)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                  )
-                else if (_resumes.isEmpty)
-                  _buildEmptyState()
-                else
-                  ..._resumes.map((resume) => _buildResumeCard(resume)),
-
-                const SizedBox(height: 24),
-
-                // Work Experience Section Header (Real data from profile)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Work Experience',
+                    const SizedBox(height: 4),
+                    Text(
+                      'Manage your resumes and professional profile',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.3,
+                        fontSize: isCompact ? 13 : 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
                       ),
                     ),
-                    TextButton.icon(
-                      onPressed: () {
-                        if (profile != null) {
-                          EditProfileSheet.show(
-                            context,
-                            profile: profile,
-                            onSave: (data) => context.read<ProfileCubit>().update(data),
-                          );
-                        } else {
-                          _navigateToCreate();
-                        }
-                      },
-                      icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
-                      label: const Text(
-                        'Add',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                    const SizedBox(height: 18),
 
-                // Work Experience Cards (Real user experience only)
-                if (experiences.isEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Column(
+                    // Dashed Upload Box
+                    _buildUploadBox(context),
+                    const SizedBox(height: 24),
+
+                    // "My Resumes" Section Header with [ + Create New ] button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Icon(Icons.work_outline_rounded, size: 36, color: Color(0xFF94A3B8)),
-                        SizedBox(height: 8),
-                        Text(
-                          'No work experience added yet',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF475569),
+                        Expanded(
+                          child: Text(
+                            'My Resumes',
+                            style: TextStyle(
+                              fontSize: isCompact ? 18 : 20,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0F172A),
+                              letterSpacing: -0.3,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Tap "+ Add" above to add your employment history.',
-                          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => _navigateToCreate(),
+                          icon: const Icon(Icons.add, size: 17, color: Colors.white),
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Create New',
+                              style: TextStyle(
+                                fontSize: isCompact ? 12.5 : 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 12 : 16,
+                              vertical: isCompact ? 8 : 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ] else ...[
-                  ...experiences.map((exp) {
-                    final roleText = exp.role.isNotEmpty ? exp.role : 'Work Experience';
-                    final compText = (exp.company.isNotEmpty && exp.company != 'XYZ Constructions')
-                        ? exp.company
-                        : '';
-                    final durationText = exp.startDate != null && exp.startDate!.isNotEmpty
-                        ? '${exp.startDate} - ${exp.endDate?.isNotEmpty == true ? exp.endDate : (exp.isCurrentlyWorking ? "Present" : "")}'
-                        : (exp.years > 0 ? '${exp.years} ${exp.years == 1 ? "Year" : "Years"} Exp' : '');
+                    const SizedBox(height: 14),
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _buildExperienceCard(
-                        title: roleText,
-                        company: compText,
-                        duration: durationText,
-                        onEdit: () {
-                          if (profile != null) {
-                            EditProfileSheet.show(
-                              context,
-                              profile: profile,
-                              onSave: (data) => context.read<ProfileCubit>().update(data),
-                            );
-                          } else {
-                            _navigateToCreate();
-                          }
-                        },
+                    // Resume Cards List (Real data only, no dummy data)
+                    if (_isLoadingResumes)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: CircularProgressIndicator(color: AppColors.primary),
+                        ),
+                      )
+                    else if (_resumes.isEmpty)
+                      _buildEmptyState()
+                    else
+                      ..._resumes.map((resume) => _buildResumeCard(resume, context)),
+
+                    const SizedBox(height: 24),
+
+                    // Work Experience Section Header (Real data from profile)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Work Experience',
+                            style: TextStyle(
+                              fontSize: isCompact ? 18 : 20,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0F172A),
+                              letterSpacing: -0.3,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton.icon(
+                          onPressed: () {
+                            if (profile != null) {
+                              EditProfileSheet.show(
+                                context,
+                                profile: profile,
+                                onSave: (data) => context.read<ProfileCubit>().update(data),
+                              );
+                            } else {
+                              _navigateToCreate();
+                            }
+                          },
+                          icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
+                          label: const Text(
+                            'Add',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Work Experience Cards (Real user experience only)
+                    if (experiences.isEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Column(
+                          children: [
+                            Icon(Icons.work_outline_rounded, size: 36, color: Color(0xFF94A3B8)),
+                            SizedBox(height: 8),
+                            Text(
+                              'No work experience added yet',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Tap "+ Add" above to add your employment history.',
+                              style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  }),
-                ],
+                    ] else ...[
+                      ...experiences.map((exp) {
+                        final roleText = exp.role.isNotEmpty ? exp.role : 'Work Experience';
+                        final compText = (exp.company.isNotEmpty && exp.company != 'XYZ Constructions')
+                            ? exp.company
+                            : '';
+                        final durationText = exp.startDate != null && exp.startDate!.isNotEmpty
+                            ? '${exp.startDate} - ${exp.endDate?.isNotEmpty == true ? exp.endDate : (exp.isCurrentlyWorking ? "Present" : "")}'
+                            : (exp.years > 0 ? '${exp.years} ${exp.years == 1 ? "Year" : "Years"} Exp' : '');
 
-                const SizedBox(height: 20),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _buildExperienceCard(
+                            title: roleText,
+                            company: compText,
+                            duration: durationText,
+                            onEdit: () {
+                              if (profile != null) {
+                                EditProfileSheet.show(
+                                  context,
+                                  profile: profile,
+                                  onSave: (data) => context.read<ProfileCubit>().update(data),
+                                );
+                              } else {
+                                _navigateToCreate();
+                              }
+                            },
+                          ),
+                        );
+                      }),
+                    ],
 
-                // Bottom Quick Action Cards: Skills & Education
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildShortcutCard(
+                    const SizedBox(height: 20),
+
+                    // Bottom Quick Action Cards: Skills & Education (Responsive wrap for small devices)
+                    if (isVeryCompact) ...[
+                      _buildShortcutCard(
                         icon: Icons.layers_rounded,
                         iconColor: const Color(0xFF10B981),
                         title: 'Skills',
@@ -598,10 +622,8 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                             : 'View & add skills',
                         onTap: () => _navigateToSkillsEducation(profile),
                       ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: _buildShortcutCard(
+                      const SizedBox(height: 10),
+                      _buildShortcutCard(
                         icon: Icons.school_rounded,
                         iconColor: const Color(0xFF6366F1),
                         title: 'Education',
@@ -612,10 +634,40 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                                 : 'View & add education'),
                         onTap: () => _navigateToSkillsEducation(profile),
                       ),
-                    ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildShortcutCard(
+                              icon: Icons.layers_rounded,
+                              iconColor: const Color(0xFF10B981),
+                              title: 'Skills',
+                              subtitle: profile != null && profile.skills.isNotEmpty
+                                  ? '${profile.skills.length} skills added'
+                                  : 'View & add skills',
+                              onTap: () => _navigateToSkillsEducation(profile),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _buildShortcutCard(
+                              icon: Icons.school_rounded,
+                              iconColor: const Color(0xFF6366F1),
+                              title: 'Education',
+                              subtitle: profile != null && profile.parsedEducation.isNotEmpty
+                                  ? '${profile.parsedEducation.length} records added'
+                                  : (profile != null && profile.education.isNotEmpty
+                                      ? '${profile.education.length} records added'
+                                      : 'View & add education'),
+                              onTap: () => _navigateToSkillsEducation(profile),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -625,11 +677,18 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
 
   // ─── Sub-widgets ────────────────────────────────────────────────────────
 
-  Widget _buildUploadBox() {
+  Widget _buildUploadBox(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 360;
+
     return GestureDetector(
       onTap: _isUploadingFile ? null : _pickAndUploadResume,
       child: Container(
-        height: 150,
+        constraints: BoxConstraints(minHeight: isCompact ? 125 : 145),
+        padding: EdgeInsets.symmetric(
+          vertical: isCompact ? 16 : 20,
+          horizontal: isCompact ? 12 : 16,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -657,32 +716,35 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                   ],
                 ),
               )
-            : const Column(
+            : Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.cloud_upload_outlined,
-                    size: 38,
+                    size: isCompact ? 32 : 38,
                     color: AppColors.primary,
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Text(
                     'Upload New Resume',
                     style: TextStyle(
-                      fontSize: 16.5,
+                      fontSize: isCompact ? 15 : 16.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: const Color(0xFF0F172A),
                       letterSpacing: -0.2,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     'PDF, DOC up to 5MB',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF64748B),
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -690,26 +752,27 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
     );
   }
 
-  Widget _buildResumeCard(ResumeModel resume) {
+  Widget _buildResumeCard(ResumeModel resume, BuildContext context) {
     final months = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
     final updatedText =
         'Last updated: ${months[resume.updatedAt.month - 1]} ${resume.updatedAt.day}, ${resume.updatedAt.year}';
-    final appsText = 'Used in ${resume.usedApplicationsCount} applications';
     final isUploaded = resume.isUploaded;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 370;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -719,21 +782,25 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   resume.title,
-                  style: const TextStyle(
-                    fontSize: 17,
+                  style: TextStyle(
+                    fontSize: isCompact ? 15.5 : 17,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: const Color(0xFF0F172A),
                     letterSpacing: -0.2,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (isUploaded)
+              if (isUploaded) ...[
+                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(6),
@@ -742,12 +809,12 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.description_rounded, size: 13, color: AppColors.primary),
+                      Icon(Icons.description_rounded, size: 12, color: AppColors.primary),
                       SizedBox(width: 4),
                       Text(
                         'Uploaded File',
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -755,89 +822,170 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                     ],
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 6),
           Text(
             updatedText,
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            appsText,
-            style: const TextStyle(
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: FontWeight.w500,
               color: Color(0xFF64748B),
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _downloadOrOpenResume(resume),
-                  icon: const Icon(Icons.download_rounded, size: 18, color: AppColors.primary),
-                  label: const Text(
-                    'Download',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isVeryNarrow = constraints.maxWidth < 280;
+
+              if (isVeryNarrow) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _downloadOrOpenResume(resume),
+                            icon: const Icon(Icons.download_rounded, size: 16, color: AppColors.primary),
+                            label: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Download',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 38,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFCA5A5)),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFEF4444)),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => _deleteResume(resume),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: isUploaded
+                            ? () => _pickAndUploadResume(replaceResumeId: resume.id)
+                            : () => _navigateToCreate(resume: resume),
+                        icon: Icon(
+                          isUploaded ? Icons.sync_rounded : Icons.edit_outlined,
+                          size: 16,
+                          color: const Color(0xFF0F172A),
+                        ),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            isUploaded ? 'Replace' : 'Edit',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _downloadOrOpenResume(resume),
+                      icon: const Icon(Icons.download_rounded, size: 17, color: AppColors.primary),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Download',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+                      ),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: isUploaded
-                      ? () => _pickAndUploadResume(replaceResumeId: resume.id)
-                      : () => _navigateToCreate(resume: resume),
-                  icon: Icon(
-                    isUploaded ? Icons.sync_rounded : Icons.edit_outlined,
-                    size: 18,
-                    color: const Color(0xFF0F172A),
-                  ),
-                  label: Text(
-                    isUploaded ? 'Replace' : 'Edit',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: isUploaded
+                          ? () => _pickAndUploadResume(replaceResumeId: resume.id)
+                          : () => _navigateToCreate(resume: resume),
+                      icon: Icon(
+                        isUploaded ? Icons.sync_rounded : Icons.edit_outlined,
+                        size: 17,
+                        color: const Color(0xFF0F172A),
+                      ),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isUploaded ? 'Replace' : 'Edit',
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+                      ),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 40,
+                    width: 42,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 19, color: Color(0xFFEF4444)),
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _deleteResume(resume),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                height: 42,
-                width: 44,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFEF4444)),
-                  padding: EdgeInsets.zero,
-                  onPressed: () => _deleteResume(resume),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -851,14 +999,14 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
     VoidCallback? onEdit,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
@@ -867,20 +1015,24 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15.5,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (company.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     company,
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF64748B),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
                 if (duration.isNotEmpty) ...[
@@ -888,15 +1040,18 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
                   Text(
                     duration,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF94A3B8),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
             ),
           ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF0F172A)),
             onPressed: onEdit ?? () => _navigateToCreate(),
@@ -916,7 +1071,7 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
@@ -924,32 +1079,37 @@ class _ResumeCvScreenState extends State<ResumeCvScreen> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 22, color: iconColor),
+              child: Icon(icon, size: 20, color: iconColor),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               title,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF0F172A),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: Color(0xFF64748B),
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

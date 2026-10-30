@@ -532,34 +532,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         centerTitle: true,
         actions: [
-          BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
-            builder: (context, state) {
-              if (state is! Loaded<List<WorkerNotification>>) {
-                return const SizedBox(width: 48);
-              }
-              final unreadCount = state.data.where((n) => !n.isRead).length;
-              if (unreadCount == 0) return const SizedBox(width: 48);
+          if (_effectiveIsCompany)
+            BlocBuilder<NotificationsCubit, LoadState<List<WorkerNotification>>>(
+              builder: (context, state) {
+                if (state is! Loaded<List<WorkerNotification>>) {
+                  return const SizedBox(width: 48);
+                }
+                final unreadCount = state.data.where((n) => !n.isRead).length;
+                if (unreadCount == 0) return const SizedBox(width: 48);
 
-              return Tooltip(
-                message: 'Mark all as read',
-                child: IconButton(
-                  icon: Icon(Icons.done_all_rounded, size: 22, color: _themePrimary),
-                  onPressed: () async {
-                    await context.read<NotificationsCubit>().markAllRead();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('All notifications marked as read'),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: AppColors.dark,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              );
-            },
-          ),
+                return Tooltip(
+                  message: 'Mark all as read',
+                  child: IconButton(
+                    icon: Icon(Icons.done_all_rounded, size: 22, color: _themePrimary),
+                    onPressed: () async {
+                      await context.read<NotificationsCubit>().markAllRead();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('All notifications marked as read'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: AppColors.dark,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+            )
+          else
+            const SizedBox(width: 48),
           const SizedBox(width: 4),
         ],
       ),

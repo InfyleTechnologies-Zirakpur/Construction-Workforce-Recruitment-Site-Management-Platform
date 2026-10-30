@@ -541,87 +541,108 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
+      bottomNavigationBar: Builder(
+        builder: (context) {
+          final screenWidth = MediaQuery.sizeOf(context).width;
+          final isCompact = screenWidth < 360;
+
+          return Container(
+            padding: EdgeInsets.fromLTRB(
+              isCompact ? 10 : 16,
+              10,
+              isCompact ? 10 : 16,
+              16,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            if (_currentPage > 0) ...[
-              OutlinedButton.icon(
-                onPressed: () {
-                  final prev = _currentPage - 1;
-                  setState(() => _currentPage = prev);
-                  _pageController.animateToPage(
-                    prev,
-                    duration: const Duration(milliseconds: 280),
-                    curve: Curves.easeInOut,
-                  );
-                },
-                icon: const Icon(Icons.arrow_back, size: 16),
-                label: const Text('Back'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF334155),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, -3),
                 ),
-              ),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _isSaving
-                    ? null
-                    : () {
-                        if (_currentPage < 3) {
-                          final next = _currentPage + 1;
-                          setState(() => _currentPage = next);
-                          _pageController.animateToPage(
-                            next,
-                            duration: const Duration(milliseconds: 280),
-                            curve: Curves.easeInOut,
-                          );
-                        } else {
-                          _saveResume();
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              ],
+            ),
+            child: Row(
+              children: [
+                if (_currentPage > 0) ...[
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      final prev = _currentPage - 1;
+                      setState(() => _currentPage = prev);
+                      _pageController.animateToPage(
+                        prev,
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    icon: const Icon(Icons.arrow_back, size: 16),
+                    label: const Text('Back'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF334155),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 10 : 16,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isSaving
+                        ? null
+                        : () {
+                            if (_currentPage < 3) {
+                              final next = _currentPage + 1;
+                              setState(() => _currentPage = next);
+                              _pageController.animateToPage(
+                                next,
+                                duration: const Duration(milliseconds: 280),
+                                curve: Curves.easeInOut,
+                              );
+                            } else {
+                              _saveResume();
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Text(
+                                _currentPage < 3
+                                    ? 'Next: ${_getNextPageTitle(_currentPage + 1)} →'
+                                    : 'Save & Generate Official Resume',
+                                style: TextStyle(
+                                  fontSize: isCompact ? 14 : 15.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
                   ),
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(
-                        _currentPage < 3
-                            ? 'Next: ${_getNextPageTitle(_currentPage + 1)} →'
-                            : 'Save & Generate Official Resume',
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -896,7 +917,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
       ],
     );
   }
-
+  
   // ─── PAGE 2: SKILLS & MACHINERY ─────────────────────────────────────
   Widget _buildSkillsPage() {
     return ListView(

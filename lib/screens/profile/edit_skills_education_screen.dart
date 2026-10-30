@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
+import '../../core/models/resume_model.dart';
 import '../../features/bloc/worker_blocs.dart';
 
 class _EducationItemControllers {

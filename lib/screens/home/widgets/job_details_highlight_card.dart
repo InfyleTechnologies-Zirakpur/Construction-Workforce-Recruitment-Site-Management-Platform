@@ -51,7 +51,7 @@ class JobDetailsHighlightCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Daily Wage',
+                        'salary',
                         style: TextStyle(
                           fontSize: 14,
                           color: Color(0xFF64748B),
