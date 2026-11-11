@@ -802,37 +802,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
       data: AppTheme.companyTheme(context),
       child: Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.card,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: AppColors.border,
-            height: 1,
-          ),
-        ),
-        automaticallyImplyLeading: !widget.isTab,
-        leading: widget.isTab
-            ? null
-            : IconButton(
+      appBar: widget.isTab
+          ? null
+          : AppBar(
+              backgroundColor: AppColors.card,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Container(
+                  color: AppColors.border,
+                  height: 1,
+                ),
+              ),
+              automaticallyImplyLeading: false,
+              leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.dark, size: 19),
                 tooltip: 'Back',
                 onPressed: () => Navigator.maybePop(context),
               ),
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: AppColors.dark,
-            letterSpacing: -0.3,
-          ),
-        ),
-        centerTitle: true,
-      ),
+              title: const Text(
+                'Settings',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: AppColors.dark,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              centerTitle: true,
+            ),
       body: SafeArea(
         child: _isLoading
             ? const Center(

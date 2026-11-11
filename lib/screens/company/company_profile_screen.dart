@@ -1,3 +1,4 @@
+import 'package:construction_workforce_recruitment_site_management_platform/screens/feed/widgets/feed_comments_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -15,9 +16,6 @@ import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
 import '../../features/repositories/worker_repository.dart';
 import '../auth/login_screen.dart';
-import '../feed/create_feed_screen.dart';
-import '../feed/widgets/feed_comments_sheet.dart';
-import '../feed/widgets/feed_post_card.dart';
 import 'company_profile_form_screen.dart';
 import 'widgets/company_candidate_card.dart';
 import 'widgets/company_post_job_sheet.dart';
@@ -108,7 +106,6 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
       await Future.wait([
         _loadProfile(),
         _loadJobs(),
-        _loadPosts(),
         _loadApplications(),
       ]);
     } catch (e) {
@@ -299,18 +296,6 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
     try {
       Share.share(shareText, subject: 'BuildHire Feed Post');
     } catch (_) {}
-  }
-
-  void _editPost(FeedPost post) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => CreateFeedScreen(postToEdit: post, isCompany: true)),
-    ).then((_) {
-      _loadPosts();
-      try {
-        context.read<FeedCubit>().load(refresh: true);
-      } catch (_) {}
-    });
   }
 
   Future<void> _deletePost(FeedPost post) async {
@@ -514,7 +499,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                   ),
                 )
               : DefaultTabController(
-                  length: 3,
+                  length: 2,
                   child: NestedScrollView(
                     headerSliverBuilder: (context, innerBoxIsScrolled) {
                       return [
@@ -550,7 +535,6 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                                 fontFamily: 'Inter',
                               ),
                               tabs: [
-                                Tab(text: 'Posts (${_companyPosts.length})'),
                                 Tab(text: 'Jobs (${_companyJobs.length})'),
                                 const Tab(text: 'About'),
                               ],
@@ -561,7 +545,6 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                     },
                     body: TabBarView(
                       children: [
-                        _buildPostsTab(),
                         _buildJobsTab(p),
                         _buildAboutTab(p),
                       ],
@@ -1176,64 +1159,6 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
           child: Center(child: child),
         ),
       ),
-    );
-  }
-
-  // --- 5. Tab 1: Posts Tab ---
-  Widget _buildPostsTab() {
-    if (_companyPosts.isEmpty) {
-      return ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.feed_outlined, size: 48, color: Color(0xFF94A3B8)),
-                SizedBox(height: 12),
-                Text(
-                  'No posts published yet',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF334155),
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Sub Contractor announcements and site achievements will appear here.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      itemCount: _companyPosts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
-      itemBuilder: (context, index) {
-        final post = _companyPosts[index];
-        return FeedPostCard(
-          post: post,
-          formattedTime: _formatPostTime(post.createdAt),
-          onLikeToggle: () => _toggleLike(post),
-          onCommentTap: () => _openComments(post),
-          onShareTap: () => _sharePost(post),
-          onEditTap: (post.isMyPost && !widget.isReadOnly) ? () => _editPost(post) : null,
-          onDeleteTap: (post.isMyPost && !widget.isReadOnly) ? () => _deletePost(post) : null,
-          isCompany: true,
-        );
-      },
     );
   }
 

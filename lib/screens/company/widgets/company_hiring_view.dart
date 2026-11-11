@@ -467,16 +467,6 @@ class _CompanyHiringViewState extends State<CompanyHiringView> {
                       size: 22,
                       color: Color(0xFF0F172A),
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Post Job',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.2,
-                      ),
-                    ),
                   ],
                 ),
               ),

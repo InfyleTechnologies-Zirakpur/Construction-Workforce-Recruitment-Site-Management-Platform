@@ -144,7 +144,11 @@ class CompanyRepository {
 
   /// 1. POST /api/v1/companies - Register a new company profile
   Future<Map<String, dynamic>> createCompanyProfile(Map<String, dynamic> body) async {
-    final r = await _client.dio.post('/companies', data: body);
+    final payload = Map<String, dynamic>.from(body);
+    if (!payload.containsKey('businessType') || payload['businessType'] == null || payload['businessType'].toString().trim().isEmpty) {
+      payload['businessType'] = 'Sub Contractor';
+    }
+    final r = await _client.dio.post('/companies', data: payload);
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 

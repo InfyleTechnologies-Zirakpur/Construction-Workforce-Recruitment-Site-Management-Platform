@@ -48,16 +48,17 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
   late final TextEditingController _logoUrl;
   late final TextEditingController _description;
 
-  String? _businessType;
+  String? _businessType = 'Sub Contractor';
   String? _teamSizeRange;
   bool _saving = false;
   String? _error;
 
   final List<String> _businessTypes = [
-    'Private Limited',
-    'Public Limited',
+    'Sub Contractor',
+    'General Contractor',
     'Proprietorship',
     'Partnership',
+    'Private Limited',
     'LLP',
     'Other',
   ];
@@ -99,7 +100,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
     _logoUrl = TextEditingController(text: p['logoUrl']?.toString() ?? '');
     _description = TextEditingController(text: p['description']?.toString() ?? '');
 
-    _businessType = p['businessType']?.toString();
+    _businessType = p['businessType']?.toString() ?? 'Sub Contractor';
     _teamSizeRange = p['teamSizeRange']?.toString();
 
     if (widget.profile == null) {
@@ -217,7 +218,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
       if (_city.text.trim().isNotEmpty) 'city': _city.text.trim(),
       if (_state.text.trim().isNotEmpty) 'state': _state.text.trim(),
       if (_pincode.text.trim().isNotEmpty) 'pincode': _pincode.text.trim(),
-      if (_businessType != null) 'businessType': _businessType,
+      'businessType': (_businessType != null && _businessType!.trim().isNotEmpty) ? _businessType! : 'Sub Contractor',
       if (_yearEstablished.text.trim().isNotEmpty) 'yearEstablished': int.tryParse(_yearEstablished.text.trim()),
       if (_teamSizeRange != null) 'teamSizeRange': _teamSizeRange,
       if (_specializations.text.trim().isNotEmpty)

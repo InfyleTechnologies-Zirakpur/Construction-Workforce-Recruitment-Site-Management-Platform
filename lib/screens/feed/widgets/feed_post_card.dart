@@ -63,7 +63,7 @@ class _FeedPostCardState extends State<FeedPostCard> {
         Theme.of(context).primaryColor.toARGB32() == AppColors.companyPrimary.toARGB32();
     final themePrimary = isCompanyFlow ? AppColors.companyPrimary : AppColors.primary;
     final avatarBg = isCompanyFlow ? AppColors.companyPrimary : AppColors.primary;
-    final avatarTextColor = isCompanyFlow ? AppColors.dark : Colors.white;
+    final avatarTextColor = Colors.white;
 
     final hasRole = post.taggedTitle != null &&
         post.taggedTitle!.trim().isNotEmpty &&
@@ -95,37 +95,41 @@ class _FeedPostCardState extends State<FeedPostCard> {
                   borderRadius: BorderRadius.circular(12),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: avatarBg,
-                        backgroundImage: (post.authorAvatarUrl != null &&
-                                post.authorAvatarUrl!.trim().isNotEmpty &&
-                                post.authorAvatarUrl != 'null' &&
-                                post.authorAvatarUrl != 'undefined')
-                            ? NetworkImage(post.authorAvatarUrl!.trim())
-                            : null,
-                        child: (post.authorAvatarUrl != null &&
-                                post.authorAvatarUrl!.trim().isNotEmpty &&
-                                post.authorAvatarUrl != 'null' &&
-                                post.authorAvatarUrl != 'undefined')
-                            ? null
-                            : Text(
-                                post.authorName.length >= 3 && post.authorName.contains(' ')
-                                    ? post.authorName
-                                          .split(' ')
-                                          .take(2)
-                                          .map((e) => e.isNotEmpty ? e[0] : '')
-                                          .join('')
-                                          .toUpperCase()
-                                    : (post.authorName.isNotEmpty
-                                          ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
-                                          : (isCompanyFlow ? 'C' : 'U')),
-                                style: TextStyle(
-                                  color: avatarTextColor,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
+                      Builder(
+                        builder: (context) {
+                          final hasValidAvatar = post.authorAvatarUrl != null &&
+                              post.authorAvatarUrl!.trim().isNotEmpty &&
+                              post.authorAvatarUrl != 'null' &&
+                              post.authorAvatarUrl != 'undefined';
+
+                          return CircleAvatar(
+                            radius: 20,
+                            backgroundColor: avatarBg,
+                            backgroundImage: hasValidAvatar
+                                ? NetworkImage(post.authorAvatarUrl!.trim())
+                                : null,
+                            onBackgroundImageError: hasValidAvatar ? (_, __) {} : null,
+                            child: hasValidAvatar
+                                ? null
+                                : Text(
+                                    post.authorName.length >= 3 && post.authorName.contains(' ')
+                                        ? post.authorName
+                                              .split(' ')
+                                              .take(2)
+                                              .map((e) => e.isNotEmpty ? e[0] : '')
+                                              .join('')
+                                              .toUpperCase()
+                                        : (post.authorName.isNotEmpty
+                                              ? post.authorName.substring(0, post.authorName.length.clamp(1, 3)).toUpperCase()
+                                              : (isCompanyFlow ? 'C' : 'U')),
+                                    style: TextStyle(
+                                      color: avatarTextColor,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                          );
+                        },
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -157,8 +161,9 @@ class _FeedPostCardState extends State<FeedPostCard> {
                   ),
                 ),
               ),
-              InkWell(
-                onTap: () => FeedPostOptionsSheet.show(
+              if (!isCompanyFlow || post.isMyPost)
+                InkWell(
+                  onTap: () => FeedPostOptionsSheet.show(
                     context,
                     post: post,
                     onEdit: widget.onEditTap,
@@ -177,13 +182,17 @@ class _FeedPostCardState extends State<FeedPostCard> {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          if (isCompanyFlow)
+            const Divider(height: 24, thickness: 0.8, color: Color(0xFFF1F5F9))
+          else
+            const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              const textStyle = TextStyle(
-                fontSize: 16.5,
+              final textStyle = TextStyle(
+                fontSize: isCompanyFlow ? 14.5 : 16.5,
                 height: 1.45,
-                color: AppColors.dark,
+                color: isCompanyFlow ? const Color(0xFF334155) : AppColors.dark,
+                fontWeight: isCompanyFlow ? FontWeight.w400 : FontWeight.normal,
               );
 
               final textSpan = TextSpan(
@@ -351,83 +360,154 @@ class _FeedPostCardState extends State<FeedPostCard> {
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          Text(
-            '${post.likesCount} ${post.likesCount == 1 ? 'like' : 'likes'}   '
-            '${post.commentsCount} ${post.commentsCount == 1 ? 'comment' : 'comments'}   '
-            '${post.sharesCount} ${post.sharesCount == 1 ? 'share' : 'shares'}',
-            style: const TextStyle(
-              fontSize: 14.5,
-              color: Color(0xFF6B7280),
+          const SizedBox(height: 18),
+          if (isCompanyFlow) ...[
+            Row(
+              children: [
+                InkWell(
+                  onTap: widget.onLikeToggle,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          post.isLiked ? Icons.favorite : Icons.favorite_border_rounded,
+                          size: 21,
+                          color: post.isLiked ? Colors.redAccent : const Color(0xFF475569),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          '${post.likesCount}',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: post.isLiked ? Colors.redAccent : const Color(0xFF475569),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 22),
+                InkWell(
+                  onTap: widget.onCommentTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 20,
+                          color: Color(0xFF475569),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          '${post.commentsCount}',
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                InkWell(
+                  onTap: widget.onShareTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      size: 21,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          const Divider(height: 1, color: AppColors.border),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              InkWell(
-                onTap: widget.onLikeToggle,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(
-                        post.isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_alt_outlined,
-                        size: 19,
-                        color: post.isLiked ? themePrimary : AppColors.dark,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Like',
-                        style: TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: post.isLiked ? FontWeight.bold : FontWeight.w600,
+          ] else ...[
+            Text(
+              '${post.likesCount} ${post.likesCount == 1 ? 'like' : 'likes'}   '
+              '${post.commentsCount} ${post.commentsCount == 1 ? 'comment' : 'comments'}   '
+              '${post.sharesCount} ${post.sharesCount == 1 ? 'share' : 'shares'}',
+              style: const TextStyle(
+                fontSize: 14.5,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Divider(height: 1, color: AppColors.border),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                InkWell(
+                  onTap: widget.onLikeToggle,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          post.isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_alt_outlined,
+                          size: 19,
                           color: post.isLiked ? themePrimary : AppColors.dark,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          'Like',
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: post.isLiked ? FontWeight.bold : FontWeight.w600,
+                            color: post.isLiked ? themePrimary : AppColors.dark,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              InkWell(
-                onTap: widget.onCommentTap,
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.chat_bubble_outline_rounded, size: 19, color: AppColors.dark),
-                      SizedBox(width: 6),
-                      Text(
-                        'Comment',
-                        style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: AppColors.dark),
-                      ),
-                    ],
+                InkWell(
+                  onTap: widget.onCommentTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.chat_bubble_outline_rounded, size: 19, color: AppColors.dark),
+                        SizedBox(width: 6),
+                        Text(
+                          'Comment',
+                          style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: AppColors.dark),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              InkWell(
-                onTap: widget.onShareTap,
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.share_outlined, size: 19, color: AppColors.dark),
-                      SizedBox(width: 6),
-                      Text(
-                        'Share',
-                        style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: AppColors.dark),
-                      ),
-                    ],
+                InkWell(
+                  onTap: widget.onShareTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.share_outlined, size: 19, color: AppColors.dark),
+                        SizedBox(width: 6),
+                        Text(
+                          'Share',
+                          style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: AppColors.dark),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );

@@ -11,7 +11,6 @@ import '../../features/bloc/worker_blocs.dart';
 import '../../features/repositories/company_repository.dart';
 import '../auth/login_screen.dart';
 import '../feed/feed_screen.dart';
-import '../feed/create_feed_screen.dart';
 import '../settings/settings_screen.dart';
 import 'company_profile_form_screen.dart';
 import 'company_profile_screen.dart';
@@ -21,6 +20,7 @@ import 'widgets/company_hiring_view.dart';
 import 'widgets/company_chats_view.dart';
 import 'widgets/company_post_job_sheet.dart';
 import 'widgets/company_site_jobs_view.dart';
+import 'work_leads_screen.dart';
 
 class CompanyHomeScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -383,12 +383,10 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       data: AppTheme.companyTheme(context),
       child: Scaffold(
       backgroundColor: AppColors.background,
-      appBar: (_tabIndex == 2 || _tabIndex == 4)
-          ? null
-          : const CompanyAppBar(
-              showSettings: false,
-              showProfileAvatar: false,
-            ),
+      appBar: const CompanyAppBar(
+        showSettings: false,
+        showProfileAvatar: false,
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -409,19 +407,18 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               ),
               _buildNavItem(
                 index: 1,
-                icon: Icons.business_center_outlined,
-                label: 'Hiring',
+                icon: Icons.work_outline_rounded,
+                label: 'Work',
               ),
               _buildNavItem(
                 index: 2,
-                icon: Icons.add_box_outlined,
-                label: 'Post',
-                isAction: true,
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Chat',
               ),
               _buildNavItem(
                 index: 3,
-                icon: Icons.chat_bubble_outline_rounded,
-                label: 'Chat',
+                icon: Icons.person_add_alt_1_outlined,
+                label: 'Hiring',
               ),
               _buildNavItem(
                 index: 4,
@@ -435,62 +432,68 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       floatingActionButton: null,
       body: _tabIndex == 0
           ? const FeedScreen(isCompany: true)
-          : _tabIndex == 2
-              ? CreateFeedScreen(
-                  isCompany: true,
-                  isTab: true,
-                  onPostSuccess: () {
-                    setState(() => _tabIndex = 0);
-                    _loadCompanyData();
-                  },
-                )
-              : _tabIndex == 4
-                  ? const SettingsScreen(isTab: true)
-                  : SafeArea(
+          : _tabIndex == 1
+              ? WorkLeadsScreen(onRefresh: _loadCompanyData)
+              : _tabIndex == 2
+                  ? SafeArea(
                       child: RefreshIndicator(
                         color: AppColors.companyPrimary,
                         onRefresh: _loadCompanyData,
-                        child: _isLoading
-                            ? const Padding(padding: EdgeInsets.all(20), child: SmartSkeleton.list(itemCount: 4))
-                            : ListView(
-                                padding: const EdgeInsets.all(20),
-                                children: [
-                                  if (_tabIndex == 1)
-                                    CompanyHiringView(
-                                      applications: _applications,
-                                      companyJobs: _companyJobs,
-                                      statusFilter: _appStatusFilter,
-                                      onStatusFilterChanged: (st) {
-                                        setState(() => _appStatusFilter = st);
-                                      },
-                                      selectedAppIds: _selectedAppIds,
-                                      isBulkAction: _isBulkAction,
-                                      onBulkShortlist: _bulkShortlist,
-                                      onUpdateStatus: _updateAppStatus,
-                                      onRefresh: _loadCompanyData,
-                                      myProfile: _myProfile,
-                                      onNewJob: () => CompanyPostJobSheet.show(
-                                        context,
-                                        myProfile: _myProfile,
-                                        onJobPosted: _loadCompanyData,
-                                      ),
-                                      onEditJob: (job) => CompanyPostJobSheet.show(
-                                        context,
-                                        myProfile: _myProfile,
-                                        existingJob: job,
-                                        onJobPosted: _loadCompanyData,
-                                      ),
-                                    )
-                                  else if (_tabIndex == 3)
-                                    CompanyChatsView(
-                                      companyConversations: _companyConversations,
-                                      companyUserId: _myProfile?['id']?.toString(),
-                                      onRefresh: _loadCompanyData,
-                                    ),
-                                ],
-                              ),
+                        child: ListView(
+                          padding: const EdgeInsets.all(20),
+                          children: [
+                            CompanyChatsView(
+                              companyConversations: _companyConversations,
+                              companyUserId: _myProfile?['id']?.toString(),
+                              onRefresh: _loadCompanyData,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    )
+                  : _tabIndex == 4
+                      ? const SettingsScreen(isTab: true)
+                      : SafeArea(
+                          child: RefreshIndicator(
+                            color: AppColors.companyPrimary,
+                            onRefresh: _loadCompanyData,
+                            child: _isLoading
+                                ? const Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: SmartSkeleton.list(itemCount: 4),
+                                  )
+                                : ListView(
+                                    padding: const EdgeInsets.all(20),
+                                    children: [
+                                      CompanyHiringView(
+                                        applications: _applications,
+                                        companyJobs: _companyJobs,
+                                        statusFilter: _appStatusFilter,
+                                        onStatusFilterChanged: (st) {
+                                          setState(() => _appStatusFilter = st);
+                                        },
+                                        selectedAppIds: _selectedAppIds,
+                                        isBulkAction: _isBulkAction,
+                                        onBulkShortlist: _bulkShortlist,
+                                        onUpdateStatus: _updateAppStatus,
+                                        onRefresh: _loadCompanyData,
+                                        myProfile: _myProfile,
+                                        onNewJob: () => CompanyPostJobSheet.show(
+                                          context,
+                                          myProfile: _myProfile,
+                                          onJobPosted: _loadCompanyData,
+                                        ),
+                                        onEditJob: (job) => CompanyPostJobSheet.show(
+                                          context,
+                                          myProfile: _myProfile,
+                                          existingJob: job,
+                                          onJobPosted: _loadCompanyData,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
       ),
     );
   }
@@ -509,10 +512,10 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeInOut,
-        width: 62,
-        height: 56,
+        width: 64,
+        height: 54,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.companyPrimary : Colors.transparent,
+          color: isSelected ? const Color(0xFFFEF3C7) : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -522,7 +525,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
             Icon(
               icon,
               size: 22,
-              color: isSelected ? AppColors.dark : const Color(0xFF334155),
+              color: isSelected ? AppColors.companyPrimaryDark : const Color(0xFF64748B),
             ),
             const SizedBox(height: 3),
             Text(
@@ -530,7 +533,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? AppColors.dark : const Color(0xFF334155),
+                color: isSelected ? AppColors.companyPrimaryDark : const Color(0xFF64748B),
                 letterSpacing: -0.2,
               ),
             ),

@@ -194,7 +194,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (isCompany) {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => const CompanyHomeScreen(initialTabIndex: 4),
+              builder: (_) => const CompanyHomeScreen(initialTabIndex: 2),
             ),
           );
         } else {
@@ -233,7 +233,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         } else {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => const CompanyHomeScreen(initialTabIndex: 1),
+              builder: (_) => const CompanyHomeScreen(initialTabIndex: 3),
             ),
           );
         }
@@ -286,7 +286,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (isCompany) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => const CompanyHomeScreen(initialTabIndex: 2),
+            builder: (_) => const CompanyHomeScreen(initialTabIndex: 1),
           ),
         );
       } else {
