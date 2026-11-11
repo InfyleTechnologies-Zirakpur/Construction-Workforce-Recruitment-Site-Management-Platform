@@ -63,7 +63,7 @@ class CompanyModel {
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ??
           json['companyName']?.toString() ??
-          'Company',
+          'Sub Contractor',
       registrationNumber: json['registrationNumber']?.toString(),
       gstNumber: json['gstNumber']?.toString(),
       panNumber: json['panNumber']?.toString(),

@@ -30,7 +30,7 @@ class _ChooseRoleScreenState extends State<ChooseRoleScreen> {
         ),
       );
     } else {
-      // Company -> CompanyLoginScreen (Email / Password)
+      // Sub Contractor -> CompanyLoginScreen (Email / Password)
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
@@ -133,10 +133,10 @@ class _ChooseRoleScreenState extends State<ChooseRoleScreen> {
 
                               const SizedBox(height: 18),
 
-                              // Role Card 2: Company (Yellow theme)
+                              // Role Card 2: Sub Contractor (Yellow theme)
                               _buildRoleCard(
                                 index: 1,
-                                title: 'Company',
+                                title: 'Sub Contractor',
                                 description:
                                     'Your next skilled crew is ready. Hire verified tradesmen & manage site hiring.',
                                 imageAsset: 'assets/role_company.png',

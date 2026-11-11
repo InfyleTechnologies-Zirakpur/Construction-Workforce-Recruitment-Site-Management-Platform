@@ -191,9 +191,9 @@ class HomeJobCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
 
-                // 2. Company Name
+                // 2. Sub Contractor Name
                 Text(
-                  job.company.isNotEmpty ? job.company : 'Verified Contractor',
+                  job.company.isNotEmpty ? job.company : 'Verified Sub Contractor',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,

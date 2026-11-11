@@ -144,7 +144,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   Future<void> _logout() async {
     final confirm = await AppConfirmDialog.show(
       context,
-      title: 'Log Out Company?',
+      title: 'Log Out Sub Contractor?',
       message: 'Are you sure you want to log out of your employer portal?',
       confirmLabel: 'Log Out',
       cancelLabel: 'Cancel',

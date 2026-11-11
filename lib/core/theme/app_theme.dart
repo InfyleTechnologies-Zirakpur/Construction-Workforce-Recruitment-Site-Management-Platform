@@ -66,7 +66,10 @@ class AppTheme {
     );
   }
 
-  /// Theme configured for the Company flow with warm amber/yellow palette
+  /// Theme configured for the Sub Contractor flow with warm amber/yellow palette
+  static ThemeData subContractorTheme(BuildContext context) => companyTheme(context);
+
+  /// Theme configured for the Company / Sub Contractor flow with warm amber/yellow palette
   static ThemeData companyTheme(BuildContext context) {
     final textTheme = AppTextTheme.build(context, Theme.of(context).textTheme);
 

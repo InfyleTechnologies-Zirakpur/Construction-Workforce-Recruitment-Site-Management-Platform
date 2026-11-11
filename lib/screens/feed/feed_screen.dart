@@ -58,7 +58,7 @@ class _FeedScreenState extends State<FeedScreen> {
       final role = await storage.read(key: 'role');
       if (mounted && role != null) {
         setState(() {
-          _isCompany = role == 'company';
+          _isCompany = role == 'company' || role == 'subcontractor' || role == 'sub_contractor';
         });
       }
     } catch (_) {}
@@ -284,7 +284,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isCompany ? 'Company Feed' : 'Industry Feed',
+                    _isCompany ? 'Sub Contractor Feed' : 'Industry Feed',
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.dark,

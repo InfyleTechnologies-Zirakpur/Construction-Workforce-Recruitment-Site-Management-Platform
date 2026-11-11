@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
             (await encryptedStorage.read(key: 'profileCompleted')) == 'true';
       }
       isLoggedIn = token != null && token.isNotEmpty;
-      isCompany = role == 'company';
+      isCompany = role == 'company' || role == 'subcontractor' || role == 'sub_contractor';
       if (isLoggedIn) {
         ApiClient.accessToken = token;
         NotificationService.instance.syncDeviceToken();

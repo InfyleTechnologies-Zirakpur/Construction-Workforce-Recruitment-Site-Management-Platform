@@ -193,7 +193,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Enter your new company email address below.',
+                  'Enter your new sub contractor email address below.',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -321,7 +321,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Enter your verified company contact phone number.',
+                  'Enter your verified sub contractor contact phone number.',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -847,14 +847,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     children: [
-                      // SECTION 1: COMPANY
-                      _buildSectionHeader('COMPANY'),
+                      // SECTION 1: SUB CONTRACTOR
+                      _buildSectionHeader('SUB CONTRACTOR'),
                       _buildCard(
                         children: [
                           _buildTile(
                             icon: Icons.domain_outlined,
-                            title: 'Company Profile',
-                            subtitle: 'Manage your company information',
+                            title: 'Sub Contractor Profile',
+                            subtitle: 'Manage your sub contractor information',
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -947,9 +947,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onTap: () => _showPolicySheet(
                               'Privacy Policy',
                               'We value the trust you place in us. FlowHire is committed to protecting your privacy and personal information.\n\n'
-                              '1. Information Collection\nWe collect information that you provide when registering as a company, submitting job posts, or updating verification details.\n\n'
+                              '1. Information Collection\nWe collect information that you provide when registering as a sub contractor, submitting job posts, or updating verification details.\n\n'
                               '2. How We Use Data\nYour information is used strictly to authenticate your account, connect you with qualified site workers, ensure safety compliance, and facilitate direct hiring.\n\n'
-                              '3. Data Protection\nAll sensitive company information and financial records are stored using encrypted industry-standard security protocols.\n\n'
+                              '3. Data Protection\nAll sensitive sub contractor information and financial records are stored using encrypted industry-standard security protocols.\n\n'
                               '4. Contact Us\nFor any privacy inquiries, reach out to privacy@flowhire.com.',
                             ),
                           ),
@@ -962,7 +962,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               'Copyright & Terms of Service',
                               'Terms and Conditions for FlowHire Platform:\n\n'
                               '1. Intellectual Property\nAll trademarks, logos, content, software, and designs on this application are the property of FlowHire and its licensors.\n\n'
-                              '2. Fair Usage\nCompanies and contractors agree to post accurate job requirements, comply with local labor regulations, and maintain respectful communication with all candidates.\n\n'
+                              '2. Fair Usage\nSub contractors agree to post accurate job requirements, comply with local labor regulations, and maintain respectful communication with all candidates.\n\n'
                               '3. Account Responsibility\nYou are responsible for safeguarding your login credentials and for all activities that occur under your account.\n\n'
                               '4. Updates to Terms\nWe may update these terms periodically to reflect product and regulatory changes. Continued use indicates acceptance.',
                             ),

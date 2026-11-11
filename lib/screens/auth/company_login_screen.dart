@@ -81,11 +81,11 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
       String compName = '';
       if (user is Map) {
         if (user['isBlocked'] == true) {
-          throw Exception('This company account has been blocked. Please contact support.');
+          throw Exception('This sub contractor account has been blocked. Please contact support.');
         }
 
-        final role = user['role']?.toString();
-        if (role != null && role != 'company' && role != 'admin') {
+        final role = user['role']?.toString().toLowerCase();
+        if (role != null && role != 'company' && role != 'subcontractor' && role != 'sub_contractor' && role != 'admin') {
           throw Exception('This account is registered as a $role. Please login via the job seeker login.');
         }
 
@@ -221,7 +221,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        'Company Login',
+                        'Sub Contractor Login',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -265,7 +265,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
 
                         // Subtitle
                         Text(
-                          'Sign in with your company email to manage jobs, applications and more.',
+                          'Sign in with your sub contractor email to manage jobs, applications and more.',
                           style: TextStyle(
                             fontSize: context.sp(16),
                             color: const Color(0xFF6B7280),
@@ -315,7 +315,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                   }
                                   final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
                                   if (!emailRegex.hasMatch(email)) {
-                                    return 'Enter a valid email address (e.g. name@company.com)';
+                                    return 'Enter a valid email address (e.g. name@subcontractor.com)';
                                   }
                                   return null;
                                 },
@@ -518,7 +518,7 @@ class _CompanyLoginScreenState extends State<CompanyLoginScreen> {
                                   ),
                                   child: const Text.rich(
                                     TextSpan(
-                                      text: "Don't have a company account? ",
+                                      text: "Don't have a sub contractor account? ",
                                       style: TextStyle(
                                         color: Color(0xFF6B7280),
                                         fontSize: 16,

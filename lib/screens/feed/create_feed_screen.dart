@@ -67,7 +67,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
       final savedName = await storage.read(key: 'userName');
       var cName = await storage.read(key: 'companyName');
 
-      if (role == 'company' || widget.isCompany == true) {
+      if (role == 'company' || role == 'subcontractor' || role == 'sub_contractor' || widget.isCompany == true) {
         try {
           final comp = await CompanyRepository().getMyCompanyProfile();
           final p = comp ?? (await CompanyRepository().getMyProfiles()).firstOrNull;
@@ -87,7 +87,7 @@ class _CreateFeedScreenState extends State<CreateFeedScreen> {
 
       if (mounted) {
         setState(() {
-          _isCompany = (role == 'company' || widget.isCompany == true);
+          _isCompany = (role == 'company' || role == 'subcontractor' || role == 'sub_contractor' || widget.isCompany == true);
           if (cName != null && cName.isNotEmpty) {
             _companyName = cName;
           }

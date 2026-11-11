@@ -514,7 +514,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     // 5.5 WORK EXPERIENCE CARD
                     CompleteProfileSectionCard(
                       title: 'Work Experience',
-                      subtitle: 'Past company and site experience',
+                      subtitle: 'Past sub contractor and site experience',
                       icon: Icons.work_history_rounded,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,7 +582,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           ),
                           const SizedBox(height: 12),
                           const Text(
-                            'Company / Contractor Name',
+                            'Sub Contractor / Employer Name',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.dark),
                           ),
                           const SizedBox(height: 6),

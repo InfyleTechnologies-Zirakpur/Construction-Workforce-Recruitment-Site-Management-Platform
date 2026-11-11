@@ -968,7 +968,7 @@ class _JobSeekerRegisterScreenState extends State<JobSeekerRegisterScreen> {
                                     MaterialPageRoute(builder: (_) => const CompanyLoginScreen()),
                                   ),
                                   child: const Text(
-                                    'Company portal with email',
+                                    'Sub Contractor portal with email',
                                     style: TextStyle(
                                       color: Color(0xFF64748B),
                                       fontSize: 14.5,

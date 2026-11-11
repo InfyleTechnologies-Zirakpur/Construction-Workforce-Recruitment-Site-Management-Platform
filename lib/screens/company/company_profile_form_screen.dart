@@ -252,7 +252,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.profile != null ? 'Company profile updated!' : 'Company profile created!'),
+            content: Text(widget.profile != null ? 'Sub Contractor profile updated!' : 'Sub Contractor profile created!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -270,7 +270,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
         setState(() {
           _error = ApiErrorParser.extractMessage(
             e,
-            fallback: 'Failed to save company profile. Please check your inputs.',
+            fallback: 'Failed to save sub contractor profile. Please check your inputs.',
           );
           _saving = false;
         });
@@ -284,7 +284,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
         context,
         title: 'Exit Profile Setup?',
         message:
-            'You can complete your company profile details later from your employer portal before posting job requirements.',
+            'You can complete your sub contractor profile details later from your employer portal before posting job requirements.',
         confirmLabel: 'Go to Dashboard',
         cancelLabel: 'Stay Here',
         icon: Icons.dashboard_customize_rounded,
@@ -338,7 +338,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isEdit ? 'Update Company Details' : 'Register Company Profile',
+                          isEdit ? 'Update Sub Contractor Details' : 'Register Sub Contractor Profile',
                           style: textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: AppColors.dark,
@@ -348,7 +348,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                         const SizedBox(height: 4),
                         Text(
                           isEdit
-                              ? 'Update your company details and verification credentials'
+                              ? 'Update your sub contractor details and verification credentials'
                               : 'Provide verified credentials for worker trust & site management',
                           style: textTheme.bodySmall?.copyWith(
                             color: AppColors.textSecondary,
@@ -383,8 +383,8 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                 SizedBox(height: context.h(12)),
                 TextFormField(
                   controller: _name,
-                  decoration: const InputDecoration(labelText: 'Company Name *', hintText: 'e.g. BuildCraft Infrastructure Ltd'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Company name is required' : null,
+                  decoration: const InputDecoration(labelText: 'Sub Contractor Name *', hintText: 'e.g. BuildCraft Infrastructure Ltd'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Sub Contractor name is required' : null,
                 ),
                 SizedBox(height: context.h(12)),
                 Row(
@@ -393,7 +393,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                       child: TextFormField(
                         controller: _contactEmail,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(labelText: 'Contact Email *', hintText: 'contact@company.com'),
+                        decoration: const InputDecoration(labelText: 'Contact Email *', hintText: 'contact@subcontractor.com'),
                         validator: (v) => (v == null || !v.contains('@')) ? 'Valid email required' : null,
                       ),
                     ),
@@ -480,7 +480,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                 TextFormField(
                   controller: _website,
                   keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(labelText: 'Website URL', hintText: 'https://company.com'),
+                  decoration: const InputDecoration(labelText: 'Website URL', hintText: 'https://subcontractor.com'),
                 ),
 
                 SizedBox(height: context.h(20)),
@@ -633,7 +633,7 @@ class _CompanyProfileFormScreenState extends State<CompanyProfileFormScreen> {
                   controller: _description,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    labelText: 'Company Description',
+                    labelText: 'Sub Contractor Description',
                     hintText: 'Overview of construction projects and capabilities...',
                   ),
                 ),

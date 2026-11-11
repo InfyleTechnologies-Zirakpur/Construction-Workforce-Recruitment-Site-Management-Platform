@@ -589,7 +589,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   child: const Text(
-                                    'Company login with email',
+                                    'Sub Contractor login with email',
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: Color(0xFF64748B),

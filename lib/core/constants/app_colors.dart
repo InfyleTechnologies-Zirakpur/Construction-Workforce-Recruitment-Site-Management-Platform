@@ -41,7 +41,7 @@ class AppColors {
   static const Color peachBorder = Color(0xFFBFDBFE);
   static const Color peachText = Color(0xFF1D4ED8);
 
-  /// Centralized Company Brand Yellow / Amber Palette (#F7B532)
+  /// Centralized Sub Contractor Brand Yellow / Amber Palette (#F7B532)
   static const Color companyPrimary = Color(0xFFF7B532);
   static const Color companyPrimaryDark = Color(0xFFD99B1E);
   static const Color companyPrimaryLight = Color(0xFFFFFBEB);
@@ -52,4 +52,16 @@ class AppColors {
   static const Color companyTagBackground = Color(0xFFFFFBEB);
   static const Color companyTagBorder = Color(0xFFFDE68A);
   static const Color companyTagText = Color(0xFFB45309);
+
+  // Sub Contractor Palette aliases
+  static const Color subContractorPrimary = companyPrimary;
+  static const Color subContractorPrimaryDark = companyPrimaryDark;
+  static const Color subContractorPrimaryLight = companyPrimaryLight;
+  static const Color subContractorSurface = companySurface;
+  static const Color subContractorBorder = companyBorder;
+  static const Color subContractorWave = companyWave;
+  static const Color subContractorButtonBg = companyButtonBg;
+  static const Color subContractorTagBackground = companyTagBackground;
+  static const Color subContractorTagBorder = companyTagBorder;
+  static const Color subContractorTagText = companyTagText;
 }

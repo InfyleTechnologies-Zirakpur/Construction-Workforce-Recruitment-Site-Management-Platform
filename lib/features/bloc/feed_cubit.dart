@@ -64,7 +64,7 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
         if (effectiveName.isEmpty || effectiveName == 'Verified Profile') {
           effectiveName = (myPost && savedCompName != null && savedCompName.isNotEmpty)
               ? savedCompName
-              : (p.authorRole.isNotEmpty ? p.authorRole : 'Company');
+              : (p.authorRole.isNotEmpty ? p.authorRole : 'Sub Contractor');
         }
 
         return p.copyWith(
@@ -107,7 +107,7 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
       final enrichedPost = newPost.copyWith(
         authorName: (authorName != null && authorName.trim().isNotEmpty)
             ? authorName.trim()
-            : (newPost.authorName.isNotEmpty ? newPost.authorName : 'Company'),
+            : (newPost.authorName.isNotEmpty ? newPost.authorName : 'Sub Contractor'),
         authorRole: (authorRole != null && authorRole.trim().isNotEmpty) ? authorRole.trim() : newPost.authorRole,
         taggedTitle: effectiveTitle,
         isMyPost: true,
@@ -122,8 +122,8 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
 
     final localPost = FeedPost(
       id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-      authorName: (authorName != null && authorName.trim().isNotEmpty) ? authorName.trim() : 'Company',
-      authorRole: (authorRole != null && authorRole.trim().isNotEmpty) ? authorRole.trim() : 'Verified General Contractor',
+      authorName: (authorName != null && authorName.trim().isNotEmpty) ? authorName.trim() : 'Sub Contractor',
+      authorRole: (authorRole != null && authorRole.trim().isNotEmpty) ? authorRole.trim() : 'Verified Sub Contractor',
       content: content.trim(),
       location: location?.trim(),
       taggedTitle: taggedTitle?.trim(),
@@ -249,7 +249,7 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
               ? savedFullName!
               : ((savedName?.isNotEmpty == true)
                   ? savedName!
-                  : (role == 'company' ? 'Company' : 'Me')));
+                  : ((role == 'company' || role == 'subcontractor' || role == 'sub_contractor') ? 'Sub Contractor' : 'Me')));
 
       final enriched = items.map((c) {
         String effectiveName = c.authorName;
@@ -295,7 +295,7 @@ class FeedCubit extends Cubit<LoadState<List<FeedPost>>> {
 
     final finalAuthorName = (authorName != null && authorName.trim().isNotEmpty)
         ? authorName.trim()
-        : (networkComment?.authorName.isNotEmpty == true ? networkComment!.authorName : 'Company');
+        : (networkComment?.authorName.isNotEmpty == true ? networkComment!.authorName : 'Sub Contractor');
 
     final newComment = (networkComment ??
         PostComment(

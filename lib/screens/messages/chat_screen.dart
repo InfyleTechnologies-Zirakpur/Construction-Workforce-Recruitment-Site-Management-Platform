@@ -140,7 +140,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_isCandidate && _messages.isEmpty && widget.conversation.lastMessage.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Contractors must initiate the conversation first.'),
+          content: Text('Sub contractors must initiate the conversation first.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -256,7 +256,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         const SizedBox(height: 12),
                                         Text(
                                           _isCandidate
-                                              ? 'Waiting for contractor to send the first message'
+                                              ? 'Waiting for sub contractor to send the first message'
                                               : 'No messages yet. Send the first message to the candidate!',
                                           style: textTheme.bodyMedium?.copyWith(
                                             color: AppColors.textSecondary,
@@ -306,7 +306,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Only the company can initiate the conversation after reviewing your application.',
+                'Only the sub contractor can initiate the conversation after reviewing your application.',
                 style: textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,

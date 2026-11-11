@@ -869,7 +869,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Enter all real jobs and site projects you have worked on. Each entry will be rendered with company, dates, and responsibilities on your resume.',
+                  'Enter all real jobs and site projects you have worked on. Each entry will be rendered with sub contractor, dates, and responsibilities on your resume.',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -1207,7 +1207,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
             hint: 'e.g. Mason, Site Supervisor, Crane Operator',
           ),
           const SizedBox(height: 10),
-          _buildFieldLabel('Company / Contractor Name *'),
+          _buildFieldLabel('Sub Contractor / Employer Name *'),
           _buildTextField(
             controller: item.companyName,
             hint: 'e.g. L&T Construction, Tata Projects, NCC Ltd',

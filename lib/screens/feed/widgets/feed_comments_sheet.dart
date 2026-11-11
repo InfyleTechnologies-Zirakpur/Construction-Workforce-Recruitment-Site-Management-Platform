@@ -62,7 +62,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
           if (resolvedName != null && resolvedName.isNotEmpty) {
             _myAuthorName = resolvedName;
           }
-          if (role == 'company') {
+          if (role == 'company' || role == 'subcontractor' || role == 'sub_contractor') {
             _userIsCompany = true;
             _myAuthorRole = 'Hiring Employer';
           }
@@ -151,7 +151,7 @@ class _FeedCommentsSheetState extends State<FeedCommentsSheet> {
             }
 
             if (myName.isEmpty) {
-              myName = 'Company';
+              myName = 'Sub Contractor';
             }
 
             final commentsList = _liveComments ?? post.comments;

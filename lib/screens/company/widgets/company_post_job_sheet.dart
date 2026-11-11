@@ -26,9 +26,9 @@ class CompanyPostJobSheet extends StatefulWidget {
     if (myProfile == null) {
       final shouldSetup = await AppConfirmDialog.show(
         context,
-        title: 'Company Profile Required',
+        title: 'Sub Contractor Profile Required',
         message:
-            'You must register your company profile credentials before posting job requirements on the platform.',
+            'You must register your sub contractor profile credentials before posting job requirements on the platform.',
         confirmLabel: 'Setup Profile',
         cancelLabel: 'Cancel',
         icon: Icons.business_rounded,
@@ -405,13 +405,13 @@ class _CompanyPostJobSheetState extends State<CompanyPostJobSheet> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       final errStr = e.toString();
-      if (errStr.contains('Company profile not found')) {
+      if (errStr.toLowerCase().contains('company profile not found') || errStr.toLowerCase().contains('sub contractor profile not found')) {
         Navigator.pop(context);
         final shouldSetup = await AppConfirmDialog.show(
           context,
-          title: 'Company Profile Required',
+          title: 'Sub Contractor Profile Required',
           message:
-              'Please complete your company profile details before posting job requirements.',
+              'Please complete your sub contractor profile details before posting job requirements.',
           confirmLabel: 'Setup Profile',
           cancelLabel: 'Cancel',
           icon: Icons.business_rounded,

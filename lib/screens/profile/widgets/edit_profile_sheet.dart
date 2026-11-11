@@ -338,7 +338,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildInputLabel('Work Experience ({ title, company, years })'),
+                  _buildInputLabel('Work Experience ({ title, sub contractor, years })'),
                   TextButton.icon(
                     onPressed: _addExperienceItem,
                     icon: const Icon(Icons.add_circle_outline, size: 16, color: AppColors.primary),
@@ -419,7 +419,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                         const SizedBox(height: 8),
                         _buildMiniField(
                           controller: item.companyController,
-                          hintText: 'Company / Site (e.g. XYZ Constructions)',
+                          hintText: 'Sub Contractor / Site (e.g. XYZ Constructions)',
                           icon: Icons.business_outlined,
                         ),
                       ],

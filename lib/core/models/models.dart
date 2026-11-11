@@ -65,7 +65,7 @@ class Job {
     return Job(
       id: j['id']?.toString() ?? '',
       title: j['title']?.toString() ?? 'Job Title',
-      company: j['company'] is Map ? (j['company']['name']?.toString() ?? 'Company') : (j['company']?.toString() ?? 'Company'),
+      company: j['company'] is Map ? (j['company']['name']?.toString() ?? 'Sub Contractor') : (j['company']?.toString() ?? 'Sub Contractor'),
       location: j['location']?.toString() ?? 'Location',
       dailyPay: pay,
       skills: List<String>.from((j['skills'] as List?)?.map((e) => e.toString()) ?? []),
@@ -369,7 +369,7 @@ class Conversation {
             ? companyObj!['fullName'].toString().replaceAll(RegExp(r'\s+Admin$', caseSensitive: false), '')
             : null) ??
         json['companyName']?.toString() ??
-        'Company';
+        'Sub Contractor';
 
     final companyIdStr = json['companyId']?.toString() ?? companyObj?['id']?.toString();
     final seekerIdStr = json['seekerId']?.toString() ?? seekerObj?['id']?.toString();

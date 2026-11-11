@@ -325,7 +325,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Account verified! Complete your company profile details.'),
+          content: Text('Account verified! Complete your sub contractor profile details.'),
           backgroundColor: Color(0xFF16A34A),
           behavior: SnackBarBehavior.floating,
         ),
@@ -357,7 +357,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
       children: [
         Row(
           children: [
-            _buildStepIndicator(0, 'Company Info', Icons.business_rounded),
+            _buildStepIndicator(0, 'Sub Contractor Info', Icons.business_rounded),
             _buildStepConnector(0),
             _buildStepIndicator(1, 'Verify Email', Icons.mark_email_read_rounded),
             _buildStepConnector(1),
@@ -516,7 +516,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Company / Contact Name *',
+            'Sub Contractor / Contact Name *',
             style: TextStyle(
               fontSize: context.sp(14),
               fontWeight: FontWeight.w600,
@@ -540,15 +540,15 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
             ),
             validator: (v) {
               final s = v?.trim() ?? '';
-              if (s.isEmpty) return 'Company / Contact name is required';
-              if (s.length < 2) return 'Enter a valid company name (minimum 2 characters)';
+              if (s.isEmpty) return 'Sub Contractor / Contact name is required';
+              if (s.length < 2) return 'Enter a valid sub contractor name (minimum 2 characters)';
               return null;
             },
           ),
           SizedBox(height: context.h(16)),
 
           Text(
-            'Official Company Email *',
+            'Official Sub Contractor Email *',
             style: TextStyle(
               fontSize: context.sp(14),
               fontWeight: FontWeight.w600,
@@ -561,7 +561,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
             keyboardType: TextInputType.emailAddress,
             style: const TextStyle(fontSize: 16, color: Color(0xFF1E2A38)),
             decoration: InputDecoration(
-              hintText: 'company@example.com',
+              hintText: 'subcontractor@example.com',
               hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14.5),
               prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF6B7280), size: 20),
               filled: true,
@@ -870,7 +870,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
           child: TextButton.icon(
             onPressed: () => setState(() => _step = 0),
             icon: const Icon(Icons.arrow_back_rounded, size: 18, color: Color(0xFF64748B)),
-            label: const Text('Back to Company Info', style: TextStyle(color: Color(0xFF64748B), fontSize: 14.5)),
+            label: const Text('Back to Sub Contractor Info', style: TextStyle(color: Color(0xFF64748B), fontSize: 14.5)),
           ),
         ),
         SizedBox(height: context.h(20)),
@@ -1150,10 +1150,10 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                         const SizedBox(width: 8),
                         Text(
                           switch (_step) {
-                            0 => 'Company Registration',
+                            0 => 'Sub Contractor Registration',
                             1 => 'Verify Email Address',
                             2 => 'Set Account Password',
-                            _ => 'Company Registration',
+                            _ => 'Sub Contractor Registration',
                           },
                           style: const TextStyle(
                             fontSize: 20,
@@ -1190,7 +1190,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                               0 => 'Create Employer Account',
                               1 => 'Verify Your Email',
                               2 => 'Secure Your Account',
-                              _ => 'Company Sign Up',
+                              _ => 'Sub Contractor Sign Up',
                             },
                             style: TextStyle(
                               fontSize: context.sp(26),
@@ -1203,8 +1203,8 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
 
                           Text(
                             switch (_step) {
-                              0 => 'Register your company to post site requirements and hire verified skilled workers.',
-                              1 => 'Enter the 6-digit confirmation code sent to your official company inbox.',
+                              0 => 'Register as a sub contractor to post site requirements and hire verified skilled workers.',
+                              1 => 'Enter the 6-digit confirmation code sent to your official sub contractor inbox.',
                               2 => 'Create a strong password with letters, digits, and symbols to finish registration.',
                               _ => '',
                             },

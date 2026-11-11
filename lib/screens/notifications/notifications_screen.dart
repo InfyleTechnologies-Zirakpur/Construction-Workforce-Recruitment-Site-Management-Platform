@@ -94,7 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       const storage1 = FlutterSecureStorage();
       final role1 = await storage1.read(key: 'role');
-      if (role1 == 'company') {
+      if (role1 == 'company' || role1 == 'subcontractor' || role1 == 'sub_contractor') {
         if (mounted && !_isCompany) setState(() => _isCompany = true);
         return;
       }
@@ -102,7 +102,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         aOptions: AndroidOptions(encryptedSharedPreferences: true),
       );
       final role2 = await storage2.read(key: 'role');
-      if (role2 == 'company') {
+      if (role2 == 'company' || role2 == 'subcontractor' || role2 == 'sub_contractor') {
         if (mounted && !_isCompany) setState(() => _isCompany = true);
         return;
       }
@@ -133,7 +133,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
     final role = await storage.read(key: 'role');
     if (!mounted) return;
-    final isCompany = widget.isCompany ?? (role == 'company');
+    final isCompany = widget.isCompany ?? (role == 'company' || role == 'subcontractor' || role == 'sub_contractor');
 
     if (t.contains('message') || t.contains('chat')) {
       // 1. CHAT / MESSAGE: Redirect to that particular conversation!
@@ -457,7 +457,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Text(
               _effectiveIsCompany
                   ? 'When candidates apply to your jobs or send messages, alerts will appear here.'
-                  : 'When companies update applications or post matching jobs, they will appear here.',
+                  : 'When sub contractors update applications or post matching jobs, they will appear here.',
               style: textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
                 fontSize: 15,

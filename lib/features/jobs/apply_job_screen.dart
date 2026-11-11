@@ -78,7 +78,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
         buffer.write('\n\n[Experience Details]');
         if (years != null && years > 0) buffer.write('\n• Years of Experience: $years');
         if (role.isNotEmpty) buffer.write('\n• Previous Role: $role');
-        if (company.isNotEmpty) buffer.write('\n• Previous Company: $company');
+        if (company.isNotEmpty) buffer.write('\n• Previous Sub Contractor: $company');
       } else if (!_hasExperience && training.isNotEmpty) {
         buffer.write('\n\n[Training/Background]\n• $training');
       }
@@ -283,7 +283,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                       validator: (value) =>
                           (value == null || value.trim().isEmpty) ? 'Please add a short summary' : null,
                       decoration: InputDecoration(
-                        hintText: 'Tell the contractor why you are a good fit for this role...',
+                        hintText: 'Tell the sub contractor why you are a good fit for this role...',
                         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                         filled: true,
                         fillColor: AppColors.background,

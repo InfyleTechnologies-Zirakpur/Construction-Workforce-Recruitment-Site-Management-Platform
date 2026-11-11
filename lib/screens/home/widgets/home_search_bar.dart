@@ -66,7 +66,7 @@ class HomeSearchBar extends StatelessWidget {
                   disabledBorder: InputBorder.none,
                   errorBorder: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
-                  hintText: 'Job title, keywords or company',
+                  hintText: 'Job title, keywords or sub contractor',
                   hintStyle: TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 15,

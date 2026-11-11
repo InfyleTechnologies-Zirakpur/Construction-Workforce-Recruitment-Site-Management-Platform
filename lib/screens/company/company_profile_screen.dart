@@ -351,7 +351,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
   }
 
   String _getCompanyName() {
-    if (_profile == null) return 'Company';
+    if (_profile == null) return 'Sub Contractor';
     final name = (_profile!['name'] ??
             _profile!['companyName'] ??
             _profile!['businessName'] ??
@@ -359,11 +359,11 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
             (_profile!['user'] is Map ? (_profile!['user']['companyName'] ?? _profile!['user']['name']) : null))
         ?.toString()
         .trim();
-    return (name != null && name.isNotEmpty) ? name : 'Company';
+    return (name != null && name.isNotEmpty) ? name : 'Sub Contractor';
   }
 
   String _getInitials(String name) {
-    if (name.isEmpty || name == 'Company') return 'CO';
+    if (name.isEmpty || name == 'Sub Contractor' || name == 'Company') return 'SC';
     final parts = name.split(RegExp(r'[\s&]+')).where((p) => p.isNotEmpty).toList();
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -392,7 +392,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
           await _repo.updateCompanyProfile(profileId, {'logoUrl': url});
         }
         if (mounted) {
-          _showMessage('Company logo updated successfully.');
+          _showMessage('Sub Contractor logo updated successfully.');
           _loadProfile();
         }
       }
@@ -444,7 +444,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
   Future<void> _logout() async {
     final confirm = await AppConfirmDialog.show(
       context,
-      title: 'Log Out Company?',
+      title: 'Log Out Sub Contractor?',
       message: 'Are you sure you want to log out of your employer portal?',
       confirmLabel: 'Log Out',
       cancelLabel: 'Cancel',
@@ -808,7 +808,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
     final isHiring = _companyJobs.isNotEmpty;
     final badgeText = isHiring
         ? 'Actively Hiring'
-        : (isVerified ? 'Verified Company' : 'Pending Verification');
+        : (isVerified ? 'Verified Sub Contractor' : 'Pending Verification');
     final badgeBg = isHiring || isVerified ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7);
     final badgeFg = isHiring || isVerified ? const Color(0xFF16A34A) : const Color(0xFFD97706);
 
@@ -1206,7 +1206,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Company announcements and site achievements will appear here.',
+                  'Sub Contractor announcements and site achievements will appear here.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                 ),
@@ -2162,7 +2162,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
             children: [
               if (hasDesc) ...[
                 const Text(
-                  'About Company',
+                  'About Sub Contractor',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -2475,7 +2475,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               ),
               icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.white),
               label: const Text(
-                'Edit Company Details',
+                'Edit Sub Contractor Details',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -2500,7 +2500,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               ),
               icon: const Icon(Icons.logout_rounded, size: 18),
               label: const Text(
-                'Log Out Company',
+                'Log Out Sub Contractor',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

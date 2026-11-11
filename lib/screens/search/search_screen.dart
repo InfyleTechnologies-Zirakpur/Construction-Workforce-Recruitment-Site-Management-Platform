@@ -372,7 +372,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             color: AppColors.dark,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Job title, keywords or company',
+                            hintText: 'Job title, keywords or sub contractor',
                             hintStyle: const TextStyle(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w400,
